@@ -42,15 +42,20 @@ export default function StaffScanner() {
 
     const fetchParticipants = async (eventId) => {
         setLoading(true)
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('participants')
             .select(`
                 *,
-                profiles (*)
+                profiles:user_id (*)
             `)
             .eq('event_id', eventId)
 
-        if (data) setParticipants(data)
+        if (error) {
+            console.error('Fetch error:', error)
+            setParticipants([])
+        } else {
+            setParticipants(data || [])
+        }
         setLoading(false)
     }
 
@@ -153,11 +158,15 @@ export default function StaffScanner() {
             .eq('id', ticket.id)
 
         setValidatedTickets(prev => new Set([...prev, code]))
+        const profile = Array.isArray(ticket.participants?.profiles)
+            ? ticket.participants.profiles[0]
+            : ticket.participants?.profiles;
+
         const result = {
             status: 'success',
             message: 'Ticket Validated',
             ticket: ticket,
-            profile: ticket.participants?.profiles,
+            profile: profile,
             type: 'ticket',
             code,
             time: new Date()
@@ -265,8 +274,8 @@ export default function StaffScanner() {
                                         <td>{p.profiles?.dept || 'N/A'}</td>
                                         <td className="font-mono" style={{ fontSize: '12px' }}>{p.profiles?.reg_no || 'N/A'}</td>
                                         <td>
-                                            <span className={`badge ${p.status === 'approved' ? 'badge-success' : 'badge-warning'}`}>
-                                                {p.status.toUpperCase()}
+                                            <span className={`badge ${p.registration_status === 'confirmed' ? 'badge-success' : 'badge-warning'}`}>
+                                                {p.registration_status?.toUpperCase()}
                                             </span>
                                         </td>
                                         <td style={{ textAlign: 'right' }}>

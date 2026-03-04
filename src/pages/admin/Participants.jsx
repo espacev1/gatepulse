@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe, Download, ThumbsUp, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { sendQRCodeEmail } from '../../lib/emailService'
 
 export default function AdminParticipants() {
     const [search, setSearch] = useState('')
@@ -88,7 +89,17 @@ export default function AdminParticipants() {
                 qr_token: qrToken
             }])
 
-        if (tError) alert('Status confirmed, but ticket provision failed: ' + tError.message)
+        if (tError) {
+            alert('Status confirmed, but ticket provision failed: ' + tError.message)
+        } else {
+            // 3. Auto-dispatch Email
+            await sendQRCodeEmail(
+                participant.user.email,
+                participant.user.full_name,
+                qrToken,
+                participant.event?.name
+            )
+        }
 
         fetchParticipants()
     }

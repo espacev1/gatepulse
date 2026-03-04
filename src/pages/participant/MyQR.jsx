@@ -3,6 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '../../contexts/AuthContext'
 import { QrCode, Mail, Download, Share2, ShieldCheck, User, Building2, Hash, AlertTriangle } from 'lucide-react'
 import ProfileCompletionModal from '../../components/ProfileCompletionModal'
+import { sendQRCodeEmail } from '../../lib/emailService'
 
 export default function MyQR() {
     const { user } = useAuth()
@@ -10,9 +11,17 @@ export default function MyQR() {
 
     const isProfileComplete = user?.dept && user?.reg_no && user?.face_url && user?.id_barcode_url
 
-    const handleEmailQR = () => {
-        // Mocking email triggering - normally this would call a backend service or EmailJS
-        alert("Your Digital Entry Credential has been dispatched to: " + user?.email)
+    const handleEmailQR = async () => {
+        if (!user.qr_token) return alert("Identity not yet provisioned.")
+
+        const result = await sendQRCodeEmail(
+            user.email,
+            user.full_name,
+            user.qr_token,
+            'Your Gate Pulse Identity'
+        )
+
+        alert(result.message)
     }
 
     if (!user) return null
