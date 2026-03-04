@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Search, Shield, User, Mail, ShieldCheck, Activity, Trash2, UserCog, Clock } from 'lucide-react'
+import { Search, Shield, User, ShieldCheck, Activity, UserCog, ArrowUpRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+
+const ROLE_LEVELS = {
+    participant: { label: 'Participant', level: 1, color: 'var(--status-info)', bg: 'var(--status-info-bg)', border: 'var(--status-info-border)' },
+    staff: { label: 'Operational Staff', level: 2, color: 'var(--status-warn)', bg: 'var(--status-warn-bg)', border: 'var(--status-warn-border)' },
+    admin: { label: 'Administrator', level: 3, color: 'var(--status-critical)', bg: 'var(--status-critical-bg)', border: 'var(--status-critical-border)' },
+}
 
 export default function AdminUsers() {
     const { user: currentUser } = useAuth()
@@ -9,6 +15,7 @@ export default function AdminUsers() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [filterRole, setFilterRole] = useState('all')
+    const [escalatingUser, setEscalatingUser] = useState(null)
 
     useEffect(() => {
         fetchUsers()
@@ -18,9 +25,7 @@ export default function AdminUsers() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers())
             .subscribe()
 
-        return () => {
-            supabase.removeChannel(channel)
-        }
+        return () => { supabase.removeChannel(channel) }
     }, [])
 
     const fetchUsers = async () => {
@@ -30,21 +35,26 @@ export default function AdminUsers() {
             .select('*')
             .order('created_at', { ascending: false })
 
+        if (error) console.error('Failed to fetch users:', error)
         if (data) setUsers(data)
         setLoading(false)
     }
 
-    const updateRole = async (userId, newRole) => {
-        if (!currentUser?.is_super_admin) return alert('Priority Authorization Required: Only Super Admins can reclassify entity roles.')
-        if (userId === currentUser.id) return alert('Internal Conflict: You cannot reclassify your own root credentials.')
+    const escalateRole = async (userId, newRole) => {
+        if (!currentUser?.is_super_admin) return alert('Only Super Admins can modify privilege levels.')
+        if (userId === currentUser.id) return alert('You cannot modify your own privileges.')
 
         const { error } = await supabase
             .from('profiles')
             .update({ role: newRole })
             .eq('id', userId)
 
-        if (error) alert('Redeployment Failed: ' + error.message)
-        else fetchUsers()
+        if (error) {
+            alert('Escalation failed: ' + error.message)
+        } else {
+            setEscalatingUser(null)
+            fetchUsers()
+        }
     }
 
     const filtered = users.filter(u => {
@@ -67,7 +77,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="card mb-6" style={{ padding: 'var(--space-4)' }}>
-                <div className="flex gap-4 flex-wrap">
+                <div className="flex gap-4 flex-wrap" style={{ alignItems: 'center' }}>
                     <div className="search-bar flex-1">
                         <Search size={18} />
                         <input
@@ -99,78 +109,142 @@ export default function AdminUsers() {
                                 <th>Clearance Level</th>
                                 <th>Deployment Date</th>
                                 <th>Status</th>
-                                <th className="text-right">Actions</th>
+                                <th style={{ textAlign: 'right' }}>Privilege Escalation</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && users.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">SCANNING DATABASE...</td></tr>
+                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>SCANNING DATABASE...</td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">NO IDENTITIES MATCHING QUERY</td></tr>
-                            ) : filtered.map((u, i) => (
-                                <tr key={u.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
-                                    <td>
-                                        <div className="flex items-center gap-3">
-                                            <div style={{
-                                                width: 36, height: 36, borderRadius: 'var(--radius-lg)',
-                                                background: u.role === 'admin' ? 'var(--secondary-glow)' : 'var(--bg-elevated)',
-                                                border: `1px solid ${u.role === 'admin' ? 'var(--secondary)' : 'var(--border-color)'}`,
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>NO IDENTITIES MATCHING QUERY</td></tr>
+                            ) : filtered.map((u, i) => {
+                                const roleInfo = ROLE_LEVELS[u.role] || ROLE_LEVELS.participant
+                                const isCurrentUser = u.id === currentUser?.id
+                                const showEscalation = escalatingUser === u.id
+
+                                return (
+                                    <tr key={u.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{
+                                                    width: 36, height: 36, borderRadius: 'var(--radius-lg)',
+                                                    background: u.role === 'admin' ? 'var(--secondary-glow)' : u.role === 'staff' ? 'var(--status-warn-bg)' : 'var(--bg-elevated)',
+                                                    border: `1px solid ${u.role === 'admin' ? 'var(--secondary)' : u.role === 'staff' ? 'var(--status-warn-border)' : 'var(--border-color)'}`,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {u.role === 'admin' ? <Shield size={16} color="var(--secondary)" /> :
+                                                        u.role === 'staff' ? <UserCog size={16} color="var(--status-warn)" /> :
+                                                            <User size={16} color="var(--text-dim)" />}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.full_name}</div>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>{u.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                padding: '2px 10px', fontSize: '10px', fontWeight: 700,
+                                                borderRadius: 'var(--radius-full)', letterSpacing: '0.04em',
+                                                background: roleInfo.bg, color: roleInfo.color, border: `1px solid ${roleInfo.border}`,
+                                                textTransform: 'uppercase'
                                             }}>
-                                                {u.role === 'admin' ? <Shield size={16} color="var(--secondary)" /> : <User size={16} color="var(--text-dim)" />}
+                                                {roleInfo.label}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: '12px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: 'var(--status-ok)' }}>
+                                                <Activity size={10} /> ACTIVE
                                             </div>
-                                            <div>
-                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.full_name}</div>
-                                                <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>{u.email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className={`badge ${u.role === 'admin' ? 'badge-error' :
-                                            u.role === 'staff' ? 'badge-warning' :
-                                                'badge-info'
-                                            }`} style={{ fontSize: '10px' }}>
-                                            {u.role.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td style={{ fontSize: '12px', color: 'var(--text-dim)', fontFileName: 'var(--font-mono)' }}>
-                                        {new Date(u.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td>
-                                        <div className="flex items-center gap-1 text-status-ok" style={{ fontSize: '10px', fontWeight: 700 }}>
-                                            <Activity size={10} /> ENCRYPTED
-                                        </div>
-                                    </td>
-                                    <td className="text-right">
-                                        {currentUser?.is_super_admin && u.id !== currentUser.id && (
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => updateRole(u.id, u.role === 'participant' ? 'staff' : 'participant')}
-                                                    className="btn btn-ghost btn-xs"
-                                                    title={u.role === 'participant' ? 'Promote to Staff' : 'Revert to Participant'}
-                                                >
-                                                    <UserCog size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => updateRole(u.id, u.role === 'admin' ? 'participant' : 'admin')}
-                                                    className="btn btn-ghost btn-xs"
-                                                    title={u.role === 'admin' ? 'Revoke Admin' : 'Grant Admin'}
-                                                    style={{ color: u.role === 'admin' ? 'var(--status-critical)' : 'var(--accent)' }}
-                                                >
-                                                    <Shield size={14} />
-                                                </button>
-                                            </div>
-                                        )}
-                                        {u.id === currentUser.id && (
-                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)', fontStyle: 'italic' }}>PRIMARY_ENTITY</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            {isCurrentUser ? (
+                                                <span style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.05em' }}>
+                                                    SUPER ADMIN
+                                                </span>
+                                            ) : currentUser?.is_super_admin ? (
+                                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                    <button
+                                                        onClick={() => setEscalatingUser(showEscalation ? null : u.id)}
+                                                        className="btn btn-secondary btn-sm"
+                                                        style={{ gap: '6px', fontSize: '11px' }}
+                                                    >
+                                                        <ArrowUpRight size={13} />
+                                                        Escalate
+                                                        <ChevronDown size={12} style={{
+                                                            transform: showEscalation ? 'rotate(180deg)' : 'none',
+                                                            transition: 'transform 0.2s ease'
+                                                        }} />
+                                                    </button>
+
+                                                    {showEscalation && (
+                                                        <div style={{
+                                                            position: 'absolute', right: 0, top: '100%', marginTop: '6px',
+                                                            background: 'var(--bg-panel)', border: '1px solid var(--border-color)',
+                                                            borderRadius: 'var(--radius-lg)', padding: '6px',
+                                                            minWidth: '180px', zIndex: 50,
+                                                            boxShadow: 'var(--shadow-xl)',
+                                                            animation: 'fadeIn 0.15s ease'
+                                                        }}>
+                                                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', padding: '4px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                                                                SET CLEARANCE LEVEL
+                                                            </div>
+                                                            {Object.entries(ROLE_LEVELS).map(([roleKey, info]) => (
+                                                                <button
+                                                                    key={roleKey}
+                                                                    onClick={() => escalateRole(u.id, roleKey)}
+                                                                    disabled={u.role === roleKey}
+                                                                    style={{
+                                                                        width: '100%', textAlign: 'left',
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                                        padding: '8px 10px', borderRadius: 'var(--radius-md)',
+                                                                        background: u.role === roleKey ? 'rgba(0,212,255,0.05)' : 'transparent',
+                                                                        border: u.role === roleKey ? '1px solid var(--border-accent)' : '1px solid transparent',
+                                                                        color: u.role === roleKey ? 'var(--accent)' : 'var(--text-secondary)',
+                                                                        cursor: u.role === roleKey ? 'default' : 'pointer',
+                                                                        fontSize: '12px', fontWeight: 500,
+                                                                        fontFamily: 'var(--font-family)',
+                                                                        transition: 'all 0.15s ease',
+                                                                        opacity: u.role === roleKey ? 0.6 : 1
+                                                                    }}
+                                                                    onMouseOver={(e) => { if (u.role !== roleKey) e.target.style.background = 'rgba(0,212,255,0.05)' }}
+                                                                    onMouseOut={(e) => { if (u.role !== roleKey) e.target.style.background = 'transparent' }}
+                                                                >
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: info.color, flexShrink: 0 }} />
+                                                                        {info.label}
+                                                                    </span>
+                                                                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)' }}>
+                                                                        LVL {info.level}
+                                                                    </span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>—</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {/* Click outside to close dropdown */}
+            {escalatingUser && (
+                <div
+                    onClick={() => setEscalatingUser(null)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                />
+            )}
         </div>
     )
 }

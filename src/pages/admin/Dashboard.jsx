@@ -298,29 +298,24 @@ export default function AdminDashboard() {
 
                 {user?.is_super_admin && (
                     <div className="card">
-                        <div className="panel-header">Admin Authority</div>
-                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)', marginBottom: 'var(--space-4)' }}>Privileged account registry.</p>
+                        <div className="panel-header">System Overview</div>
+                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)', marginBottom: 'var(--space-4)' }}>Quick system status and access.</p>
 
                         <div className="flex flex-col gap-3">
                             {admins.map(admin => (
-                                <div key={admin.id} className="flex justify-between items-center p-3" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                                    <div className="flex items-center gap-3">
-                                        <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--secondary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--secondary)' }}>
-                                            <Shield size={16} color="var(--secondary)" />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>{admin.full_name}</div>
-                                            <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email} {admin.id === user.id ? '(YOU)' : ''}</div>
-                                        </div>
+                                <div key={admin.id} className="flex items-center gap-3 p-3" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--secondary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--secondary)' }}>
+                                        <Shield size={16} color="var(--secondary)" />
                                     </div>
-                                    {admin.id !== user.id && (
-                                        <button className="btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
-                                    )}
+                                    <div>
+                                        <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>{admin.full_name}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email} {admin.id === user.id ? '(YOU)' : ''}</div>
+                                    </div>
                                 </div>
                             ))}
-                            <button className="btn btn-ghost btn-sm w-full mt-2" style={{ border: '1px dashed var(--border-color)' }}>
-                                <Plus size={14} /> Provision New Admin
-                            </button>
+                            <a href="/admin/users" className="btn btn-secondary btn-sm w-full mt-2" style={{ textDecoration: 'none' }}>
+                                <Users size={14} /> Manage Users & Roles
+                            </a>
                         </div>
                     </div>
                 )}
