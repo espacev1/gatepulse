@@ -92,16 +92,18 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
 
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update({
+                .upsert({
+                    id: user.id,
+                    email: user.email,
                     full_name: formData.fullName,
+                    role: user.role || 'participant',
                     dept: formData.dept,
                     section: formData.section,
                     reg_no: formData.regNo,
                     id_barcode_url: idUrl,
                     face_url: faceUrl,
                     qr_token: user.qr_token || `GP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-                })
-                .eq('id', user.id)
+                }, { onConflict: 'id' })
 
             if (updateError) throw updateError
 
