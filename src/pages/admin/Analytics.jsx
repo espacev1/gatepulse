@@ -62,6 +62,9 @@ export default function AdminAnalytics() {
             `).order('timestamp', { ascending: false }).limit(50)
         ])
 
+        if (scansRes.error) console.error('Scans fetch error:', scansRes.error)
+        if (logsRes.error) console.error('Recent logs fetch error:', logsRes.error)
+
         const totalTickets = ticketsRes.count || 0
         const validatedCount = validatedRes.count || 0
         const attendanceRate = totalTickets > 0 ? Math.round((validatedCount / totalTickets) * 100) : 0

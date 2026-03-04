@@ -30,12 +30,13 @@ export default function StaffCheckIns() {
     }
 
     const fetchEvents = async () => {
-        const { data } = await supabase.from('events').select('id, name')
+        const { data, error } = await supabase.from('events').select('id, name')
+        if (error) console.error('Events fetch error:', error)
         if (data) setEvents(data)
     }
 
     const fetchLogs = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('attendance_logs')
             .select(`
                 id,
@@ -53,6 +54,11 @@ export default function StaffCheckIns() {
             `)
             .order('timestamp', { ascending: false })
             .limit(50)
+
+        if (error) {
+            console.error('Logs fetch error:', error)
+            return
+        }
 
         if (data) {
             setLogs(data.map(log => {

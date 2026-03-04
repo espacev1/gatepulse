@@ -123,16 +123,19 @@ export default function StaffScanner() {
     useEffect(() => { return () => { stopCamera() } }, [])
 
     const logScan = async (status, ticketId, eventIdOverride = null) => {
-        try {
-            await supabase.from('attendance_logs').insert([{
-                ticket_id: ticketId,
-                event_id: eventIdOverride || selectedEvent?.id,
-                verification_status: status,
-                staff_id: staffUser?.id,
-                timestamp: new Date().toISOString()
-            }])
-        } catch (err) {
-            console.error('Telemetric logging failed:', err)
+        const { error } = await supabase.from('attendance_logs').insert([{
+            ticket_id: ticketId,
+            event_id: eventIdOverride || selectedEvent?.id,
+            verification_status: status,
+            staff_id: staffUser?.id,
+            timestamp: new Date().toISOString()
+        }])
+
+        if (error) {
+            console.error('Telemetric logging failed:', error)
+            // Fallback for UI feedback if needed
+        } else {
+            console.log('Telemetric log committed:', status)
         }
     }
 
@@ -207,7 +210,7 @@ export default function StaffScanner() {
         }
 
         // 4. Mark as validated in DB
-        await supabase
+        const { error: updateError } = await supabase
             .from('tickets')
             .update({
                 is_validated: true,
@@ -215,6 +218,8 @@ export default function StaffScanner() {
                 validated_by: staffUser?.id
             })
             .eq('id', ticket.id)
+
+        if (updateError) console.error('Ticket validation update failed:', updateError)
 
         setValidatedTickets(prev => new Set([...prev, code]))
 
