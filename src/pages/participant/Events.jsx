@@ -112,18 +112,28 @@ export default function ParticipantEvents() {
         setLoading(true)
 
         try {
-            // 1. Resolve members
-            const memberIdentifiers = [user.email, ...teamMembers.filter(m => m.trim())]
+            // 1. Resolve members (Support Email or Reg No)
+            const rawIdentifiers = [user.email, ...teamMembers.filter(m => m.trim())]
+            const trimmedIdentifiers = [...new Set(rawIdentifiers.map(m => m.trim().toLowerCase()))]
+            const regIdentifiers = [...new Set(rawIdentifiers.map(m => m.trim()))]
+
+            // Query by email and reg_no separately to be robust
             const { data: profiles, error: prError } = await supabase
                 .from('profiles')
-                .select('id, email, full_name')
-                .in('email', memberIdentifiers)
+                .select('id, email, full_name, reg_no')
+                .or(`email.in.(${trimmedIdentifiers.join(',')}),reg_no.in.(${regIdentifiers.join(',')})`)
 
             if (prError) throw prError
-            if (profiles.length < memberIdentifiers.length) {
-                const found = profiles.map(p => p.email)
-                const missing = memberIdentifiers.filter(m => !found.includes(m))
-                throw new Error(`ENTITY_NOT_FOUND: Could not resolve credentials for: ${missing.join(', ')}. All members must have participant accounts.`)
+
+            // Validate all members found
+            if (profiles.length < trimmedIdentifiers.length) {
+                const foundEmails = profiles.map(p => p.email?.toLowerCase())
+                const foundRegs = profiles.map(p => p.reg_no?.toLowerCase())
+                const missing = rawIdentifiers.filter(m => {
+                    const cleanM = m.trim().toLowerCase()
+                    return !foundEmails.includes(cleanM) && !foundRegs.includes(cleanM)
+                })
+                throw new Error(`ENTITY_NOT_FOUND: Could not resolve credentials for: ${missing.join(', ')}. Please ensure they have created a participant account and you are using their exact Email or Reg No.`)
             }
 
             // 2. Create Team
