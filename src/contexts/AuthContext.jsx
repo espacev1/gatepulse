@@ -74,6 +74,8 @@ export function AuthProvider({ children }) {
         })
         if (error) throw error
 
+        if (!data.user) throw new Error('Registration failed: User identity not established.')
+
         const newUserProfile = {
             id: data.user.id,
             email,
@@ -81,12 +83,23 @@ export function AuthProvider({ children }) {
             role: role || 'participant'
         }
 
+        // Try to create profile, but handle if it already exists or fails due to RLS
         const { error: profileError } = await supabase.from('profiles').insert(newUserProfile)
-        if (profileError) throw profileError
+
+        // If profile creation fails but user exists, it might be due to RLS or previous attempt
+        // We still want to allow the user to proceed if they have a session
+        if (profileError && profileError.code !== '23505') {
+            console.error('Profile creation warning:', profileError)
+        }
 
         const sessionUser = { ...data.user, ...newUserProfile }
         setUser(sessionUser)
         localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
+
+        if (!data.session) {
+            throw new Error('Entity Provisioned. Please check your deployment email for activation instructions.')
+        }
+
         return sessionUser
     }
 

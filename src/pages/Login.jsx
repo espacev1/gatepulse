@@ -72,14 +72,16 @@ export default function Login() {
                 {/* Header */}
                 <div className="text-center mb-10">
                     <div style={{
-                        width: 52, height: 52, background: 'var(--accent-gradient)',
-                        borderRadius: 'var(--radius-xl)', display: 'flex',
+                        width: 60, height: 60,
+                        display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
                         margin: '0 auto var(--space-4)',
-                        boxShadow: 'var(--shadow-glow-strong)',
-                        animation: 'float 4s ease-in-out infinite'
                     }}>
-                        <Shield size={28} color="#060E1A" strokeWidth={2.5} />
+                        <img
+                            src="/logo_refined.png"
+                            alt="GatePulse Logo"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     <h1 className="page-title" style={{ marginBottom: 4 }}>Access Console</h1>
                     <p className="page-subtitle">Security Authentication Gateway</p>

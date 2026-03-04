@@ -12,13 +12,13 @@
   --bg-elevated: #1A3A5C;
   --bg-input: #0C1E38;
 
-  /* Electric Blue / Cyan Accent */
-  --accent: #00D4FF;
-  --accent-bright: #33E0FF;
-  --accent-dim: #0099CC;
-  --accent-glow: rgba(0, 212, 255, 0.15);
-  --accent-glow-strong: rgba(0, 212, 255, 0.3);
-  --accent-gradient: linear-gradient(135deg, #00D4FF 0%, #0088CC 100%);
+  /* Electric Blue / Cyan Accent (Refined for Logo) */
+  --accent: #00D1FF;
+  --accent-bright: #33EBFF;
+  --accent-dim: #00A3CC;
+  --accent-glow: rgba(0, 209, 255, 0.15);
+  --accent-glow-strong: rgba(0, 209, 255, 0.3);
+  --accent-gradient: linear-gradient(135deg, #00D1FF 0%, #008CCB 100%);
 
   /* Secondary - Magenta / Teal */
   --secondary: #7B61FF;

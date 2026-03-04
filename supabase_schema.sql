@@ -64,25 +64,67 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
 
 -- Row Level Security (RLS) Policies
 
--- Profiles
+-- 1. Profiles: Ensure every auth user has a profile
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, full_name, role)
+    VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name', 'participant');
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "System can insert profiles" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Events
+-- 2. Events
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Events are viewable by everyone" ON public.events FOR SELECT USING (true);
-CREATE POLICY "Admins can insert events" ON public.events FOR INSERT WITH CHECK (
+CREATE POLICY "Admins can manage events" ON public.events FOR ALL USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Tickets
+-- 3. Participants
+ALTER TABLE public.participants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own participation" ON public.participants FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins and Staff can view all participants" ON public.participants FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+);
+CREATE POLICY "Users can register themselves" ON public.participants FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Admins can update participant status" ON public.participants FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- 4. Tickets
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own tickets" ON public.tickets FOR SELECT USING (
     EXISTS (
         SELECT 1 FROM public.participants 
         WHERE participants.id = tickets.participant_id 
         AND participants.user_id = auth.uid()
-    ) OR 
+    )
+);
+CREATE POLICY "Admins and Staff can view all tickets" ON public.tickets FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+);
+CREATE POLICY "Admins can provision tickets" ON public.tickets FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Staff can validate tickets" ON public.tickets FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+);
+
+-- 5. Attendance Logs
+ALTER TABLE public.attendance_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins and Staff can log attendance" ON public.attendance_logs FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+);
+CREATE POLICY "Admins and Staff can view logs" ON public.attendance_logs FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
