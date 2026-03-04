@@ -12,11 +12,14 @@ export default function StaffCheckIns() {
         fetchInitialData()
 
         const subscription = supabase
-            .channel('staff-checkins')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+            .channel('staff-checkins-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, (payload) => {
+                console.log('REALTIME_EVENT_DETECTED:', payload)
                 fetchLogs()
             })
-            .subscribe()
+            .subscribe((status) => {
+                console.log('REALTIME_SUBSCRIPTION_STATUS:', status)
+            })
 
         return () => {
             supabase.removeChannel(subscription)
@@ -56,8 +59,13 @@ export default function StaffCheckIns() {
             .limit(50)
 
         if (error) {
-            console.error('Logs fetch error:', error)
+            console.error('CRITICAL_LOGS_FETCH_ERROR:', error)
             return
+        }
+
+        console.log('RAW_LOGS_DATA_RECEIVED:', data?.length || 0, 'items')
+        if (data && data.length > 0) {
+            console.log('SAMPLE_LOG_ITEM:', data[0])
         }
 
         if (data) {
