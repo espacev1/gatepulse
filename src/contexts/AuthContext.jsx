@@ -126,10 +126,8 @@ export function AuthProvider({ children }) {
         if (!data.user) throw new Error('Registration failed: User identity not established.')
 
         const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
-        const assignedRole = isSuperAdmin ? 'admin' : 'participant'
+        const assignedRole = isSuperAdmin ? 'admin' : (role || 'participant')
 
-        // Always create profile in DB — don't gate behind session check
-        // (session may be null if email confirmation is enabled)
         // Always create profile in DB — don't gate behind session check
         const { error: pError } = await supabase.from('profiles').upsert({
             id: data.user.id,

@@ -102,13 +102,15 @@ BEGIN
         new.raw_user_meta_data->>'full_name', 
         CASE 
             WHEN new.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
-            ELSE 'participant'
+            WHEN new.email LIKE '%@vishnu.edu.in' THEN COALESCE(new.raw_user_meta_data->>'role', 'participant')
+            ELSE 'participant' -- Fallback, though frontend will block non-vishnu domains
         END
     )
     ON CONFLICT (id) DO UPDATE 
     SET full_name = EXCLUDED.full_name, 
         role = CASE 
             WHEN EXCLUDED.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
+            WHEN EXCLUDED.email LIKE '%@vishnu.edu.in' THEN COALESCE(new.raw_user_meta_data->>'role', profiles.role)
             ELSE profiles.role 
         END;
     RETURN new;
