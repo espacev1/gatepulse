@@ -47,7 +47,6 @@ export default function StaffCheckIns() {
                 event_id,
                 timestamp,
                 verification_status,
-                events (name),
                 tickets (
                     ticket_type,
                     participants (
@@ -72,12 +71,13 @@ export default function StaffCheckIns() {
             setLogs(data.map(log => {
                 const profile = log.tickets?.participants?.profiles;
                 const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+                const eventObj = events.find(e => e.id === log.event_id);
 
                 return {
                     id: log.id,
                     ticket_id: log.ticket_id || 'N/A',
                     timestamp: log.timestamp,
-                    event_name: log.events?.name || 'Unknown Sector',
+                    event_name: eventObj?.name || 'Unknown Sector',
                     event_id: log.event_id,
                     full_name: safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY'),
                     verification_status: log.verification_status || 'invalid'
