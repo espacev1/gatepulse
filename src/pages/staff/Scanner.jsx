@@ -256,33 +256,35 @@ export default function StaffScanner() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {participants.map((p) => (
-                                    <tr key={p.id} className="clickable" onClick={() => handleParticipantSelect(p)}>
-                                        <td>
-                                            <div className="flex items-center gap-3">
-                                                <div style={{
-                                                    width: 36, height: 36, borderRadius: 'var(--radius-md)',
-                                                    background: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: '14px', fontWeight: 800, color: 'var(--accent)'
-                                                }}>
-                                                    {p.profiles?.full_name?.charAt(0) || '?'}
+                                {participants.map((p) => {
+                                    const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+                                    return (
+                                        <tr key={p.id} className="clickable" onClick={() => handleParticipantSelect(p)}>
+                                            <td>
+                                                <div className="flex items-center gap-3">
+                                                    <div style={{
+                                                        width: 36, height: 36, borderRadius: 'var(--radius-md)',
+                                                        background: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: '14px', fontWeight: 800, color: 'var(--accent)'
+                                                    }}>
+                                                        {prof?.full_name?.charAt(0) || '?'}
+                                                    </div>
+                                                    <div style={{ fontWeight: 600 }}>{prof?.full_name || 'AUTHENTICATING...'}</div>
                                                 </div>
-                                                <div style={{ fontWeight: 600 }}>{p.profiles?.full_name}</div>
-                                            </div>
-                                        </td>
-                                        <td>{p.profiles?.dept || 'N/A'}</td>
-                                        <td className="font-mono" style={{ fontSize: '12px' }}>{p.profiles?.reg_no || 'N/A'}</td>
-                                        <td>
-                                            <span className={`badge ${p.registration_status === 'confirmed' ? 'badge-success' : 'badge-warning'}`}>
-                                                {p.registration_status?.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button className="btn btn-primary btn-xs">VERIFY IDENTITY</button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td>{prof?.dept || 'N/A'}</td>
+                                            <td className="font-mono" style={{ fontSize: '12px' }}>{prof?.reg_no || 'N/A'}</td>
+                                            <td>
+                                                <span className={`badge ${p.registration_status === 'confirmed' ? 'badge-success' : 'badge-warning'}`}>
+                                                    {p.registration_status?.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button className="btn btn-primary btn-xs">VERIFY IDENTITY</button>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>
@@ -304,11 +306,11 @@ export default function StaffScanner() {
                                 <div className="flex items-center gap-3">
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }} className="animate-pulse" />
                                     <div style={{ fontSize: '12px', fontWeight: 700 }}>
-                                        TARGETING: <span style={{ color: 'var(--accent)' }}>{selectedParticipant.profiles?.full_name?.toUpperCase()}</span>
+                                        TARGETING: <span style={{ color: 'var(--accent)' }}>{(Array.isArray(selectedParticipant.profiles) ? selectedParticipant.profiles[0] : selectedParticipant.profiles)?.full_name?.toUpperCase() || 'UNSYNCED'}</span>
                                     </div>
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 600 }}>
-                                    {selectedParticipant.profiles?.reg_no}
+                                    {(Array.isArray(selectedParticipant.profiles) ? selectedParticipant.profiles[0] : selectedParticipant.profiles)?.reg_no}
                                 </div>
                             </div>
                         )}
