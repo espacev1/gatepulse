@@ -43,9 +43,10 @@ export default function AdminParticipants() {
                 created_at,
                 event_id,
                 registration_status,
-                user:profiles!inner (full_name, email),
-                event:events (name),
-                ticket:tickets (id, is_validated, qr_token)
+                user:profiles!inner (full_name, email, dept),
+                event:events (name, participation_type),
+                ticket:tickets (id, is_validated, qr_token),
+                team:teams (name)
             `)
             .order('created_at', { ascending: false })
 
@@ -58,7 +59,8 @@ export default function AdminParticipants() {
                 user: p.user,
                 event: p.event,
                 ticket: p.ticket?.[0] || null,
-                ticket_id: p.ticket?.[0]?.id || 'NO_CREDENTIAL'
+                ticket_id: p.ticket?.[0]?.id || 'NO_CREDENTIAL',
+                team_name: p.team?.name || null
             })))
         }
     }
@@ -171,16 +173,26 @@ export default function AdminParticipants() {
                                             }}>
                                                 {p.user?.full_name?.charAt(0) || '?'}
                                             </div>
-                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{p.user?.full_name || 'Anonymous'}</span>
+                                            <div>
+                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{p.user?.full_name || 'Anonymous'}</div>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{p.user?.dept || 'NO_DEPT'}</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td style={{ color: 'var(--text-dim)', fontSize: '11px' }}>
                                         <div className="flex items-center gap-1"><Mail size={10} /> {p.user?.email}</div>
                                     </td>
                                     <td>
-                                        <span style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>
-                                            {p.event?.name?.toUpperCase() || 'N/A'}
-                                        </span>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>
+                                                {p.event?.name?.toUpperCase() || 'N/A'}
+                                            </span>
+                                            {p.team_name && (
+                                                <span style={{ fontSize: '10px', color: 'var(--status-warn)', fontWeight: 600 }}>
+                                                    TEAM: {p.team_name.toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td>
                                         {p.registration_status === 'pending' ? (

@@ -467,7 +467,7 @@ export default function StaffScanner() {
                                 padding: 'var(--space-6)'
                             }}>
                                 <div className="flex gap-6">
-                                    {scanResult.status === 'success' && scanResult.profile?.face_url ? (
+                                    {scanResult.status === 'success' && scanResult.profile?.face_url && scanResult.ticket?.events?.participation_type !== 'team' ? (
                                         <div style={{
                                             width: 120, height: 120, borderRadius: 'var(--radius-md)',
                                             border: '2px solid var(--accent)', overflow: 'hidden', background: '#000'
@@ -503,10 +503,10 @@ export default function StaffScanner() {
                                                     <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>SECTION / REG</div>
                                                     <div style={{ fontSize: 'var(--font-sm)' }}>{scanResult.profile.section || '-'} / {scanResult.profile.reg_no || '-'}</div>
                                                 </div>
-                                                {scanResult.type === 'ticket' && (
+                                                {scanResult.ticket?.participants?.team_id && (
                                                     <div>
-                                                        <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>EVENT</div>
-                                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--accent)' }}>{scanResult.ticket?.events?.name}</div>
+                                                        <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>TEAM</div>
+                                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--status-ok)' }}>ACTIVE_SQUAD</div>
                                                     </div>
                                                 )}
                                             </div>
@@ -514,7 +514,7 @@ export default function StaffScanner() {
                                     </div>
                                 </div>
 
-                                {scanResult.profile?.id_barcode_url && (
+                                {scanResult.profile?.id_barcode_url && scanResult.ticket?.events?.participation_type !== 'team' && (
                                     <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
                                         <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID BARCODE VERIFICATION</div>
                                         <img src={scanResult.profile.id_barcode_url} alt="ID Barcode" style={{ width: '100%', height: '40px', objectFit: 'contain', opacity: 0.8 }} />

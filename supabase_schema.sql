@@ -32,8 +32,19 @@ CREATE TABLE IF NOT EXISTS public.events (
     max_capacity INTEGER DEFAULT 100,
     registered_count INTEGER DEFAULT 0,
     checked_in_count INTEGER DEFAULT 0,
+    participation_type TEXT DEFAULT 'solo' CHECK (participation_type IN ('solo', 'team')),
+    allowed_departments TEXT[] DEFAULT NULL, -- NULL means all departments allowed
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2.1 Teams Table (For Group Participation)
+CREATE TABLE IF NOT EXISTS public.teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    leader_id UUID REFERENCES public.profiles(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 3. Participants Table (Registration)
@@ -41,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
+    team_id UUID REFERENCES public.teams(id) ON DELETE SET NULL,
     registration_status TEXT NOT NULL DEFAULT 'confirmed' CHECK (registration_status IN ('confirmed', 'pending', 'cancelled')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(user_id, event_id)
@@ -72,6 +84,7 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
 ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance_logs;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.participants;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.teams;
 
 -- 6. SYSTEM FRESH START (RUN THIS TO WIPE DATA)
 -- TRUNCATE public.attendance_logs, public.tickets, public.participants, public.events, public.profiles CASCADE;
@@ -179,3 +192,13 @@ CREATE POLICY "Admins and Staff can log attendance" ON public.attendance_logs FO
 CREATE POLICY "Admins and Staff can view logs" ON public.attendance_logs FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
+
+-- 6. Teams RLS
+ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Teams are viewable by participants of that team" ON public.teams FOR SELECT USING (
+    auth.uid() = leader_id OR 
+    EXISTS (SELECT 1 FROM public.participants WHERE team_id = teams.id AND user_id = auth.uid()) OR
+    is_staff(auth.uid())
+);
+CREATE POLICY "Leaders can manage their teams" ON public.teams FOR ALL USING (auth.uid() = leader_id OR is_admin(auth.uid()));
+CREATE POLICY "Participants can create teams during registration" ON public.teams FOR INSERT WITH CHECK (true);

@@ -12,7 +12,10 @@ export default function ParticipantEvents() {
     const [showSuccess, setShowSuccess] = useState(null)
     const [loading, setLoading] = useState(true)
     const [profileModal, setProfileModal] = useState(false)
+    const [teamModal, setTeamModal] = useState(false)
     const [pendingEvent, setPendingEvent] = useState(null)
+    const [teamName, setTeamName] = useState('')
+    const [teamMembers, setTeamMembers] = useState(['']) // Array of emails or reg_nos
 
     useEffect(() => {
         fetchInitialData()
@@ -57,14 +60,35 @@ export default function ParticipantEvents() {
     const handleRegister = async (event) => {
         if (!user) return alert('Please sign in to register.')
 
-        // Check for complete profile
-        const isProfileComplete = user.dept && user.reg_no && user.face_url && user.id_barcode_url
+        // 1. Department Check
+        if (event.allowed_departments && event.allowed_departments.length > 0) {
+            const userDept = user.dept?.toUpperCase()
+            if (!event.allowed_departments.includes(userDept)) {
+                return alert(`ACCESS_DENIED: This sector is restricted to ${event.allowed_departments.join(', ')} branches. Your current node affiliation (${userDept || 'NONE'}) is insufficient.`)
+            }
+        }
+
+        // 2. Profile Completion Check
+        // Team events don't require face/barcode as per requirements
+        const isSolo = event.participation_type !== 'team'
+        const isProfileComplete = user.dept && user.reg_no && (!isSolo || (user.face_url && user.id_barcode_url))
+
         if (!isProfileComplete) {
             setPendingEvent(event)
             setProfileModal(true)
             return
         }
 
+        if (event.participation_type === 'team') {
+            setPendingEvent(event)
+            setTeamModal(true)
+            return
+        }
+
+        await executeSoloRegistration(event)
+    }
+
+    const executeSoloRegistration = async (event) => {
         const { data: participant, error: pError } = await supabase
             .from('participants')
             .insert([{
@@ -76,14 +100,76 @@ export default function ParticipantEvents() {
             .single()
 
         if (pError) {
-            if (pError.code === '23503') {
-                return alert('IDENTITY VERIFICATION FAILURE: Your profile record is missing from the database. Please try logging out and logging back in to re-synchronize your identity.')
-            }
+            if (pError.code === '23505') return alert('ALREADY_REGISTERED: Your credentials for this sector are already in queue.')
             return alert('Registration error: ' + pError.message)
         }
 
-        setRegisteredEvents(prev => new Set([...prev, event.id]))
-        setShowSuccess(event.id)
+        completeRegistration(event.id)
+    }
+
+    const handleTeamSubmit = async () => {
+        if (!teamName) return alert('Team Designation Required.')
+        setLoading(true)
+
+        try {
+            // 1. Resolve members
+            const memberIdentifiers = [user.email, ...teamMembers.filter(m => m.trim())]
+            const { data: profiles, error: prError } = await supabase
+                .from('profiles')
+                .select('id, email, full_name')
+                .in('email', memberIdentifiers)
+
+            if (prError) throw prError
+            if (profiles.length < memberIdentifiers.length) {
+                const found = profiles.map(p => p.email)
+                const missing = memberIdentifiers.filter(m => !found.includes(m))
+                throw new Error(`ENTITY_NOT_FOUND: Could not resolve credentials for: ${missing.join(', ')}. All members must have participant accounts.`)
+            }
+
+            // 2. Create Team
+            const { data: team, error: tError } = await supabase
+                .from('teams')
+                .insert([{
+                    event_id: pendingEvent.id,
+                    name: teamName,
+                    leader_id: user.id
+                }])
+                .select()
+                .single()
+
+            if (tError) throw tError
+
+            // 3. Create Participants
+            const participantData = profiles.map(p => ({
+                user_id: p.id,
+                event_id: pendingEvent.id,
+                team_id: team.id,
+                registration_status: 'pending'
+            }))
+
+            const { error: finalError } = await supabase
+                .from('participants')
+                .insert(participantData)
+
+            if (finalError) {
+                if (finalError.code === '23505') throw new Error('ONE_OR_MORE_MEMBERS_ALREADY_REGISTERED: A member of your team is already registered for this node.')
+                throw finalError
+            }
+
+            setTeamModal(false)
+            setTeamName('')
+            setTeamMembers([''])
+            completeRegistration(pendingEvent.id)
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const completeRegistration = (eventId) => {
+        setRegisteredEvents(prev => new Set([...prev, eventId]))
+        setShowSuccess(eventId)
         setTimeout(() => setShowSuccess(null), 3500)
     }
 
@@ -231,6 +317,59 @@ export default function ParticipantEvents() {
                 user={user}
                 onComplete={handleProfileComplete}
             />
+
+            {teamModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ border: '2px solid var(--border-accent)' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">TEAM_REGISTRATION</h2>
+                            <button onClick={() => setTeamModal(false)} className="btn-icon"><Users size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Team Designation (Name)</label>
+                                <input className="form-input" value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="Nexus Squad Alpha" />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Team Members (Linked Emails)</label>
+                                <p style={{ fontSize: '10px', color: 'var(--text-dim)', marginBottom: '8px' }}>
+                                    Your email is automatically included as Team Leader.
+                                </p>
+                                {teamMembers.map((m, idx) => (
+                                    <div key={idx} className="flex gap-2 mb-2">
+                                        <input
+                                            className="form-input"
+                                            value={m}
+                                            onChange={e => {
+                                                const newMembers = [...teamMembers]
+                                                newMembers[idx] = e.target.value
+                                                setTeamMembers(newMembers)
+                                            }}
+                                            placeholder="Member Email"
+                                        />
+                                        <button
+                                            onClick={() => setTeamMembers(teamMembers.filter((_, i) => i !== idx))}
+                                            className="btn btn-ghost btn-sm"
+                                            style={{ color: 'var(--status-critical)' }}
+                                        >DISCONNECT</button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => setTeamMembers([...teamMembers, ''])}
+                                    className="btn btn-secondary btn-xs mt-2"
+                                >ADD_MEMBER_SLOT</button>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => setTeamModal(false)} className="btn btn-secondary">ABORT</button>
+                            <button onClick={handleTeamSubmit} className="btn btn-primary" disabled={loading}>
+                                {loading ? 'DEPLOYING...' : 'COMMIT TEAM REGISTRATION'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

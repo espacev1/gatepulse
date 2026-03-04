@@ -17,8 +17,12 @@ export default function AdminEvents() {
     const [form, setForm] = useState({
         name: '', location: '', start_time: '', end_time: '',
         max_capacity: 100, description: '', status: 'upcoming',
-        is_free: true, price: 0
+        is_free: true, price: 0,
+        participation_type: 'solo',
+        allowed_departments: [] // Empty means all
     })
+
+    const DEPARTMENTS = ['AIML', 'AIDS', 'IT', 'CSE', 'ECE', 'EEE', 'ME', 'CE', 'CSBS']
 
     useEffect(() => {
         fetchEvents()
@@ -51,14 +55,18 @@ export default function AdminEvents() {
             setForm({
                 ...event,
                 is_free: event.is_free ?? true,
-                price: event.price ?? 0
+                price: event.price ?? 0,
+                participation_type: event.participation_type || 'solo',
+                allowed_departments: event.allowed_departments || []
             })
         } else {
             setEditingEvent(null)
             setForm({
                 name: '', location: '', start_time: '', end_time: '',
                 max_capacity: 100, description: '', status: 'upcoming',
-                is_free: true, price: 0
+                is_free: true, price: 0,
+                participation_type: 'solo',
+                allowed_departments: []
             })
         }
         setShowModal(true)
@@ -101,6 +109,17 @@ export default function AdminEvents() {
         }
     }
 
+    const toggleDept = (dept) => {
+        setForm(prev => {
+            const current = [...(prev.allowed_departments || [])]
+            if (current.includes(dept)) {
+                return { ...prev, allowed_departments: current.filter(d => d !== dept) }
+            } else {
+                return { ...prev, allowed_departments: [...current, dept] }
+            }
+        })
+    }
+
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to decommission this node?')) return
         const { data, error } = await supabase.from('events').delete().eq('id', id).select()
@@ -123,7 +142,7 @@ export default function AdminEvents() {
                     <h1 className="page-title">Operational Node Management</h1>
                     <p className="page-subtitle">Configure and monitor event deployments and availability.</p>
                 </div>
-                {user?.is_super_admin && (
+                {user?.role === 'admin' && (
                     <button onClick={() => handleOpenModal()} className="btn btn-primary">
                         <Plus size={16} /> Deploy New Node
                     </button>
@@ -137,11 +156,6 @@ export default function AdminEvents() {
                         <Search />
                         <input placeholder="Search Active Nodes..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
-                    <select className="form-select" style={{ width: 'auto', minWidth: '180px' }}>
-                        <option>SYSTEM_STATUS: ALL</option>
-                        <option>ACTIVE_ONLY</option>
-                        <option>UPCOMING</option>
-                    </select>
                 </div>
             </div>
 
@@ -162,10 +176,10 @@ export default function AdminEvents() {
                                 <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>{event.name}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                                <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{event.status}</span>
-                                <span className={`badge ${event.is_free ? 'badge-info' : 'badge-warning'}`} style={{ fontSize: '9px' }}>
-                                    {event.is_free ? 'FREE_ACCESS' : `CREDIT: $${event.price}`}
+                                <span className={`badge ${event.participation_type === 'team' ? 'badge-primary' : 'badge-info'}`} style={{ fontSize: '9px' }}>
+                                    {event.participation_type?.toUpperCase()}
                                 </span>
+                                <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{event.status}</span>
                             </div>
                         </div>
 
@@ -173,9 +187,15 @@ export default function AdminEvents() {
                             {event.description}
                         </p>
 
-                        <div className="flex flex-col gap-2 mb-6" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+                        <div className="flex flex-col gap-2 mb-4" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
                             <div className="flex items-center gap-2"><MapPin size={12} color="var(--accent)" /> {event.location}</div>
                             <div className="flex items-center gap-2"><Clock size={12} color="var(--accent)" /> {new Date(event.start_time).toLocaleString()}</div>
+                            <div className="flex items-center gap-2">
+                                <Users size={12} color="var(--accent)" />
+                                {event.allowed_departments && event.allowed_departments.length > 0 ?
+                                    `RESTRICTED: ${event.allowed_departments.join(', ')}` :
+                                    'OPEN TO ALL BRANCHES'}
+                            </div>
                         </div>
 
                         {/* Load Capacity */}
@@ -191,7 +211,7 @@ export default function AdminEvents() {
 
                         <div className="flex gap-2">
                             <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
-                            {user?.is_super_admin && (
+                            {user?.role === 'admin' && (
                                 <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
                             )}
                         </div>
@@ -202,7 +222,7 @@ export default function AdminEvents() {
             {/* Config Modal */}
             {showModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ border: '2px solid var(--border-accent)' }}>
+                    <div className="modal-content" style={{ border: '2px solid var(--border-accent)', maxWidth: '600px' }}>
                         <div className="modal-header">
                             <h2 className="modal-title">{editingEvent ? 'RECONFIGURE_NODE' : 'PROVISION_NODE'}</h2>
                             <button onClick={() => setShowModal(false)} className="btn-icon"><X size={20} /></button>
@@ -216,12 +236,61 @@ export default function AdminEvents() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Deployment Local (Location)</label>
-                                    <input className="form-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+                                    <label className="form-label">Participation Category</label>
+                                    <div className="flex gap-2 p-1 bg-deepest rounded-lg border border-border-color">
+                                        <button
+                                            onClick={() => setForm({ ...form, participation_type: 'solo' })}
+                                            className={`btn btn-sm flex-1 ${form.participation_type === 'solo' ? 'btn-primary' : 'btn-ghost'}`}
+                                        >SOLO</button>
+                                        <button
+                                            onClick={() => setForm({ ...form, participation_type: 'team' })}
+                                            className={`btn btn-sm flex-1 ${form.participation_type === 'team' ? 'btn-primary' : 'btn-ghost'}`}
+                                        >TEAM</button>
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Max Capacity (Entities)</label>
                                     <input type="number" className="form-input" value={form.max_capacity} onChange={e => setForm({ ...form, max_capacity: parseInt(e.target.value) })} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Sector Branch Locking (Departments)</label>
+                                <div className="flex flex-wrap gap-2 p-3 bg-deepest rounded-lg border border-border-color">
+                                    {DEPARTMENTS.map(dept => (
+                                        <button
+                                            key={dept}
+                                            onClick={() => toggleDept(dept)}
+                                            className={`btn btn-xs ${form.allowed_departments?.includes(dept) ? 'btn-primary' : 'btn-outline'}`}
+                                            style={{ fontSize: '10px' }}
+                                        >
+                                            {dept}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setForm({ ...form, allowed_departments: [] })}
+                                        className="btn btn-xs btn-ghost"
+                                        style={{ fontSize: '10px', marginLeft: 'auto' }}
+                                    >RESET (OPEN ALL)</button>
+                                </div>
+                                <p style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '4px' }}>
+                                    * Selection restricts registration to specific branches. Leave unselected for Global Access.
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Deployment Local (Location)</label>
+                                    <input className="form-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Status</label>
+                                    <select className="form-select" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                                        <option value="upcoming">UPCOMING</option>
+                                        <option value="active">ACTIVE</option>
+                                        <option value="completed">COMPLETED</option>
+                                        <option value="cancelled">CANCELLED</option>
+                                    </select>
                                 </div>
                             </div>
 
