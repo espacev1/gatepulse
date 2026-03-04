@@ -191,11 +191,20 @@ export default function ParticipantEvents() {
         window.location.reload()
     }
 
-    const filtered = events.filter(e =>
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.description.toLowerCase().includes(search.toLowerCase()) ||
-        e.location.toLowerCase().includes(search.toLowerCase())
-    )
+    const filtered = events.filter(e => {
+        // 1. Department Visibility Logic
+        if (e.allowed_departments && e.allowed_departments.length > 0) {
+            const userDept = user?.dept?.toUpperCase()
+            if (!e.allowed_departments.includes(userDept)) return false
+        }
+
+        // 2. Search Filter
+        const matchesSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
+            e.description.toLowerCase().includes(search.toLowerCase()) ||
+            e.location.toLowerCase().includes(search.toLowerCase())
+
+        return matchesSearch
+    })
 
     const getStatusStyle = (status) => {
         if (status === 'active') return { accent: 'var(--status-ok)', badge: 'badge-success' }
