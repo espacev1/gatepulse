@@ -19,21 +19,19 @@ export function AuthProvider({ children }) {
                         .eq('id', session.user.id)
                         .single()
 
-                    // Robustness: If profile missing (e.g. after wipe), try to recover it
-                    if (!profile) {
-                        const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
+                    // Robustness: If profile missing or role out of sync for Super Admin
+                    const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
+
+                    if (!profile || (isSuperAdmin && profile.role !== 'admin')) {
                         const { data: newProfile, error: pError } = await supabase.from('profiles').upsert({
                             id: session.user.id,
                             email: session.user.email,
-                            full_name: session.user.user_metadata?.full_name || 'Admin Entity',
-                            role: isSuperAdmin ? 'admin' : 'participant'
+                            full_name: profile?.full_name || session.user.user_metadata?.full_name || 'Admin Entity',
+                            role: isSuperAdmin ? 'admin' : (profile?.role || 'participant')
                         }, { onConflict: 'id' }).select().single()
 
                         if (!pError) profile = newProfile
-                        else {
-                            console.error('Profile recovery failed:', pError)
-                            // If we can't create a profile, the user is in a "broken" state
-                        }
+                        else console.error('Profile sync failed:', pError)
                     }
 
                     if (profile) {

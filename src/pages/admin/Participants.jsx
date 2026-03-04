@@ -67,12 +67,16 @@ export default function AdminParticipants() {
         if (!window.confirm(`Approve registration for ${participant.user.full_name}?`)) return
 
         // 1. Update participant status
-        const { error: pError } = await supabase
+        const { data: updated, error: pError } = await supabase
             .from('participants')
             .update({ registration_status: 'confirmed' })
             .eq('id', participant.id)
+            .select()
 
         if (pError) return alert('Approval failed: ' + pError.message)
+        if (!updated || updated.length === 0) {
+            return alert('PERMISSION DENIED: Your clearance level is insufficient to approve participants.')
+        }
 
         // 2. Provision Ticket
         const qrToken = `GP-${participant.event_id.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`

@@ -103,9 +103,15 @@ export default function AdminEvents() {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to decommission this node?')) return
-        const { error } = await supabase.from('events').delete().eq('id', id)
-        if (!error) fetchEvents()
-        else alert('Error deleting event: ' + error.message)
+        const { data, error } = await supabase.from('events').delete().eq('id', id).select()
+
+        if (error) {
+            alert('Error deleting event: ' + error.message)
+        } else if (data.length === 0) {
+            alert('PERMISSION DENIED: Your account does not have sufficient clearance to decommission this node. Please contact the high-level administrator.')
+        } else {
+            fetchEvents()
+        }
     }
 
     const filtered = events.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
