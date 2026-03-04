@@ -1,7 +1,15 @@
 import emailjs from 'emailjs-com';
 
-// These should ideally be in environment variables
-// But for now, we'll provide a central place to configure them
+/**
+ * HOW TO GET EMAILJS KEYS:
+ * 1. Sign up at https://www.emailjs.com/
+ * 2. SERVICE_ID: Go to "Email Services" -> "Add New Service" (e.g. Gmail). Use the ID shown.
+ * 3. TEMPLATE_ID: Go to "Email Templates" -> "Create New Template". 
+ *    - Use variables like {{to_name}}, {{qr_code}}, {{event_name}} in your design.
+ *    - Save and use the Template ID.
+ * 4. PUBLIC_KEY: Go to "Account" -> "API Keys" -> "Public Key".
+ */
+
 const SERVICE_ID = 'service_gatepulse'; // Replace with actual Service ID
 const TEMPLATE_ID = 'template_qr_dispatch'; // Replace with actual Template ID
 const PUBLIC_KEY = 'user_XXXXXXXXXXXX'; // Replace with actual Public Key

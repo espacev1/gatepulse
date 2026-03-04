@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-    ScanLine, CheckCircle2, XCircle, AlertTriangle, Camera,
-    Keyboard, RefreshCw, Activity, ShieldCheck, Zap, Maximize,
-    ChevronRight, ArrowLeft, Users, Building2, Calendar
+    Camera, Keyboard, ArrowLeft, Calendar, Users,
+    ChevronRight, ScanLine, CheckCircle2, XCircle,
+    ShieldCheck, AlertTriangle, Activity
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -107,17 +107,17 @@ export default function StaffScanner() {
         setScanResult(null);
 
         // 1. First, check if it is a Profile Identity QR (format GP-XXXXXX)
-        const { data: profile, error: pError } = await supabase
+        const { data: identProfile, error: pError } = await supabase
             .from('profiles')
             .select('*')
             .eq('qr_token', code)
             .single()
 
-        if (profile) {
+        if (identProfile) {
             const result = {
                 status: 'success',
                 message: 'IDENTITY AUTHENTICATED',
-                profile: profile,
+                profile: identProfile,
                 type: 'identity',
                 code,
                 time: new Date()
@@ -158,7 +158,8 @@ export default function StaffScanner() {
             .eq('id', ticket.id)
 
         setValidatedTickets(prev => new Set([...prev, code]))
-        const profile = Array.isArray(ticket.participants?.profiles)
+
+        const mappedProfile = Array.isArray(ticket.participants?.profiles)
             ? ticket.participants.profiles[0]
             : ticket.participants?.profiles;
 
@@ -166,12 +167,25 @@ export default function StaffScanner() {
             status: 'success',
             message: 'Ticket Validated',
             ticket: ticket,
-            profile: profile,
+            profile: mappedProfile,
             type: 'ticket',
             code,
             time: new Date()
         }
         setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+    }
+
+    const getSafeProfile = (item) => {
+        if (!item) return null;
+        // If it's a participant object directly
+        if (item.profiles) {
+            return Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
+        }
+        // If it's a join object from tickets
+        if (item.participants?.profiles) {
+            return Array.isArray(item.participants.profiles) ? item.participants.profiles[0] : item.participants.profiles;
+        }
+        return null;
     }
 
     return (
@@ -257,7 +271,7 @@ export default function StaffScanner() {
                             </thead>
                             <tbody>
                                 {participants.map((p) => {
-                                    const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+                                    const prof = getSafeProfile(p);
                                     return (
                                         <tr key={p.id} className="clickable" onClick={() => handleParticipantSelect(p)}>
                                             <td>
@@ -270,7 +284,7 @@ export default function StaffScanner() {
                                                     }}>
                                                         {prof?.full_name?.charAt(0) || '?'}
                                                     </div>
-                                                    <div style={{ fontWeight: 600 }}>{prof?.full_name || 'AUTHENTICATING...'}</div>
+                                                    <div style={{ fontWeight: 600 }}>{prof?.full_name || 'PENDING_PROVISION'}</div>
                                                 </div>
                                             </td>
                                             <td>{prof?.dept || 'N/A'}</td>
@@ -284,7 +298,8 @@ export default function StaffScanner() {
                                                 <button className="btn btn-primary btn-xs">VERIFY IDENTITY</button>
                                             </td>
                                         </tr>
-                                    ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -292,7 +307,6 @@ export default function StaffScanner() {
             )}
 
             {dashView === 'scanner' && (
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'var(--space-6)' }}>
                     {/* Main Scanner HUD */}
                     <div>
@@ -306,11 +320,11 @@ export default function StaffScanner() {
                                 <div className="flex items-center gap-3">
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }} className="animate-pulse" />
                                     <div style={{ fontSize: '12px', fontWeight: 700 }}>
-                                        TARGETING: <span style={{ color: 'var(--accent)' }}>{(Array.isArray(selectedParticipant.profiles) ? selectedParticipant.profiles[0] : selectedParticipant.profiles)?.full_name?.toUpperCase() || 'UNSYNCED'}</span>
+                                        TARGETING: <span style={{ color: 'var(--accent)' }}>{getSafeProfile(selectedParticipant)?.full_name?.toUpperCase() || 'UNSYNCED'}</span>
                                     </div>
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 600 }}>
-                                    {(Array.isArray(selectedParticipant.profiles) ? selectedParticipant.profiles[0] : selectedParticipant.profiles)?.reg_no}
+                                    {getSafeProfile(selectedParticipant)?.reg_no}
                                 </div>
                             </div>
                         )}
