@@ -12,11 +12,24 @@ export function AuthProvider({ children }) {
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
-                const { data: profile } = await supabase
+                let { data: profile } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', session.user.id)
                     .single()
+
+                // Robustness: If profile missing (e.g. after wipe), try to recover it
+                if (!profile) {
+                    const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
+                    const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
+                        id: session.user.id,
+                        email: session.user.email,
+                        full_name: session.user.user_metadata?.full_name || 'Admin Entity',
+                        role: isSuperAdmin ? 'admin' : 'participant'
+                    }).select().single()
+
+                    if (!pError) profile = newProfile
+                }
 
                 if (profile) {
                     setUser({
@@ -25,30 +38,45 @@ export function AuthProvider({ children }) {
                         is_super_admin: profile.email === 'shanmukhamanikanta.inti@gmail.com'
                     })
                 }
-            } else {
-                // Fallback to local storage for demo persistence if needed, 
-                // but prioritize real session
-                const saved = localStorage.getItem('gatepulse_user')
-                if (saved) {
-                    try { setUser(JSON.parse(saved)) } catch { }
-                }
             }
             setLoading(false)
         }
         checkSession()
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!session) {
+                setUser(null)
+                localStorage.removeItem('gatepulse_user')
+            }
+            // We don't force setLoading(false) here because checkSession handles initial load
+        })
+
+        return () => subscription.unsubscribe()
     }, [])
 
     const login = async (email, password, role) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
 
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
             .single()
 
-        if (!profile) throw new Error('Profile not found')
+        // Recovery logic for missing profiles
+        if (!profile) {
+            const isSuperAdmin = data.user.email === 'shanmukhamanikanta.inti@gmail.com'
+            const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
+                id: data.user.id,
+                email: data.user.email,
+                full_name: data.user.user_metadata?.full_name || 'Admin Entity',
+                role: isSuperAdmin ? 'admin' : 'participant'
+            }).select().single()
+
+            if (pError) throw new Error('Security Profile missing. Reset required.')
+            profile = newProfile
+        }
 
         const isSuperAdmin = profile.email === 'shanmukhamanikanta.inti@gmail.com'
         const sessionUser = {

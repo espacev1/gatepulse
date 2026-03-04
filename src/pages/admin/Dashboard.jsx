@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
     Shield, Activity, Users, CalendarDays, TrendingUp, AlertTriangle,
-    Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight, Trash2, Plus
+    Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight, Trash2, Plus, ShieldCheck
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useAuth } from '../../contexts/AuthContext'
@@ -17,7 +17,8 @@ export default function AdminDashboard() {
         totalTickets: 0,
         activeCheckins: 0,
         loadFactor: 0,
-        securityAlerts: 0
+        securityAlerts: 0,
+        totalUsers: 0
     })
 
     useEffect(() => {
@@ -38,13 +39,14 @@ export default function AdminDashboard() {
 
     const fetchDashboardData = async () => {
         // 1. Fetch Events & Admins
-        const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes, pendingRes] = await Promise.all([
+        const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes, pendingRes, usersRes] = await Promise.all([
             supabase.from('events').select('*'),
             supabase.from('tickets').select('*', { count: 'exact', head: true }),
             supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true),
             supabase.from('profiles').select('*').eq('role', 'admin'),
             supabase.from('attendance_logs').select('timestamp').order('timestamp', { ascending: true }),
-            supabase.from('participants').select('*', { count: 'exact', head: true }).eq('registration_status', 'pending')
+            supabase.from('participants').select('*', { count: 'exact', head: true }).eq('registration_status', 'pending'),
+            supabase.from('profiles').select('*', { count: 'exact', head: true })
         ])
 
         if (eventsRes.data) setEvents(eventsRes.data)
@@ -58,7 +60,8 @@ export default function AdminDashboard() {
             activeCheckins: checkinsRes.count || 0,
             loadFactor: loadFactor,
             securityAlerts: 0,
-            pendingApprovals: pendingRes.count || 0
+            pendingApprovals: pendingRes.count || 0,
+            totalUsers: usersRes.count || 0
         })
 
         // 2. Process Traffic Data (Group logs by time)
@@ -116,8 +119,9 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid-4 mb-8">
+            <div className="grid-4 mb-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                 <MetricBar icon={Users} label="TOTAL RESERVATIONS" value={metrics.totalTickets} trend="LIVE" />
+                <MetricBar icon={ShieldCheck} label="TOTAL_IDENTITIES" value={metrics.totalUsers} trend="REGISTERED" color="var(--accent)" />
                 <MetricBar icon={Clock} label="PENDING APPROVALS" value={metrics.pendingApprovals} trend="AWAITING" color="var(--status-warn)" />
                 <MetricBar icon={Activity} label="ACTIVE_CHECKINS" value={metrics.activeCheckins} trend="SYNCED" color="var(--status-ok)" />
                 <MetricBar icon={TrendingUp} label="LOAD_FACTOR" value={`${metrics.loadFactor}%`} trend="NOMINAL" color="var(--status-info)" />

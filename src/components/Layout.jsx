@@ -12,6 +12,7 @@ const navConfig = {
         { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/admin/events', icon: CalendarDays, label: 'Events' },
         { to: '/admin/participants', icon: Users, label: 'Participants' },
+        { to: '/admin/users', icon: ShieldCheck, label: 'User Management' },
         { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     ],
     staff: [

@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/Dashboard'
 import AdminEvents from './pages/admin/Events'
 import AdminParticipants from './pages/admin/Participants'
 import AdminAnalytics from './pages/admin/Analytics'
+import AdminUsers from './pages/admin/Users'
 import StaffScanner from './pages/staff/Scanner'
 import StaffCheckIns from './pages/staff/CheckIns'
 import ParticipantEvents from './pages/participant/Events'
@@ -65,6 +66,7 @@ function AppRoutes() {
           <Route path="/admin/events" element={<AdminEvents />} />
           <Route path="/admin/participants" element={<AdminParticipants />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Route>
 
         {/* Staff Routes */}
