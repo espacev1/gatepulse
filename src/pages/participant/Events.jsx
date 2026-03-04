@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap, DollarSign } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import ProfileCompletionModal from '../../components/ProfileCompletionModal'
 
 export default function ParticipantEvents() {
     const { user } = useAuth()
@@ -10,6 +11,8 @@ export default function ParticipantEvents() {
     const [registeredEvents, setRegisteredEvents] = useState(new Set())
     const [showSuccess, setShowSuccess] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [profileModal, setProfileModal] = useState(false)
+    const [pendingEvent, setPendingEvent] = useState(null)
 
     useEffect(() => {
         fetchInitialData()
@@ -54,6 +57,14 @@ export default function ParticipantEvents() {
     const handleRegister = async (event) => {
         if (!user) return alert('Please sign in to register.')
 
+        // Check for complete profile
+        const isProfileComplete = user.dept && user.reg_no && user.face_url && user.id_barcode_url
+        if (!isProfileComplete) {
+            setPendingEvent(event)
+            setProfileModal(true)
+            return
+        }
+
         const { data: participant, error: pError } = await supabase
             .from('participants')
             .insert([{
@@ -74,6 +85,14 @@ export default function ParticipantEvents() {
         setRegisteredEvents(prev => new Set([...prev, event.id]))
         setShowSuccess(event.id)
         setTimeout(() => setShowSuccess(null), 3500)
+    }
+
+    const handleProfileComplete = () => {
+        // Since useAuth user state might not update instantly, we can't easily auto-register
+        // but we can alert the user to try again
+        alert("Identity Provisioned. You may now initialize access.")
+        // Optionally reload or re-fetch profile if AuthContext supports it
+        window.location.reload()
     }
 
     const filtered = events.filter(e =>
@@ -205,6 +224,13 @@ export default function ParticipantEvents() {
                     )
                 })}
             </div>
+
+            <ProfileCompletionModal
+                isOpen={profileModal}
+                onClose={() => setProfileModal(false)}
+                user={user}
+                onComplete={handleProfileComplete}
+            />
         </div>
     )
 }
