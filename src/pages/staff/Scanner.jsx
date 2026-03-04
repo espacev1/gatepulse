@@ -76,20 +76,39 @@ export default function StaffScanner() {
         setScanResult(null)
         try {
             const { Html5Qrcode } = await import('html5-qrcode')
+
+            // Check for cameras first to give better error messages
+            const devices = await Html5Qrcode.getCameras().catch(() => []);
+            if (devices.length === 0) {
+                setScanning(false)
+                setScanResult({ status: 'error', message: 'No camera hardware detected on this device.' })
+                return;
+            }
+
             const scanner = new Html5Qrcode('qr-reader')
             html5QrRef.current = scanner
             await scanner.start(
                 { facingMode: 'environment' },
-                { fps: 15, qrbox: { width: 250, height: 250 } },
+                {
+                    fps: 15,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
                 (decodedText) => {
                     handleScan(decodedText)
                     stopCamera()
                 },
-                () => { }
-            )
+                (errorMessage) => {
+                    // Silent retry for scanning frames
+                }
+            ).catch(err => {
+                setScanning(false)
+                const msg = err?.message || err || 'Check hardware permissions';
+                setScanResult({ status: 'error', message: `Sensor failure: ${msg}` })
+            })
         } catch (err) {
             setScanning(false)
-            setScanResult({ status: 'error', message: 'Sensor initialization failure. Check hardware permissions.' })
+            setScanResult({ status: 'error', message: 'Sensor initialization failure. Critical system error.' })
         }
     }
 
@@ -137,12 +156,20 @@ export default function StaffScanner() {
         // 3. Verify with Supabase (Ticket Verification)
         const { data: ticket, error } = await supabase
             .from('tickets')
-            .select('*, participants(profiles(*)), events(name)')
-            .eq('qr_token', code)
+            .select(`
+                *,
+                participants (
+                    *,
+                    profiles (*)
+                ),
+                events (*)
+            `)
+            .eq('qr_token', code.trim())
             .single()
 
         if (error || !ticket) {
-            const result = { status: 'invalid', message: 'Token not recognized in system', code, time: new Date() }
+            console.error('Ticket fetch error:', error);
+            const result = { status: 'invalid', message: 'Token not recognized in system or sector mismatch', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
             return
         }
@@ -159,9 +186,8 @@ export default function StaffScanner() {
 
         setValidatedTickets(prev => new Set([...prev, code]))
 
-        const mappedProfile = Array.isArray(ticket.participants?.profiles)
-            ? ticket.participants.profiles[0]
-            : ticket.participants?.profiles;
+        const mappedProfile = ticket.participants?.profiles ||
+            (Array.isArray(ticket.participants) ? ticket.participants[0]?.profiles : null);
 
         const result = {
             status: 'success',
