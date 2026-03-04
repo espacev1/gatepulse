@@ -123,11 +123,27 @@ export default function Layout() {
                         {sidebarOpen && <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>Collapse</span>}
                     </button>
 
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
-                        padding: '8px 10px', borderRadius: 'var(--radius-lg)',
-                        background: 'rgba(0,212,255,0.03)', border: '1px solid var(--border-color)',
-                    }}>
+                    <div
+                        onClick={() => {
+                            const profilePath = user.role === 'participant' ? '/profile' : `/${user.role}/profile`
+                            navigate(profilePath)
+                        }}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+                            padding: '8px 10px', borderRadius: 'var(--radius-lg)',
+                            background: 'rgba(0,212,255,0.03)', border: '1px solid var(--border-color)',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-base)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(0,212,255,0.08)'
+                            e.currentTarget.style.borderColor = 'var(--accent)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(0,212,255,0.03)'
+                            e.currentTarget.style.borderColor = 'var(--border-color)'
+                        }}
+                    >
                         <div style={{
                             width: 32, height: 32, borderRadius: 'var(--radius-full)',
                             background: 'var(--accent-gradient)',
@@ -147,7 +163,11 @@ export default function Layout() {
                                 </div>
                             </div>
                         )}
-                        <button onClick={handleLogout} className="btn-icon" title="Sign Out">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                            className="btn-icon"
+                            title="Sign Out"
+                        >
                             <LogOut size={14} />
                         </button>
                     </div>

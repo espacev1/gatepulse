@@ -17,6 +17,7 @@ import StaffCheckIns from './pages/staff/CheckIns'
 import ParticipantEvents from './pages/participant/Events'
 import MyTickets from './pages/participant/MyTickets'
 import MyQR from './pages/participant/MyQR'
+import Profile from './pages/shared/Profile'
 
 function AppRoutes() {
   const { isAuthenticated, user, setUnlockedRole } = useAuth()
@@ -68,12 +69,14 @@ function AppRoutes() {
           <Route path="/admin/participants" element={<AdminParticipants />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/profile" element={<Profile />} />
         </Route>
 
         {/* Staff Routes */}
         <Route element={<ProtectedRoute allowedRoles={['staff']}><Layout /></ProtectedRoute>}>
           <Route path="/staff/scanner" element={<StaffScanner />} />
           <Route path="/staff/checkins" element={<StaffCheckIns />} />
+          <Route path="/staff/profile" element={<Profile />} />
         </Route>
 
         {/* Participant Routes */}
@@ -81,6 +84,7 @@ function AppRoutes() {
           <Route path="/events" element={<ParticipantEvents />} />
           <Route path="/my-tickets" element={<MyTickets />} />
           <Route path="/my-qr" element={<MyQR />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
