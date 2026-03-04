@@ -121,7 +121,7 @@ export default function ParticipantEvents() {
             const { data: profiles, error: prError } = await supabase
                 .from('profiles')
                 .select('id, email, full_name, reg_no')
-                .or(`email.in.(${trimmedIdentifiers.join(',')}),reg_no.in.(${regIdentifiers.join(',')})`)
+                .or(`email.in.("${trimmedIdentifiers.join('","')}"),reg_no.in.("${regIdentifiers.join('","')}")`)
 
             if (prError) throw prError
 
