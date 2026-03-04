@@ -10,7 +10,7 @@ import emailjs from 'emailjs-com';
  * 4. PUBLIC_KEY: Go to "Account" -> "API Keys" -> "Public Key".
  */
 
-const SERVICE_ID = 'service_gatepulse'; // Replace with actual Service ID
+const SERVICE_ID = 'GATEPULSEV1'; // Replace with actual Service ID
 const TEMPLATE_ID = 'template_qr_dispatch'; // Replace with actual Template ID
 const PUBLIC_KEY = 'user_XXXXXXXXXXXX'; // Replace with actual Public Key
 
