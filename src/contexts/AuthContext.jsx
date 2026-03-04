@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
     }
 
 
-    const register = async (email, password, fullName, role) => {
+    const register = async (email, password, fullName, role, metadata = {}) => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -133,7 +133,8 @@ export function AuthProvider({ children }) {
                 id: data.user.id,
                 email: data.user.email || email,
                 full_name: fullName,
-                role: assignedRole
+                role: assignedRole,
+                ...metadata
             }, { onConflict: 'id' })
         } catch (profileErr) {
             console.error('Profile creation during register:', profileErr)

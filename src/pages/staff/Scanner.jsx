@@ -58,14 +58,37 @@ export default function StaffScanner() {
     useEffect(() => { return () => { stopCamera() } }, [])
 
     const handleScan = async (code) => {
-        // 1. Check local cache first
+        setScanResult(null);
+
+        // 1. First, check if it is a Profile Identity QR (format GP-XXXXXX)
+        const { data: profile, error: pError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('qr_token', code)
+            .single()
+
+        if (profile) {
+            const result = {
+                status: 'success',
+                message: 'IDENTITY AUTHENTICATED',
+                profile: profile,
+                type: 'identity',
+                code,
+                time: new Date()
+            }
+            setScanResult(result);
+            setRecentScans(prev => [result, ...prev].slice(0, 8))
+            return
+        }
+
+        // 2. Check local cache for tickets
         if (validatedTickets.has(code)) {
-            const result = { status: 'duplicate', message: 'Token previously authenticated', code, time: new Date() }
+            const result = { status: 'duplicate', message: 'Ticket previously authenticated', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
             return
         }
 
-        // 2. Verify with Supabase
+        // 3. Verify with Supabase (Ticket Verification)
         const { data: ticket, error } = await supabase
             .from('tickets')
             .select('*, participants(profiles(*)), events(name)')
@@ -73,13 +96,13 @@ export default function StaffScanner() {
             .single()
 
         if (error || !ticket) {
-            const result = { status: 'invalid', message: 'Token not found in registry', code, time: new Date() }
+            const result = { status: 'invalid', message: 'Token not recognized in system', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
             return
         }
 
-        // 3. Mark as validated in DB
-        const { error: updateError } = await supabase
+        // 4. Mark as validated in DB
+        await supabase
             .from('tickets')
             .update({
                 is_validated: true,
@@ -88,25 +111,13 @@ export default function StaffScanner() {
             })
             .eq('id', ticket.id)
 
-        if (updateError) {
-            const result = { status: 'error', message: 'Database synchronization failure', code, time: new Date() }
-            setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-            return
-        }
-
-        // 4. Record attendance log
-        await supabase.from('attendance_logs').insert({
-            ticket_id: ticket.id,
-            event_id: ticket.event_id,
-            verification_status: 'success',
-            staff_id: staffUser?.id
-        })
-
         setValidatedTickets(prev => new Set([...prev, code]))
         const result = {
             status: 'success',
-            message: 'Authentication Successful',
+            message: 'Ticket Validated',
             ticket: ticket,
+            profile: ticket.participants?.profiles,
+            type: 'ticket',
             code,
             time: new Date()
         }
@@ -179,27 +190,63 @@ export default function StaffScanner() {
                     {scanResult && (
                         <div className="animate-fade-in-up mt-6 card" style={{
                             background: scanResult.status === 'success' ? 'var(--status-ok-bg)' : 'var(--status-critical-bg)',
-                            border: `1px solid ${scanResult.status === 'success' ? 'var(--status-ok-border)' : 'var(--status-critical-border)'}`
+                            border: `1px solid ${scanResult.status === 'success' ? 'var(--status-ok-border)' : 'var(--status-critical-border)'}`,
+                            padding: 'var(--space-6)'
                         }}>
-                            <div className="flex items-center gap-6">
-                                <div style={{
-                                    width: 60, height: 60, borderRadius: 'var(--radius-xl)',
-                                    background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    {scanResult.status === 'success' ? <CheckCircle2 size={32} color="var(--status-ok)" /> : <XCircle size={32} color="var(--status-critical)" />}
-                                </div>
-                                <div>
+                            <div className="flex gap-6">
+                                {scanResult.status === 'success' && scanResult.profile?.face_url ? (
+                                    <div style={{
+                                        width: 120, height: 120, borderRadius: 'var(--radius-md)',
+                                        border: '2px solid var(--accent)', overflow: 'hidden', background: '#000'
+                                    }}>
+                                        <img src={scanResult.profile.face_url} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        width: 60, height: 60, borderRadius: 'var(--radius-xl)',
+                                        background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        {scanResult.status === 'success' ? <CheckCircle2 size={32} color="var(--status-ok)" /> : <XCircle size={32} color="var(--status-critical)" />}
+                                    </div>
+                                )}
+
+                                <div className="flex-1">
                                     <h3 className="page-title" style={{ fontSize: 'var(--font-lg)', color: scanResult.status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', marginBottom: 2 }}>
-                                        {scanResult.status === 'success' ? 'IDENTITY VERIFIED' : 'AUTH_FAILURE'}
+                                        {scanResult.status === 'success' ? 'ACCESS GRANTED' : 'AUTH_FAILURE'}
                                     </h3>
-                                    <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)' }}>{scanResult.message}</p>
-                                    {scanResult.ticket && (
-                                        <p className="font-mono mt-2" style={{ fontSize: '10px', opacity: 0.6 }}>
-                                            ENTITY_UID: {(scanResult.ticket.participants?.profiles?.full_name || scanResult.ticket.participant?.user?.full_name || 'ANONYMOUS').toUpperCase()}
-                                        </p>
+                                    <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)', marginBottom: 8 }}>{scanResult.message}</p>
+
+                                    {scanResult.profile && (
+                                        <div className="grid grid-cols-2 gap-y-2 gap-x-4 mt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                                            <div>
+                                                <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>ENTITY NAME</div>
+                                                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700 }}>{scanResult.profile.full_name}</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>DEPARTMENT</div>
+                                                <div style={{ fontSize: 'var(--font-sm)' }}>{scanResult.profile.dept || 'N/A'}</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>SECTION / REG</div>
+                                                <div style={{ fontSize: 'var(--font-sm)' }}>{scanResult.profile.section || '-'} / {scanResult.profile.reg_no || '-'}</div>
+                                            </div>
+                                            {scanResult.type === 'ticket' && (
+                                                <div>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>EVENT</div>
+                                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--accent)' }}>{scanResult.ticket?.events?.name}</div>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
+
+                            {scanResult.profile?.id_barcode_url && (
+                                <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID BARCODE VERIFICATION</div>
+                                    <img src={scanResult.profile.id_barcode_url} alt="ID Barcode" style={{ width: '100%', height: '40px', objectFit: 'contain', opacity: 0.8 }} />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -219,7 +266,7 @@ export default function StaffScanner() {
                                         {scan.status === 'success' ? <ShieldCheck size={14} color="var(--status-ok)" /> : <AlertTriangle size={14} color="var(--status-critical)" />}
                                         <div>
                                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                                {scan.ticket?.participants?.profiles?.full_name || scan.ticket?.participant?.user?.full_name || 'UNKNOWN_IDENTITY'}
+                                                {scan.profile?.full_name || 'UNKNOWN_IDENTITY'}
                                             </div>
                                             <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>{scan.code?.slice(-8)} @ {scan.time?.toLocaleTimeString()}</div>
                                         </div>

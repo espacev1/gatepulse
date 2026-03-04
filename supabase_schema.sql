@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE NOT NULL,
     full_name TEXT,
     role TEXT NOT NULL DEFAULT 'participant' CHECK (role IN ('admin', 'staff', 'participant')),
+    dept TEXT,
+    section TEXT,
+    reg_no TEXT,
+    id_barcode_url TEXT,
+    face_url TEXT,
+    qr_token TEXT UNIQUE,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
