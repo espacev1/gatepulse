@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     Shield, Activity, Users, CalendarDays, TrendingUp, AlertTriangle,
     Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight, Trash2, Plus
@@ -6,13 +6,83 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { mockEvents, mockStats, mockUsers } from '../../data/mockData'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 
 export default function AdminDashboard() {
     const { user } = useAuth()
     const [timeRange, setTimeRange] = useState('5m')
+    const [events, setEvents] = useState([])
+    const [metrics, setMetrics] = useState({
+        totalTickets: 0,
+        activeCheckins: 0,
+        loadFactor: 0,
+        securityAlerts: 0
+    })
 
-    // SOC Style Metric Bar Component
-    const MetricBar = ({ label, value, color }) => (
+    useEffect(() => {
+        fetchDashboardData()
+
+        const logsChannel = supabase
+            .channel('dashboard-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchDashboardData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+                fetchDashboardData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                fetchDashboardData()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(logsChannel)
+        }
+    }, [])
+
+    const fetchDashboardData = async () => {
+        const { data: eventsData } = await supabase.from('events').select('*')
+        if (eventsData) setEvents(eventsData)
+
+        const { count: ticketsCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
+        const { count: checkinsCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true)
+
+        const totalCapacity = eventsData?.reduce((acc, e) => acc + (e.max_capacity || 0), 0) || 1
+        const loadFactor = Math.round(((checkinsCount || 0) / totalCapacity) * 100)
+
+        setMetrics({
+            totalTickets: ticketsCount || 0,
+            activeCheckins: checkinsCount || 0,
+            loadFactor: loadFactor,
+            securityAlerts: 0
+        })
+    }
+
+    const MetricBar = ({ icon: Icon, label, value, trend, color = 'var(--accent)' }) => (
+        <div className="stat-card">
+            <div className="w-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div style={{
+                        width: 38, height: 38, borderRadius: 'var(--radius-lg)',
+                        background: `${color}15`, border: `1px solid ${color}30`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <Icon size={18} color={color} />
+                    </div>
+                    <div className="stat-card-trend" style={{
+                        color: trend.startsWith('+') ? 'var(--status-ok)' : 'var(--status-critical)',
+                        background: trend.startsWith('+') ? 'var(--status-ok-bg)' : 'var(--status-critical-bg)'
+                    }}>
+                        {trend.startsWith('+') ? <TrendingUp size={10} /> : <AlertTriangle size={10} />} {trend}
+                    </div>
+                </div>
+                <div className="stat-card-value">{value}</div>
+                <div className="stat-card-label">{label}</div>
+            </div>
+        </div>
+    )
+
+    const HealthMetric = ({ label, value, color }) => (
         <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
                 <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
@@ -26,7 +96,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="page-container">
-            {/* Top Section */}
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Operations Command</h1>
@@ -39,19 +108,23 @@ export default function AdminDashboard() {
                         <option value="24h">Last 24 Hours</option>
                         <option value="7d">Last 7 Days</option>
                     </select>
-                    <button className="btn btn-primary"><Activity size={14} /> Refresh Node</button>
+                    <button className="btn btn-primary" onClick={fetchDashboardData}><Activity size={14} /> Refresh Node</button>
                 </div>
             </div>
 
-            {/* First Row — System Overview */}
-            <div className="grid-4 mb-6">
-                {/* System Health */}
+            <div className="grid-4 mb-8">
+                <MetricBar icon={Users} label="TOTAL RESERVATIONS" value={metrics.totalTickets.toLocaleString()} trend="+12.4%" />
+                <MetricBar icon={Activity} label="ACTIVE_CHECKINS" value={metrics.activeCheckins.toLocaleString()} trend="+8.2%" color="var(--status-ok)" />
+                <MetricBar icon={TrendingUp} label="LOAD_FACTOR" value={`${metrics.loadFactor}%`} trend="+2.1%" color="var(--status-warn)" />
+                <MetricBar icon={Shield} label="THREAT_LEVEL" value="LOW" trend="0% Delta" color="var(--status-ok)" />
+            </div>
+
+            <div className="grid-3 mb-6" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)' }}>
                 <div className="stat-card">
                     <div className="w-full">
                         <div className="panel-header">System Health</div>
                         <div className="flex items-center gap-4 mb-4">
                             <div style={{ position: 'relative', width: 60, height: 60, flexShrink: 0 }}>
-                                {/* Simplified Circular Progress (CSS) */}
                                 <div style={{
                                     width: '100%', height: '100%', borderRadius: '50%',
                                     background: 'conic-gradient(var(--status-ok) 92%, var(--bg-elevated) 0deg)',
@@ -67,12 +140,11 @@ export default function AdminDashboard() {
                                 <div className="badge badge-success animate-pulse">PROTECTED</div>
                             </div>
                         </div>
-                        <MetricBar label="CPU LOAD" value={24} color="var(--accent)" />
-                        <MetricBar label="MEMORY ADDR" value={42} color="var(--secondary)" />
+                        <HealthMetric label="CPU LOAD" value={24} color="var(--accent)" />
+                        <HealthMetric label="MEMORY ADDR" value={42} color="var(--secondary)" />
                     </div>
                 </div>
 
-                {/* Log Activity */}
                 <div className="stat-card">
                     <div className="w-full">
                         <div className="panel-header">Log Activity</div>
@@ -89,7 +161,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Event Throughput */}
                 <div className="stat-card">
                     <div className="w-full">
                         <div className="panel-header">Event Flow</div>
@@ -105,29 +176,9 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-
-                {/* Global Attendance */}
-                <div className="stat-card">
-                    <div className="w-full">
-                        <div className="panel-header">Active Entities</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                            <div>
-                                <div className="stat-card-value">842</div>
-                                <div className="stat-card-label">Check-ins</div>
-                            </div>
-                            <Users size={24} color="var(--secondary)" style={{ opacity: 0.5 }} />
-                        </div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>TARGET REACH: 84%</div>
-                        <div className="progress-bar-track mt-4">
-                            <div className="progress-bar-fill" style={{ width: '84%', background: 'var(--secondary)' }} />
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            {/* Second Row — Detailed Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
-                {/* Activity Trend (Inspired Time-series) */}
                 <div className="card">
                     <div className="panel-header">Security Traffic Analysis</div>
                     <div style={{ height: 320, width: '100%', marginTop: 'var(--space-4)' }}>
@@ -153,11 +204,10 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Source Categories */}
                 <div className="card">
                     <div className="panel-header">Event Distribution</div>
                     <div style={{ height: 320, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        {mockEvents.slice(0, 4).map((e, i) => (
+                        {events.slice(0, 4).map((e, i) => (
                             <div key={e.id} className="mb-6">
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-2">
@@ -181,11 +231,10 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Bottom Section — Active Operations Log */}
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-6)' }}>
                 <div className="card">
                     <div className="flex justify-between items-center mb-6">
-                        <div className="panel-header" style={{ marginBottom: 0 }}>Active Operational Nodes (Events)</div>
+                        <div className="panel-header" style={{ marginBottom: 0 }}>Active Operational Nodes</div>
                         <div className="badge badge-info"><Clock size={12} /> Real-time Streaming</div>
                     </div>
                     <div className="table-container">
@@ -201,9 +250,9 @@ export default function AdminDashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockEvents.map((event, i) => (
+                                {events.map((event) => (
                                     <tr key={event.id}>
-                                        <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{event.id}</td>
+                                        <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{event.id.slice(-8)}</td>
                                         <td>
                                             <div className="flex items-center gap-2">
                                                 <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
@@ -225,7 +274,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>{new Date(event.start_time).toLocaleTimeString()}</td>
                                         <td>
-                                            <button className="btn-icon" title="View Source"><Activity size={14} /></button>
+                                            <button className="btn-icon"><Activity size={14} /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -234,7 +283,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Admin Management - ONLY FOR SUPER ADMIN */}
                 {user?.is_super_admin && (
                     <div className="card">
                         <div className="panel-header">Admin Management</div>
@@ -252,9 +300,7 @@ export default function AdminDashboard() {
                                             <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email}</div>
                                         </div>
                                     </div>
-                                    <button className="btn-icon" style={{ color: 'var(--status-critical)' }} title="Revoke Privilege">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <button className="btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
                                 </div>
                             ))}
                             <button className="btn btn-ghost btn-sm w-full mt-2" style={{ border: '1px dashed var(--border-color)' }}>

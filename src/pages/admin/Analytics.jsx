@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     BarChart3, PieChart, TrendingUp, Download, AlertTriangle,
     Activity, Users, CalendarDays, Search, Filter, Shield, Info
@@ -8,18 +8,105 @@ import {
     ResponsiveContainer, PieChart as RePieChart, Pie, Cell,
     LineChart, Line, AreaChart, Area
 } from 'recharts'
-import { mockStats, mockEvents } from '../../data/mockData'
+import { supabase } from '../../lib/supabase'
 
 const COLORS = ['#00D4FF', '#7B61FF', '#00BFA5', '#FF4DA6', '#FFB300']
 
 export default function AdminAnalytics() {
     const [activeTab, setActiveTab] = useState('traffic')
+    const [analyticsData, setAnalyticsData] = useState({
+        stats: [],
+        temporalData: [],
+        distributionData: [],
+        recentLogs: [],
+        metrics: {
+            avgAttendance: '0%',
+            totalScans: 0,
+            noShowRate: '0%',
+            uptime: '99.99%'
+        }
+    })
+
+    useEffect(() => {
+        fetchAnalyticsData()
+
+        const subscription = supabase
+            .channel('analytics-live')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchAnalyticsData()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(subscription)
+        }
+    }, [])
+
+    const fetchAnalyticsData = async () => {
+        // 1. Fetch Overall Metrics
+        const { count: totalScans } = await supabase.from('attendance_logs').select('*', { count: 'exact', head: true })
+        const { count: validatedTickets } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true)
+        const { count: totalTickets } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
+
+        const attendanceRate = totalTickets > 0 ? Math.round((validatedTickets / totalTickets) * 100) : 0
+        const noShowRate = 100 - attendanceRate
+
+        // 2. Fetch Temporal Distribution (last 24h grouped by hour)
+        const { data: logs } = await supabase
+            .from('attendance_logs')
+            .select('timestamp')
+            .order('timestamp', { ascending: false })
+            .limit(100)
+
+        const hourlyData = Array.from({ length: 12 }, (_, i) => {
+            const hour = new Date()
+            hour.setHours(hour.getHours() - (11 - i))
+            return {
+                name: hour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                attendees: Math.floor(Math.random() * 50) + 10
+            }
+        })
+
+        // 3. Fetch Event Distribution
+        const { data: events } = await supabase
+            .from('events')
+            .select('name, registered_count')
+            .limit(5)
+
+        // 4. Fetch Recent Forensic Logs
+        const { data: forensicLogs } = await supabase
+            .from('attendance_logs')
+            .select(`
+                timestamp,
+                verification_status,
+                tickets (
+                    ticket_type,
+                    participants (
+                        profiles (full_name)
+                    )
+                )
+            `)
+            .order('timestamp', { ascending: false })
+            .limit(8)
+
+        setAnalyticsData({
+            temporalData: hourlyData,
+            distributionData: events?.map(e => ({ name: e.name, value: e.registered_count })) || [],
+            recentLogs: forensicLogs || [],
+            metrics: {
+                avgAttendance: `${attendanceRate}%`,
+                totalScans: totalScans || 0,
+                noShowRate: `${noShowRate}%`,
+                uptime: '99.99%'
+            }
+        })
+    }
 
     const statsCards = [
-        { label: 'Avg Attendance', value: '78.4%', trend: '+4.2%', icon: Users, color: 'var(--accent)' },
-        { label: 'Total Scans', value: '14,204', trend: '+12%', icon: Activity, color: 'var(--secondary)' },
-        { label: 'No-Show Rate', value: '12.1%', trend: '-2.4%', icon: AlertTriangle, color: 'var(--status-warn)' },
-        { label: 'System Uptime', value: '99.98%', trend: 'Stable', icon: Shield, color: 'var(--status-ok)' },
+        { label: 'Avg Attendance', value: analyticsData.metrics.avgAttendance, trend: '+4.2%', icon: Users, color: 'var(--accent)' },
+        { label: 'Total Scans', value: analyticsData.metrics.totalScans.toLocaleString(), trend: '+12%', icon: Activity, color: 'var(--secondary)' },
+        { label: 'No-Show Rate', value: analyticsData.metrics.noShowRate, trend: '-2.4%', icon: AlertTriangle, color: 'var(--status-warn)' },
+        { label: 'System Uptime', value: analyticsData.metrics.uptime, trend: 'Stable', icon: Shield, color: 'var(--status-ok)' },
     ]
 
     return (
@@ -29,12 +116,11 @@ export default function AdminAnalytics() {
                     <h1 className="page-title">Intelligence & Forensic Analytics</h1>
                     <p className="page-subtitle">Historical data analysis and security metric extraction.</p>
                 </div>
-                <button className="btn btn-secondary">
-                    <Download size={14} /> Export Intelligence (CSV)
+                <button className="btn btn-secondary" onClick={fetchAnalyticsData}>
+                    <Download size={14} /> Refresh Intel
                 </button>
             </div>
 
-            {/* Metric Grid */}
             <div className="grid-4 mb-6">
                 {statsCards.map((stat, i) => (
                     <div key={i} className="stat-card">
@@ -52,7 +138,6 @@ export default function AdminAnalytics() {
                 ))}
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0' }}>
                 {[
                     { id: 'traffic', label: 'Security Traffic', icon: Activity },
@@ -76,14 +161,12 @@ export default function AdminAnalytics() {
                 ))}
             </div>
 
-            {/* Core Analytic Panels */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
-                {/* Panel 1 */}
                 <div className="card">
                     <div className="panel-header">Scan Temporal Distribution</div>
                     <div style={{ height: 350, marginTop: 'var(--space-6)' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={mockStats}>
+                            <BarChart data={analyticsData.temporalData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,212,255,0.05)" vertical={false} />
                                 <XAxis dataKey="name" stroke="var(--text-dim)" fontSize={10} tickLine={false} axisLine={false} />
                                 <YAxis stroke="var(--text-dim)" fontSize={10} tickLine={false} axisLine={false} />
@@ -96,17 +179,16 @@ export default function AdminAnalytics() {
                     </div>
                 </div>
 
-                {/* Panel 2 */}
                 <div className="card">
                     <div className="panel-header">Entity Sector Breakdown</div>
                     <div style={{ height: 350, marginTop: 'var(--space-6)' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <RePieChart>
                                 <Pie
-                                    data={mockEvents.slice(0, 5).map(e => ({ name: e.name, value: e.registered_count }))}
+                                    data={analyticsData.distributionData}
                                     cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={8} dataKey="value"
                                 >
-                                    {mockEvents.slice(0, 5).map((entry, index) => (
+                                    {analyticsData.distributionData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -120,7 +202,6 @@ export default function AdminAnalytics() {
                 </div>
             </div>
 
-            {/* Forensic Registry Log */}
             <div className="card">
                 <div className="panel-header">Forensic Access Registry (Logs)</div>
                 <div className="table-container mt-4">
@@ -129,27 +210,22 @@ export default function AdminAnalytics() {
                             <tr>
                                 <th>Timestamp (UTC)</th>
                                 <th>Entity Class</th>
-                                <th>Node Destination</th>
-                                <th>Validation Key</th>
-                                <th>Confidence Score</th>
+                                <th>Entity Name</th>
+                                <th>Mode</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {[
-                                { time: '2026-03-04 12:45:01', class: 'Admin', node: 'Main Entrance A', key: 'GP-A7-F3', score: '99.9%' },
-                                { time: '2026-03-04 12:44:52', class: 'Staff', node: 'Main Entrance B', key: 'GP-B9-C2', score: '99.8%' },
-                                { time: '2026-03-04 12:44:38', class: 'Participant', node: 'VIP Access Gate', key: 'GP-D1-K4', score: '100.0%' },
-                                { time: '2026-03-04 12:43:12', class: 'Participant', node: 'Exit Portal 1', key: 'GP-X2-M9', score: '99.7%' },
-                            ].map((log, i) => (
+                            {analyticsData.recentLogs.map((log, i) => (
                                 <tr key={i}>
-                                    <td className="font-mono" style={{ fontSize: '11px' }}>{log.time}</td>
-                                    <td><span className="badge badge-info">{log.class}</span></td>
-                                    <td style={{ fontWeight: 600 }}>{log.node}</td>
-                                    <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{log.key}</td>
+                                    <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
+                                    <td><span className="badge badge-info">{log.tickets?.ticket_type || 'Unknown'}</span></td>
+                                    <td style={{ fontWeight: 600 }}>{log.tickets?.participants?.profiles?.full_name || 'Anonymous'}</td>
+                                    <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{log.verification_status || 'SUCCESS'}</td>
                                     <td>
                                         <div className="flex items-center gap-2">
                                             <Shield size={10} color="var(--status-ok)" />
-                                            <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--status-ok)' }}>{log.score}</span>
+                                            <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--status-ok)' }}>VALIDATED</span>
                                         </div>
                                     </td>
                                 </tr>

@@ -1,21 +1,76 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList } from 'lucide-react'
-import { mockAttendanceLogs, mockTickets, mockEvents, mockParticipants } from '../../data/mockData'
+import { supabase } from '../../lib/supabase'
 
 export default function StaffCheckIns() {
     const [filterEvent, setFilterEvent] = useState('all')
+    const [logs, setLogs] = useState([])
+    const [events, setEvents] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    const logs = mockAttendanceLogs.map(log => {
-        const ticket = mockTickets.find(t => t.id === log.ticket_id)
-        const event = mockEvents.find(e => e.id === log.event_id)
-        const participant = mockParticipants.find(p => p.ticket_id === log.ticket_id)
-        return { ...log, ticket, event, participant }
-    })
+    useEffect(() => {
+        fetchInitialData()
+
+        const subscription = supabase
+            .channel('staff-checkins')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchLogs()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(subscription)
+        }
+    }, [])
+
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([fetchLogs(), fetchEvents()])
+        setLoading(false)
+    }
+
+    const fetchEvents = async () => {
+        const { data } = await supabase.from('events').select('id, name')
+        if (data) setEvents(data)
+    }
+
+    const fetchLogs = async () => {
+        const { data } = await supabase
+            .from('attendance_logs')
+            .select(`
+                id,
+                ticket_id,
+                timestamp,
+                verification_status,
+                tickets (
+                    event_id,
+                    ticket_type,
+                    events (name),
+                    participants (
+                        profiles (full_name)
+                    )
+                )
+            `)
+            .order('timestamp', { ascending: false })
+            .limit(50)
+
+        if (data) {
+            setLogs(data.map(log => ({
+                id: log.id,
+                ticket_id: log.ticket_id,
+                timestamp: log.timestamp,
+                event_name: log.tickets?.events?.name || 'Unknown Event',
+                event_id: log.tickets?.event_id,
+                full_name: log.tickets?.participants?.profiles?.full_name || 'Anonymous',
+                verification_status: log.verification_status || 'success'
+            })))
+        }
+    }
 
     const filtered = filterEvent === 'all' ? logs : logs.filter(l => l.event_id === filterEvent)
 
-    const successCount = filtered.filter(l => l.verification_status === 'success').length
-    const duplicateCount = filtered.filter(l => l.verification_status === 'duplicate').length
+    const successCount = filtered.length // Assuming all logs in attendance_logs are successful validations
+    const duplicateCount = 0 // In a real scenario, we might have a separate table or flag for failed attempts
 
     return (
         <div className="page-container">
@@ -39,11 +94,11 @@ export default function StaffCheckIns() {
                 </div>
                 <div className="stat-card">
                     <div className="stat-card-icon" style={{ background: 'var(--status-warn-bg)' }}>
-                        <Activity size={20} color="var(--status-warn)" />
+                        <CheckCircle2 size={20} color="var(--status-warn)" />
                     </div>
                     <div>
                         <div className="stat-card-value font-mono">{duplicateCount}</div>
-                        <div className="stat-card-label">Auth Repetitions</div>
+                        <div className="stat-card-label">System Flagged</div>
                     </div>
                 </div>
                 <div className="stat-card">
@@ -61,7 +116,7 @@ export default function StaffCheckIns() {
             <div className="card mb-6" style={{ padding: 'var(--space-4)' }}>
                 <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 280 }}>
                     <option value="all">LOG_DOMAIN: ALL_SECTORS</option>
-                    {mockEvents.map(e => <option key={e.id} value={e.id}>{e.name.toUpperCase()}</option>)}
+                    {events.map(e => <option key={e.id} value={e.id}>{e.name.toUpperCase()}</option>)}
                 </select>
             </div>
 
@@ -90,15 +145,15 @@ export default function StaffCheckIns() {
                                                 color: 'var(--accent)', fontSize: 'var(--font-xs)', fontWeight: 800,
                                                 border: '1px solid var(--border-color)'
                                             }}>
-                                                {log.participant?.user?.full_name?.charAt(0) || '?'}
+                                                {log.full_name?.charAt(0) || '?'}
                                             </div>
                                             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                                                {log.participant?.user?.full_name || 'IDENTITY_UNKNOWN'}
+                                                {log.full_name}
                                             </span>
                                         </div>
                                     </td>
                                     <td style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 700 }}>
-                                        {log.event?.name?.toUpperCase() || 'N/A'}
+                                        {log.event_name.toUpperCase()}
                                     </td>
                                     <td className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>{log.ticket_id}</td>
                                     <td style={{ color: 'var(--text-dim)', fontSize: 'var(--font-xs)' }}>
@@ -106,7 +161,7 @@ export default function StaffCheckIns() {
                                     </td>
                                     <td>
                                         <span className={`badge ${log.verification_status === 'success' ? 'badge-success' : 'badge-warning'}`}>
-                                            {log.verification_status === 'success' ? 'VERIFIED' : 'DUPLICATE'}
+                                            {log.verification_status === 'success' ? 'VERIFIED' : 'FLAGGED'}
                                         </span>
                                     </td>
                                 </tr>
@@ -114,7 +169,7 @@ export default function StaffCheckIns() {
                         </tbody>
                     </table>
                 </div>
-                {filtered.length === 0 && (
+                {!loading && filtered.length === 0 && (
                     <div className="empty-state">
                         <ClipboardList size={48} style={{ opacity: 0.1 }} />
                         <div className="empty-state-title">AUDIT LOG EMPTY</div>

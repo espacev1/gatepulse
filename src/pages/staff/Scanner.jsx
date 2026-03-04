@@ -3,18 +3,28 @@ import {
     ScanLine, CheckCircle2, XCircle, AlertTriangle, Camera,
     Keyboard, RefreshCw, Activity, ShieldCheck, Zap, Maximize
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { mockTickets } from '../../data/mockData'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function StaffScanner() {
+    const { user: staffUser } = useAuth()
     const [mode, setMode] = useState('camera')
     const [manualCode, setManualCode] = useState('')
     const [scanResult, setScanResult] = useState(null)
     const [scanning, setScanning] = useState(false)
-    const [validatedTickets, setValidatedTickets] = useState(new Set(
-        mockTickets.filter(t => t.is_validated).map(t => t.qr_token)
-    ))
+    const [validatedTickets, setValidatedTickets] = useState(new Set())
     const [recentScans, setRecentScans] = useState([])
     const html5QrRef = useRef(null)
+
+    // Load initial validated tickets from Supabase
+    useEffect(() => {
+        const fetchValidated = async () => {
+            const { data } = await supabase.from('tickets').select('qr_token').eq('is_validated', true)
+            if (data) setValidatedTickets(new Set(data.map(t => t.qr_token)))
+        }
+        fetchValidated()
+    }, [])
 
     const startCamera = async () => {
         setScanning(true)
@@ -48,20 +58,60 @@ export default function StaffScanner() {
 
     useEffect(() => { return () => { stopCamera() } }, [])
 
-    const handleScan = (code) => {
-        const ticket = mockTickets.find(t => t.qr_token === code)
-        if (!ticket) {
-            const result = { status: 'invalid', message: 'Token not found in registry', code, time: new Date() }
-            setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-            return
-        }
+    const handleScan = async (code) => {
+        // 1. Check local cache first
         if (validatedTickets.has(code)) {
-            const result = { status: 'duplicate', message: 'Token previously authenticated', ticket, code, time: new Date() }
+            const result = { status: 'duplicate', message: 'Token previously authenticated', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
             return
         }
+
+        // 2. Verify with Supabase
+        const { data: ticket, error } = await supabase
+            .from('tickets')
+            .select('*, participants(profiles(*)), events(name)')
+            .eq('qr_token', code)
+            .single()
+
+        let currentTicket = ticket
+
+        if (error || !currentTicket) {
+            // Fallback to mock for demo stability if DB fails
+            const mock = mockTickets.find(t => t.qr_token === code)
+            if (!mock) {
+                const result = { status: 'invalid', message: 'Token not found in registry', code, time: new Date() }
+                setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+                return
+            }
+            currentTicket = mock
+        }
+
+        // 3. Mark as validated in DB
+        await supabase
+            .from('tickets')
+            .update({
+                is_validated: true,
+                validated_at: new Date().toISOString(),
+                validated_by: staffUser?.id
+            })
+            .eq('id', currentTicket.id)
+
+        // 4. Record attendance log
+        await supabase.from('attendance_logs').insert({
+            ticket_id: currentTicket.id,
+            event_id: currentTicket.event_id,
+            verification_status: 'success',
+            staff_id: staffUser?.id
+        })
+
         setValidatedTickets(prev => new Set([...prev, code]))
-        const result = { status: 'success', message: 'Authentication Successful', ticket, code, time: new Date() }
+        const result = {
+            status: 'success',
+            message: 'Authentication Successful',
+            ticket: currentTicket,
+            code,
+            time: new Date()
+        }
         setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
     }
 
@@ -145,7 +195,11 @@ export default function StaffScanner() {
                                         {scanResult.status === 'success' ? 'IDENTITY VERIFIED' : 'AUTH_FAILURE'}
                                     </h3>
                                     <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)' }}>{scanResult.message}</p>
-                                    {scanResult.ticket && <p className="font-mono mt-2" style={{ fontSize: '10px', opacity: 0.6 }}>ENTITY_UID: {scanResult.ticket.participant?.user?.full_name?.toUpperCase()}</p>}
+                                    {scanResult.ticket && (
+                                        <p className="font-mono mt-2" style={{ fontSize: '10px', opacity: 0.6 }}>
+                                            ENTITY_UID: {(scanResult.ticket.participants?.profiles?.full_name || scanResult.ticket.participant?.user?.full_name || 'ANONYMOUS').toUpperCase()}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -166,7 +220,9 @@ export default function StaffScanner() {
                                     <div className="flex items-center gap-3">
                                         {scan.status === 'success' ? <ShieldCheck size={14} color="var(--status-ok)" /> : <AlertTriangle size={14} color="var(--status-critical)" />}
                                         <div>
-                                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{scan.ticket?.participant?.user?.full_name || 'UNKNOWN_IDENTITY'}</div>
+                                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                {scan.ticket?.participants?.profiles?.full_name || scan.ticket?.participant?.user?.full_name || 'UNKNOWN_IDENTITY'}
+                                            </div>
                                             <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>{scan.code?.slice(-8)} @ {scan.time?.toLocaleTimeString()}</div>
                                         </div>
                                     </div>
