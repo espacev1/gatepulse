@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Camera, User, Building2, Layers, Hash, Activity, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 

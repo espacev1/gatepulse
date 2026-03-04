@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '../../contexts/AuthContext'
 import { QrCode, Mail, Download, Share2, ShieldCheck, User, Building2, Hash, AlertTriangle } from 'lucide-react'
