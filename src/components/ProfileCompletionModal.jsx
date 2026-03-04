@@ -20,8 +20,10 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
     const streamRef = useRef(null)
 
     useEffect(() => {
-        return () => stopCamera()
-    }, [])
+        if (isCameraActive && videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current
+        }
+    }, [isCameraActive])
 
     if (!isOpen) return null
 
