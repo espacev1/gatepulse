@@ -104,6 +104,46 @@ export default function AdminParticipants() {
         fetchParticipants()
     }
 
+    const handleResendEmail = async (participant) => {
+        if (!participant.ticket?.qr_token) {
+            return alert("No credential exists for this user. Approve them first.")
+        }
+
+        setLoading(true)
+        const result = await sendQRCodeEmail(
+            participant.user.email,
+            participant.user.full_name,
+            participant.ticket.qr_token,
+            participant.event?.name
+        )
+        setLoading(false)
+        alert(result.message)
+    }
+
+    const handleDispatchAll = async () => {
+        const confirmedParticipants = participants.filter(p => p.registration_status === 'confirmed' && p.ticket?.qr_token)
+
+        if (confirmedParticipants.length === 0) {
+            return alert("No confirmed entities found awaiting dispatch.")
+        }
+
+        if (!window.confirm(`THIS OPERATION WILL DISPATCH ${confirmedParticipants.length} CREDENTIALS. Continue deployment?`)) return
+
+        setLoading(true)
+        let successCount = 0
+        for (const p of confirmedParticipants) {
+            const result = await sendQRCodeEmail(
+                p.user.email,
+                p.user.full_name,
+                p.ticket.qr_token,
+                p.event?.name
+            )
+            if (result.success) successCount++
+        }
+        setLoading(false)
+        alert(`OPERATIONAL REPORT: ${successCount}/${confirmedParticipants.length} Credentials Dispatched successfully.`)
+    }
+
     const filtered = participants.filter(p => {
         const matchesSearch = p.user.full_name.toLowerCase().includes(search.toLowerCase()) ||
             p.user.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -125,8 +165,13 @@ export default function AdminParticipants() {
                     <h1 className="page-title">Entity Registry</h1>
                     <p className="page-subtitle">Historical and active participant credentials mapping.</p>
                 </div>
-                <div className="badge badge-primary" style={{ padding: 'var(--space-2) var(--space-4)' }}>
-                    {loading ? 'SYNCING...' : `${filtered.length} NODES LOGGED`}
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <button onClick={handleDispatchAll} className="btn btn-primary btn-sm" disabled={loading}>
+                        <Mail size={14} /> DISPATCH ALL CREDENTIALS
+                    </button>
+                    <div className="badge badge-primary" style={{ padding: 'var(--space-2) var(--space-4)' }}>
+                        {loading ? 'SYNCING...' : `${filtered.length} NODES LOGGED`}
+                    </div>
                 </div>
             </div>
 
@@ -213,7 +258,9 @@ export default function AdminParticipants() {
                                             </button>
                                         )}
                                         {p.registration_status === 'confirmed' && (
-                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>ACT_LOGGED</span>
+                                            <button onClick={() => handleResendEmail(p)} className="btn btn-secondary btn-xs" style={{ padding: '4px 8px', fontSize: '10px' }}>
+                                                <Mail size={10} /> RESEND QR
+                                            </button>
                                         )}
                                     </td>
                                 </tr>
