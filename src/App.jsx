@@ -37,7 +37,13 @@ function AppRoutes() {
 
   const handleVerified = (role) => {
     setUnlockedRole(role)
-    navigate('/login', { state: { requestedRole: role } })
+    const dashMap = { admin: '/admin', staff: '/staff/scanner', participant: '/events' }
+
+    if (isAuthenticated && (user.role === role || user.email === 'shanmukhamanikanta.inti@gmail.com')) {
+      navigate(dashMap[role] || '/')
+    } else {
+      navigate('/login', { state: { requestedRole: role } })
+    }
   }
 
   const getDashboardRedirect = () => {
