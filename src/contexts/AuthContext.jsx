@@ -64,27 +64,39 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
 
-        let { data: profile } = await supabase
+        let { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
             .single()
 
-        // Recovery logic for missing profiles
-        if (!profile) {
+        // Recovery logic for missing profiles — use upsert to handle conflicts
+        if (!profile || profileError) {
             const isSuperAdmin = data.user.email === 'shanmukhamanikanta.inti@gmail.com'
-            const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
+            const profileData = {
                 id: data.user.id,
                 email: data.user.email,
-                full_name: data.user.user_metadata?.full_name || 'Admin Entity',
+                full_name: data.user.user_metadata?.full_name || (isSuperAdmin ? 'Super Admin' : 'User'),
                 role: isSuperAdmin ? 'admin' : 'participant'
-            }).select().single()
+            }
 
-            if (pError) throw new Error('Security Profile missing. Reset required.')
-            profile = newProfile
+            // Try upsert first (handles both insert and conflict)
+            const { data: upserted, error: upsertErr } = await supabase
+                .from('profiles')
+                .upsert(profileData, { onConflict: 'id' })
+                .select()
+                .single()
+
+            if (upsertErr) {
+                console.error('Profile upsert failed:', upsertErr)
+                // Last resort: use the auth data directly to let user in
+                profile = profileData
+            } else {
+                profile = upserted
+            }
         }
 
-        const isSuperAdmin = profile.email === 'shanmukhamanikanta.inti@gmail.com'
+        const isSuperAdmin = (profile.email || email) === 'shanmukhamanikanta.inti@gmail.com'
         const sessionUser = {
             ...data.user,
             ...profile,
@@ -97,6 +109,7 @@ export function AuthProvider({ children }) {
         setUnlockedRole(null)
         return sessionUser
     }
+
 
     const register = async (email, password, fullName, role) => {
         const { data, error } = await supabase.auth.signUp({
