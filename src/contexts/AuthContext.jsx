@@ -22,15 +22,18 @@ export function AuthProvider({ children }) {
                     // Robustness: If profile missing (e.g. after wipe), try to recover it
                     if (!profile) {
                         const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
-                        const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
+                        const { data: newProfile, error: pError } = await supabase.from('profiles').upsert({
                             id: session.user.id,
                             email: session.user.email,
                             full_name: session.user.user_metadata?.full_name || 'Admin Entity',
                             role: isSuperAdmin ? 'admin' : 'participant'
-                        }).select().single()
+                        }, { onConflict: 'id' }).select().single()
 
                         if (!pError) profile = newProfile
-                        else console.error('Profile recovery failed:', pError)
+                        else {
+                            console.error('Profile recovery failed:', pError)
+                            // If we can't create a profile, the user is in a "broken" state
+                        }
                     }
 
                     if (profile) {
@@ -88,9 +91,8 @@ export function AuthProvider({ children }) {
                 .single()
 
             if (upsertErr) {
-                console.error('Profile upsert failed:', upsertErr)
-                // Last resort: use the auth data directly to let user in
-                profile = profileData
+                console.error('Profile recovery failed during login:', upsertErr)
+                throw new Error(`Profile synchronization failed: ${upsertErr.message}. Ensure your database schema is up to date.`)
             } else {
                 profile = upserted
             }
@@ -128,16 +130,18 @@ export function AuthProvider({ children }) {
 
         // Always create profile in DB — don't gate behind session check
         // (session may be null if email confirmation is enabled)
-        try {
-            await supabase.from('profiles').upsert({
-                id: data.user.id,
-                email: data.user.email || email,
-                full_name: fullName,
-                role: assignedRole,
-                ...metadata
-            }, { onConflict: 'id' })
-        } catch (profileErr) {
-            console.error('Profile creation during register:', profileErr)
+        // Always create profile in DB — don't gate behind session check
+        const { error: pError } = await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: data.user.email || email,
+            full_name: fullName,
+            role: assignedRole,
+            ...metadata
+        }, { onConflict: 'id' })
+
+        if (pError) {
+            console.error('Profile creation failed:', pError)
+            throw new Error(`Profile creation failed: ${pError.message}. Please check if the database columns exist.`)
         }
 
         const sessionUser = {
