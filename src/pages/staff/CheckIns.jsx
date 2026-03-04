@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList } from 'lucide-react'
+import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList, ShieldAlert } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function StaffCheckIns() {
+    const { user: staffUser } = useAuth()
     const [filterEvent, setFilterEvent] = useState('all')
     const [logs, setLogs] = useState([])
     const [events, setEvents] = useState([])
@@ -28,7 +30,8 @@ export default function StaffCheckIns() {
 
     const fetchInitialData = async () => {
         setLoading(true)
-        await Promise.all([fetchLogs(), fetchEvents()])
+        await fetchEvents()
+        await fetchLogs()
         setLoading(false)
     }
 
@@ -97,6 +100,21 @@ export default function StaffCheckIns() {
                 <div>
                     <h1 className="page-title">Check-in Registry</h1>
                     <p className="page-subtitle">Real-time audit log of all credential validation attempts.</p>
+                </div>
+                {/* Security Diagnostics Banner */}
+                <div className="card-glass" style={{ padding: '8px 16px', border: '1px solid var(--border-accent)', background: 'rgba(0,212,255,0.05)' }}>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Activity size={14} color="var(--accent)" />
+                            <span className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RLS_STATUS:</span>
+                            <span className="badge badge-primary">{staffUser?.role?.toUpperCase() || 'UNKNOWN'}</span>
+                        </div>
+                        <div className="flex items-center gap-2" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
+                            <ClipboardList size={14} color="var(--text-dim)" />
+                            <span className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RAW_PACKETS:</span>
+                            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent)' }}>{logs.length}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
