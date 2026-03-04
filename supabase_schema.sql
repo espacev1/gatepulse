@@ -107,12 +107,27 @@ DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "System can insert profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
 
+-- Permission Helpers (SECURITY DEFINER bypasses RLS on profiles table)
+CREATE OR REPLACE FUNCTION public.is_admin(user_id uuid)
+RETURNS boolean AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE id = user_id AND role = 'admin'
+    );
+$$ LANGUAGE sql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.is_staff(user_id uuid)
+RETURNS boolean AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE id = user_id AND role IN ('admin', 'staff')
+    );
+$$ LANGUAGE sql SECURITY DEFINER;
+
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "System can insert profiles" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Admins can update any profile" ON public.profiles FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Users can create own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id OR is_admin(auth.uid()));
+CREATE POLICY "Admins can manage any profile" ON public.profiles FOR ALL USING (is_admin(auth.uid()));
 
 -- 2. Events
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
