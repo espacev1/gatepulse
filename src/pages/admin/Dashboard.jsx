@@ -38,12 +38,13 @@ export default function AdminDashboard() {
 
     const fetchDashboardData = async () => {
         // 1. Fetch Events & Admins
-        const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes] = await Promise.all([
+        const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes, pendingRes] = await Promise.all([
             supabase.from('events').select('*'),
             supabase.from('tickets').select('*', { count: 'exact', head: true }),
             supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true),
             supabase.from('profiles').select('*').eq('role', 'admin'),
-            supabase.from('attendance_logs').select('timestamp').order('timestamp', { ascending: true })
+            supabase.from('attendance_logs').select('timestamp').order('timestamp', { ascending: true }),
+            supabase.from('participants').select('*', { count: 'exact', head: true }).eq('registration_status', 'pending')
         ])
 
         if (eventsRes.data) setEvents(eventsRes.data)
@@ -56,7 +57,8 @@ export default function AdminDashboard() {
             totalTickets: ticketsRes.count || 0,
             activeCheckins: checkinsRes.count || 0,
             loadFactor: loadFactor,
-            securityAlerts: 0
+            securityAlerts: 0,
+            pendingApprovals: pendingRes.count || 0
         })
 
         // 2. Process Traffic Data (Group logs by time)
@@ -116,9 +118,9 @@ export default function AdminDashboard() {
 
             <div className="grid-4 mb-8">
                 <MetricBar icon={Users} label="TOTAL RESERVATIONS" value={metrics.totalTickets} trend="LIVE" />
+                <MetricBar icon={Clock} label="PENDING APPROVALS" value={metrics.pendingApprovals} trend="AWAITING" color="var(--status-warn)" />
                 <MetricBar icon={Activity} label="ACTIVE_CHECKINS" value={metrics.activeCheckins} trend="SYNCED" color="var(--status-ok)" />
-                <MetricBar icon={TrendingUp} label="LOAD_FACTOR" value={`${metrics.loadFactor}%`} trend="NOMINAL" color="var(--status-warn)" />
-                <MetricBar icon={Shield} label="THREAT_LEVEL" value="LOW" trend="STABLE" color="var(--status-ok)" />
+                <MetricBar icon={TrendingUp} label="LOAD_FACTOR" value={`${metrics.loadFactor}%`} trend="NOMINAL" color="var(--status-info)" />
             </div>
 
             <div className="grid-3 mb-6">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe, Download } from 'lucide-react'
+import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe, Download, ThumbsUp, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 export default function AdminParticipants() {
@@ -42,6 +42,7 @@ export default function AdminParticipants() {
                 id,
                 created_at,
                 event_id,
+                registration_status,
                 user:profiles!inner (full_name, email),
                 event:events (name),
                 ticket:tickets (id, is_validated)
@@ -53,12 +54,39 @@ export default function AdminParticipants() {
                 id: p.id,
                 created_at: p.created_at,
                 event_id: p.event_id,
+                registration_status: p.registration_status,
                 user: p.user,
                 event: p.event,
-                ticket: p.ticket?.[0] || null, // tickets is an array because of the join, but it's 1:1 or 1:0 here
+                ticket: p.ticket?.[0] || null,
                 ticket_id: p.ticket?.[0]?.id || 'NO_CREDENTIAL'
             })))
         }
+    }
+
+    const handleApprove = async (participant) => {
+        if (!window.confirm(`Approve registration for ${participant.user.full_name}?`)) return
+
+        // 1. Update participant status
+        const { error: pError } = await supabase
+            .from('participants')
+            .update({ registration_status: 'confirmed' })
+            .eq('id', participant.id)
+
+        if (pError) return alert('Approval failed: ' + pError.message)
+
+        // 2. Provision Ticket
+        const qrToken = `GP-${participant.event_id.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+        const { error: tError } = await supabase
+            .from('tickets')
+            .insert([{
+                participant_id: participant.id,
+                event_id: participant.event_id,
+                qr_token: qrToken
+            }])
+
+        if (tError) alert('Status confirmed, but ticket provision failed: ' + tError.message)
+
+        fetchParticipants()
     }
 
     const filtered = participants.filter(p => {
@@ -68,8 +96,9 @@ export default function AdminParticipants() {
 
         const matchesEvent = filterEvent === 'all' || p.event_id === filterEvent
         const matchesStatus = filterStatus === 'all' ||
+            (filterStatus === 'pending-approval' && p.registration_status === 'pending') ||
             (filterStatus === 'checked-in' && p.ticket?.is_validated) ||
-            (filterStatus === 'pending' && !p.ticket?.is_validated)
+            (filterStatus === 'pending-check-in' && p.registration_status === 'confirmed' && !p.ticket?.is_validated)
 
         return matchesSearch && matchesEvent && matchesStatus
     })
@@ -99,8 +128,9 @@ export default function AdminParticipants() {
                     </select>
                     <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
                         <option value="all">AUTH_STATUS: ALL</option>
+                        <option value="pending-approval">PENDING_APPROVAL</option>
+                        <option value="pending-check-in">AWAITING_ENTRY</option>
                         <option value="checked-in">IDENTITY_VERIFIED</option>
-                        <option value="pending">PENDING_AUTH</option>
                     </select>
                 </div>
             </div>
@@ -114,9 +144,9 @@ export default function AdminParticipants() {
                                 <th>Identity Name</th>
                                 <th>Entity Class</th>
                                 <th>Target Sector</th>
-                                <th>Credential Key</th>
                                 <th>Status</th>
-                                <th>Access Date</th>
+                                <th>Credential</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -147,16 +177,29 @@ export default function AdminParticipants() {
                                             {p.event?.name?.toUpperCase() || 'N/A'}
                                         </span>
                                     </td>
-                                    <td><code className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>{p.ticket_id}</code></td>
                                     <td>
-                                        {p.ticket?.is_validated ? (
+                                        {p.registration_status === 'pending' ? (
+                                            <span className="badge badge-warning"><Clock size={10} /> PENDING_APPROVAL</span>
+                                        ) : p.ticket?.is_validated ? (
                                             <span className="badge badge-success"><CheckCircle2 size={10} /> VERIFIED</span>
                                         ) : (
-                                            <span className="badge badge-warning"><Clock size={10} /> PENDING</span>
+                                            <span className="badge badge-info"><Shield size={10} /> CONFIRMED</span>
                                         )}
                                     </td>
-                                    <td style={{ color: 'var(--text-dim)', fontSize: 'var(--font-xs)' }}>
-                                        {new Date(p.created_at).toLocaleDateString()}
+                                    <td>
+                                        <code className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>
+                                            {p.registration_status === 'pending' ? 'SEC_CLEARANCE_REQUIRED' : p.ticket_id}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        {p.registration_status === 'pending' && (
+                                            <button onClick={() => handleApprove(p)} className="btn btn-primary btn-xs" style={{ padding: '4px 8px', fontSize: '10px' }}>
+                                                <ThumbsUp size={10} /> APPROVE
+                                            </button>
+                                        )}
+                                        {p.registration_status === 'confirmed' && (
+                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>ACT_LOGGED</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

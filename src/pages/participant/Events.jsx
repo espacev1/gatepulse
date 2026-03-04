@@ -54,26 +54,17 @@ export default function ParticipantEvents() {
     const handleRegister = async (event) => {
         if (!user) return alert('Please sign in to register.')
 
-        // For demo purposes, we auto-generate a ticket token
-        const qrToken = `GP-${event.id.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-
         const { data: participant, error: pError } = await supabase
             .from('participants')
-            .insert([{ user_id: user.id, event_id: event.id }])
+            .insert([{
+                user_id: user.id,
+                event_id: event.id,
+                registration_status: 'pending'
+            }])
             .select()
             .single()
 
         if (pError) return alert('Registration error: ' + pError.message)
-
-        const { error: tError } = await supabase
-            .from('tickets')
-            .insert([{
-                participant_id: participant.id,
-                event_id: event.id,
-                qr_token: qrToken
-            }])
-
-        if (tError) return alert('Ticket generation error: ' + tError.message)
 
         setRegisteredEvents(prev => new Set([...prev, event.id]))
         setShowSuccess(event.id)
@@ -125,7 +116,7 @@ export default function ParticipantEvents() {
                     </div>
                     <div>
                         <div style={{ fontWeight: 800, fontSize: 'var(--font-xs)', color: 'var(--status-ok)', letterSpacing: '0.05em' }}>REGISTRATION_SUCCESS</div>
-                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>Credential provisioned. Check "Identity Credentials".</div>
+                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>Access pending admin approval. Credentials issued upon clearance.</div>
                     </div>
                 </div>
             )}
