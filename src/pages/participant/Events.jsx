@@ -1,26 +1,90 @@
-import { useState } from 'react'
-import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap, DollarSign } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { mockEvents as initialEvents } from '../../data/mockData'
+import { supabase } from '../../lib/supabase'
 
 export default function ParticipantEvents() {
     const { user } = useAuth()
-    const [events] = useState(initialEvents)
+    const [events, setEvents] = useState([])
     const [search, setSearch] = useState('')
-    const [registeredEvents, setRegisteredEvents] = useState(new Set(['evt-001', 'evt-003']))
+    const [registeredEvents, setRegisteredEvents] = useState(new Set())
     const [showSuccess, setShowSuccess] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchInitialData()
+
+        const subscription = supabase
+            .channel('participant-events-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                fetchEvents()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(subscription)
+        }
+    }, [])
+
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([fetchEvents(), fetchMyRegistrations()])
+        setLoading(false)
+    }
+
+    const fetchEvents = async () => {
+        const { data } = await supabase
+            .from('events')
+            .select('*')
+            .order('start_time', { ascending: true })
+        if (data) setEvents(data)
+    }
+
+    const fetchMyRegistrations = async () => {
+        if (!user) return
+        const { data } = await supabase
+            .from('participants')
+            .select('event_id')
+            .eq('user_id', user.id)
+        if (data) {
+            setRegisteredEvents(new Set(data.map(r => r.event_id)))
+        }
+    }
+
+    const handleRegister = async (event) => {
+        if (!user) return alert('Please sign in to register.')
+
+        // For demo purposes, we auto-generate a ticket token
+        const qrToken = `GP-${event.id.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+
+        const { data: participant, error: pError } = await supabase
+            .from('participants')
+            .insert([{ user_id: user.id, event_id: event.id }])
+            .select()
+            .single()
+
+        if (pError) return alert('Registration error: ' + pError.message)
+
+        const { error: tError } = await supabase
+            .from('tickets')
+            .insert([{
+                participant_id: participant.id,
+                event_id: event.id,
+                qr_token: qrToken
+            }])
+
+        if (tError) return alert('Ticket generation error: ' + tError.message)
+
+        setRegisteredEvents(prev => new Set([...prev, event.id]))
+        setShowSuccess(event.id)
+        setTimeout(() => setShowSuccess(null), 3500)
+    }
 
     const filtered = events.filter(e =>
         e.name.toLowerCase().includes(search.toLowerCase()) ||
         e.description.toLowerCase().includes(search.toLowerCase()) ||
         e.location.toLowerCase().includes(search.toLowerCase())
     )
-
-    const handleRegister = (eventId) => {
-        setRegisteredEvents(prev => new Set([...prev, eventId]))
-        setShowSuccess(eventId)
-        setTimeout(() => setShowSuccess(null), 3500)
-    }
 
     const getStatusStyle = (status) => {
         if (status === 'active') return { accent: 'var(--status-ok)', badge: 'badge-success' }
@@ -68,10 +132,14 @@ export default function ParticipantEvents() {
 
             {/* Events Grid */}
             <div className="grid-3" style={{ gap: 'var(--space-6)' }}>
+                {loading && <div className="col-span-3 text-center py-20 text-dim">Scanning for available sectors...</div>}
+                {!loading && filtered.length === 0 && (
+                    <div className="col-span-3 text-center py-20 text-dim">No operational sectors detected in this coordinate range.</div>
+                )}
                 {filtered.map((event, i) => {
                     const isRegistered = registeredEvents.has(event.id)
                     const ss = getStatusStyle(event.status)
-                    const isFull = event.registered_count >= event.max_capacity
+                    const isFull = (event.registered_count || 0) >= event.max_capacity
 
                     return (
                         <div key={event.id} className="card" style={{
@@ -88,7 +156,12 @@ export default function ParticipantEvents() {
                                         <Zap size={14} color={ss.accent} />
                                         <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>SECTOR_{event.id.slice(-4)}</span>
                                     </div>
-                                    <span className={`badge ${ss.badge}`} style={{ fontSize: '9px' }}>{event.status}</span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`badge ${ss.badge}`} style={{ fontSize: '9px' }}>{event.status}</span>
+                                        <span className={`badge ${event.is_free ? 'badge-info' : 'badge-warning'}`} style={{ fontSize: '9px' }}>
+                                            {event.is_free ? 'FREE_ACCESS' : `CREDIT: $${event.price}`}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-0.01em' }}>
@@ -108,11 +181,11 @@ export default function ParticipantEvents() {
                                 <div className="mb-6">
                                     <div className="flex justify-between items-center mb-2">
                                         <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>LOAD FACTOR</span>
-                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-primary)' }}>{Math.round((event.registered_count / event.max_capacity) * 100)}%</span>
+                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-primary)' }}>{Math.round(((event.registered_count || 0) / event.max_capacity) * 100)}%</span>
                                     </div>
                                     <div className="progress-bar-track">
                                         <div className="progress-bar-fill" style={{
-                                            width: `${(event.registered_count / event.max_capacity) * 100}%`,
+                                            width: `${((event.registered_count || 0) / event.max_capacity) * 100}%`,
                                             background: isFull ? 'var(--status-critical)' : 'var(--accent)'
                                         }} />
                                     </div>
@@ -127,7 +200,7 @@ export default function ParticipantEvents() {
                                         SECTOR_FULL
                                     </button>
                                 ) : (
-                                    <button onClick={() => handleRegister(event.id)} className="btn btn-primary w-full">
+                                    <button onClick={() => handleRegister(event)} className="btn btn-primary w-full">
                                         INITIALIZE ACCESS <ArrowRight size={14} />
                                     </button>
                                 )}

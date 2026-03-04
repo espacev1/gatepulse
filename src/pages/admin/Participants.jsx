@@ -1,25 +1,76 @@
-import { useState } from 'react'
-import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe } from 'lucide-react'
-import { mockParticipants, mockTickets, mockEvents } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe, Download } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 
 export default function AdminParticipants() {
     const [search, setSearch] = useState('')
     const [filterEvent, setFilterEvent] = useState('all')
     const [filterStatus, setFilterStatus] = useState('all')
+    const [participants, setParticipants] = useState([])
+    const [events, setEvents] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    const participants = mockParticipants.map(p => {
-        const ticket = mockTickets.find(t => t.id === p.ticket_id)
-        const event = mockEvents.find(e => e.id === p.event_id)
-        return { ...p, ticket, event }
-    })
+    useEffect(() => {
+        fetchInitialData()
+
+        const participantsSub = supabase
+            .channel('participants-registry-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => fetchParticipants())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchParticipants())
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(participantsSub)
+        }
+    }, [])
+
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([fetchParticipants(), fetchEvents()])
+        setLoading(false)
+    }
+
+    const fetchEvents = async () => {
+        const { data } = await supabase.from('events').select('id, name')
+        if (data) setEvents(data)
+    }
+
+    const fetchParticipants = async () => {
+        const { data } = await supabase
+            .from('participants')
+            .select(`
+                id,
+                created_at,
+                event_id,
+                user:profiles!inner (full_name, email),
+                event:events (name),
+                ticket:tickets (id, is_validated)
+            `)
+            .order('created_at', { ascending: false })
+
+        if (data) {
+            setParticipants(data.map(p => ({
+                id: p.id,
+                created_at: p.created_at,
+                event_id: p.event_id,
+                user: p.user,
+                event: p.event,
+                ticket: p.ticket?.[0] || null, // tickets is an array because of the join, but it's 1:1 or 1:0 here
+                ticket_id: p.ticket?.[0]?.id || 'NO_CREDENTIAL'
+            })))
+        }
+    }
 
     const filtered = participants.filter(p => {
         const matchesSearch = p.user.full_name.toLowerCase().includes(search.toLowerCase()) ||
-            p.user.email.toLowerCase().includes(search.toLowerCase())
+            p.user.email.toLowerCase().includes(search.toLowerCase()) ||
+            p.ticket_id.toLowerCase().includes(search.toLowerCase())
+
         const matchesEvent = filterEvent === 'all' || p.event_id === filterEvent
         const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'checked-in' && p.ticket?.is_validated) ||
             (filterStatus === 'pending' && !p.ticket?.is_validated)
+
         return matchesSearch && matchesEvent && matchesStatus
     })
 
@@ -31,7 +82,7 @@ export default function AdminParticipants() {
                     <p className="page-subtitle">Historical and active participant credentials mapping.</p>
                 </div>
                 <div className="badge badge-primary" style={{ padding: 'var(--space-2) var(--space-4)' }}>
-                    {filtered.length} NODES LOGGED
+                    {loading ? 'SYNCING...' : `${filtered.length} NODES LOGGED`}
                 </div>
             </div>
 
@@ -44,7 +95,7 @@ export default function AdminParticipants() {
                     </div>
                     <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
                         <option value="all">SECTOR: ALL</option>
-                        {mockEvents.map(e => <option key={e.id} value={e.id}>{e.name.toUpperCase()}</option>)}
+                        {events.map(e => <option key={e.id} value={e.id}>{e.name.toUpperCase()}</option>)}
                     </select>
                     <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
                         <option value="all">AUTH_STATUS: ALL</option>
@@ -69,7 +120,11 @@ export default function AdminParticipants() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((p, i) => (
+                            {loading ? (
+                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">SCANNING REGISTRY...</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">NO ENTITIES REGISTERED</td></tr>
+                            ) : filtered.map((p, i) => (
                                 <tr key={p.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -79,13 +134,13 @@ export default function AdminParticipants() {
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 color: 'var(--bg-deepest)', fontSize: 'var(--font-xs)', fontWeight: 800,
                                             }}>
-                                                {p.user.full_name.charAt(0)}
+                                                {p.user?.full_name?.charAt(0) || '?'}
                                             </div>
-                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{p.user.full_name}</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{p.user?.full_name || 'Anonymous'}</span>
                                         </div>
                                     </td>
                                     <td style={{ color: 'var(--text-dim)', fontSize: '11px' }}>
-                                        <div className="flex items-center gap-1"><Mail size={10} /> {p.user.email}</div>
+                                        <div className="flex items-center gap-1"><Mail size={10} /> {p.user?.email}</div>
                                     </td>
                                     <td>
                                         <span style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>
@@ -108,14 +163,6 @@ export default function AdminParticipants() {
                         </tbody>
                     </table>
                 </div>
-
-                {filtered.length === 0 && (
-                    <div className="empty-state">
-                        <Users size={48} style={{ opacity: 0.1, margin: '0 auto var(--space-4)' }} />
-                        <div className="empty-state-title">NO ENTITIES REGISTERED</div>
-                        <p>Adjust data filters to view alternate registry domains.</p>
-                    </div>
-                )}
             </div>
         </div>
     )

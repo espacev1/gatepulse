@@ -4,7 +4,6 @@ import {
     Keyboard, RefreshCw, Activity, ShieldCheck, Zap, Maximize
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { mockTickets } from '../../data/mockData'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function StaffScanner() {
@@ -73,33 +72,32 @@ export default function StaffScanner() {
             .eq('qr_token', code)
             .single()
 
-        let currentTicket = ticket
-
-        if (error || !currentTicket) {
-            // Fallback to mock for demo stability if DB fails
-            const mock = mockTickets.find(t => t.qr_token === code)
-            if (!mock) {
-                const result = { status: 'invalid', message: 'Token not found in registry', code, time: new Date() }
-                setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-                return
-            }
-            currentTicket = mock
+        if (error || !ticket) {
+            const result = { status: 'invalid', message: 'Token not found in registry', code, time: new Date() }
+            setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+            return
         }
 
         // 3. Mark as validated in DB
-        await supabase
+        const { error: updateError } = await supabase
             .from('tickets')
             .update({
                 is_validated: true,
                 validated_at: new Date().toISOString(),
                 validated_by: staffUser?.id
             })
-            .eq('id', currentTicket.id)
+            .eq('id', ticket.id)
+
+        if (updateError) {
+            const result = { status: 'error', message: 'Database synchronization failure', code, time: new Date() }
+            setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+            return
+        }
 
         // 4. Record attendance log
         await supabase.from('attendance_logs').insert({
-            ticket_id: currentTicket.id,
-            event_id: currentTicket.event_id,
+            ticket_id: ticket.id,
+            event_id: ticket.event_id,
             verification_status: 'success',
             staff_id: staffUser?.id
         })
@@ -108,7 +106,7 @@ export default function StaffScanner() {
         const result = {
             status: 'success',
             message: 'Authentication Successful',
-            ticket: currentTicket,
+            ticket: ticket,
             code,
             time: new Date()
         }

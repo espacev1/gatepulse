@@ -1,22 +1,80 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { mockTickets, mockEvents } from '../../data/mockData'
+import { supabase } from '../../lib/supabase'
 
 export default function MyTickets() {
     const { user } = useAuth()
+    const [tickets, setTickets] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    const tickets = mockTickets.filter(t =>
-        t.participant?.user?.id === user?.id || ['tkt-001', 'tkt-003', 'tkt-006'].includes(t.id)
-    ).map(t => ({
-        ...t,
-        event: mockEvents.find(e => e.id === t.event_id) || t.event,
-    }))
+    useEffect(() => {
+        if (user) {
+            fetchMyTickets()
+
+            const subscription = supabase
+                .channel('my-tickets-live')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tickets'
+                }, () => {
+                    fetchMyTickets()
+                })
+                .subscribe()
+
+            return () => {
+                supabase.removeChannel(subscription)
+            }
+        }
+    }, [user])
+
+    const fetchMyTickets = async () => {
+        if (!user) return
+        setLoading(true)
+
+        // Fetch tickets where the participant's user_id matches current user
+        const { data, error } = await supabase
+            .from('tickets')
+            .select(`
+                *,
+                events (*)
+            `)
+            .eq('participants.user_id', user.id)
+
+        // Supabase doesn't support deep filtering directly on nested objects easily in a single select eq
+        // So we join via participant
+        const { data: ticketData } = await supabase
+            .from('tickets')
+            .select(`
+                id,
+                qr_token,
+                is_validated,
+                event_id,
+                event:events (*),
+                participant:participants!inner (user_id)
+            `)
+            .eq('participant.user_id', user.id)
+
+        if (ticketData) {
+            setTickets(ticketData)
+        }
+        setLoading(false)
+    }
 
     const downloadBadge = (ticket) => {
-        // Standard download logic (re-using the canvas approach but with SIEM styling)
         alert('Generating Security Credential PNG... Done.')
+    }
+
+    if (loading) {
+        return (
+            <div className="page-container">
+                <div className="flex items-center justify-center h-64 text-dim font-mono">
+                    PROBING SECURE SECTORS...
+                </div>
+            </div>
+        )
     }
 
     return (
