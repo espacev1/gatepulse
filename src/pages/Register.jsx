@@ -1,0 +1,180 @@
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { Shield, Mail, Lock, User, ShieldCheck, ArrowRight, Activity, AlertCircle } from 'lucide-react'
+
+export default function Register() {
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'participant'
+    })
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const { register } = useAuth()
+    const navigate = useNavigate()
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value })
+    }
+
+    const handleRegister = async (e) => {
+        e.preventDefault()
+        setError('')
+        if (formData.password !== formData.confirmPassword) {
+            return setError('Cryptographic mismatch: Passwords do not align.')
+        }
+
+        setLoading(true)
+        try {
+            await register(formData.email, formData.password, formData.fullName, formData.role)
+            navigate('/login')
+        } catch (err) {
+            setError(err.message || 'System error during registration.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--gradient-hero)',
+            padding: 'var(--space-6)',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            {/* Background Decor */}
+            <div style={{
+                position: 'absolute', inset: 0, opacity: 0.05,
+                backgroundImage: 'linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+            }} />
+
+            <div className="card-glass" style={{
+                width: '100%',
+                maxWidth: '480px',
+                padding: 'var(--space-8)',
+                position: 'relative',
+                zIndex: 1,
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                border: '1px solid rgba(0, 212, 255, 0.1)'
+            }}>
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div style={{
+                        width: 48, height: 48, background: 'var(--accent-gradient)',
+                        borderRadius: 'var(--radius-xl)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        margin: '0 auto var(--space-4)',
+                        boxShadow: 'var(--shadow-glow-strong)',
+                    }}>
+                        <ShieldCheck size={24} color="#060E1A" strokeWidth={2.5} />
+                    </div>
+                    <h1 className="page-title" style={{ fontSize: 'var(--font-xl)', marginBottom: 4 }}>Entity Registration</h1>
+                    <p className="page-subtitle">Provision New Security Credentials</p>
+                </div>
+
+                {error && (
+                    <div className="badge badge-error w-full mb-6" style={{ padding: '8px', borderRadius: 'var(--radius-md)', textTransform: 'none' }}>
+                        <AlertCircle size={14} /> {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleRegister} className="flex flex-col gap-4">
+                    <div className="form-group">
+                        <label className="form-label">Full Legal Name</label>
+                        <div style={{ position: 'relative' }}>
+                            <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                            <input
+                                type="text"
+                                name="fullName"
+                                className="form-input"
+                                style={{ paddingLeft: '40px' }}
+                                placeholder="John Doe"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Deployment Email</label>
+                        <div style={{ position: 'relative' }}>
+                            <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                            <input
+                                type="email"
+                                name="email"
+                                className="form-input"
+                                style={{ paddingLeft: '40px' }}
+                                placeholder="john@gatepulse.io"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                        <div className="form-group">
+                            <label className="form-label">Secure Key</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="form-input"
+                                    style={{ paddingLeft: '40px' }}
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Confirm Key</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    className="form-input"
+                                    style={{ paddingLeft: '40px' }}
+                                    placeholder="••••••••"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Access Level Provisioning</label>
+                        <select name="role" className="form-select" value={formData.role} onChange={handleChange}>
+                            <option value="participant">LEVEL 1: Participant</option>
+                            <option value="staff">LEVEL 2: Operational Staff</option>
+                            <option value="admin">LEVEL 3: Security Admin</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" className="btn btn-primary btn-lg w-full mt-4" disabled={loading}>
+                        {loading ? <Activity className="animate-pulse" size={18} /> : <>Initialize Deployment <ArrowRight size={18} /></>}
+                    </button>
+                </form>
+
+                <p className="text-center mt-8" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
+                    Already have an entity ID?{' '}
+                    <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>Access Console</Link>
+                </p>
+            </div>
+        </div>
+    )
+}
