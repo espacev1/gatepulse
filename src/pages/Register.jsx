@@ -1,25 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { Shield, Mail, Lock, User, ShieldCheck, ArrowRight, Activity, AlertCircle, Building2, Layers, Hash, Camera, CheckCircle2 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
+import { Shield, Mail, Lock, User, ShieldCheck, ArrowRight, Activity, AlertCircle } from 'lucide-react'
 
 export default function Register() {
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
         password: '',
-        confirmPassword: '',
-        dept: '',
-        section: '',
-        regNo: ''
+        confirmPassword: ''
     })
-    const [idBarcode, setIdBarcode] = useState(null)
-    const [facePic, setFacePic] = useState(null)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-    const [step, setStep] = useState(1) // 1: Info, 2: Verification
     const { register } = useAuth()
     const navigate = useNavigate()
 
@@ -130,215 +122,78 @@ export default function Register() {
                 )}
 
                 <form onSubmit={handleRegister} className="flex flex-col gap-4">
-                    {step === 1 ? (
-                        <>
-                            <div className="form-group">
-                                <label className="form-label">Full Legal Name</label>
-                                <div style={{ position: 'relative' }}>
-                                    <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                    <input
-                                        type="text"
-                                        name="fullName"
-                                        className="form-input"
-                                        style={{ paddingLeft: '40px' }}
-                                        placeholder="John Doe"
-                                        value={formData.fullName}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
+                    <div className="form-group">
+                        <label className="form-label">Full Legal Name</label>
+                        <div style={{ position: 'relative' }}>
+                            <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                            <input
+                                type="text"
+                                name="fullName"
+                                className="form-input"
+                                style={{ paddingLeft: '40px' }}
+                                placeholder="John Doe"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Deployment Email</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        className="form-input"
-                                        style={{ paddingLeft: '40px' }}
-                                        placeholder="john@gatepulse.io"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
+                    <div className="form-group">
+                        <label className="form-label">Deployment Email</label>
+                        <div style={{ position: 'relative' }}>
+                            <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                            <input
+                                type="email"
+                                name="email"
+                                className="form-input"
+                                style={{ paddingLeft: '40px' }}
+                                placeholder="john@gatepulse.io"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Department</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Building2 size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                    <input
-                                        type="text"
-                                        name="dept"
-                                        className="form-input"
-                                        style={{ paddingLeft: '40px' }}
-                                        placeholder="Computer Science"
-                                        value={formData.dept}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                        <div className="form-group">
+                            <label className="form-label">Secure Key</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="form-input"
+                                    style={{ paddingLeft: '40px' }}
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                />
                             </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Section</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Layers size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                        <input
-                                            type="text"
-                                            name="section"
-                                            className="form-input"
-                                            style={{ paddingLeft: '40px' }}
-                                            placeholder="A"
-                                            value={formData.section}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Reg No</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Hash size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                        <input
-                                            type="text"
-                                            name="regNo"
-                                            className="form-input"
-                                            style={{ paddingLeft: '40px' }}
-                                            placeholder="2021CS001"
-                                            value={formData.regNo}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Confirm Key</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    className="form-input"
+                                    style={{ paddingLeft: '40px' }}
+                                    placeholder="••••••••"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                />
                             </div>
+                        </div>
+                    </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Secure Key</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            className="form-input"
-                                            style={{ paddingLeft: '40px' }}
-                                            placeholder="••••••••"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Confirm Key</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-                                        <input
-                                            type="password"
-                                            name="confirmPassword"
-                                            className="form-input"
-                                            style={{ paddingLeft: '40px' }}
-                                            placeholder="••••••••"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="submit" className="btn btn-primary btn-lg w-full mt-4">
-                                Next: Identity Verification <ArrowRight size={18} />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="flex flex-col gap-6">
-                                <div className="verification-slot">
-                                    <label className="form-label mb-2 block">ID Barcode Scan</label>
-                                    <div style={{
-                                        height: 120,
-                                        border: '2px dashed var(--border-color)',
-                                        borderRadius: 'var(--radius-md)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        background: idBarcode ? 'rgba(0, 212, 255, 0.05)' : 'transparent',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {idBarcode ? (
-                                            <>
-                                                <img src={URL.createObjectURL(idBarcode)} alt="ID Barcode" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                <div style={{ position: 'absolute', top: 5, right: 5 }}><CheckCircle2 size={20} color="var(--accent)" /></div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Camera size={24} className="mb-2" style={{ color: 'var(--text-dim)' }} />
-                                                <p style={{ fontSize: 12, opacity: 0.7 }}>Take photo of ID barcode</p>
-                                            </>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            capture="environment"
-                                            onChange={(e) => setIdBarcode(e.target.files[0])}
-                                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="verification-slot">
-                                    <label className="form-label mb-2 block">Live Face Verification</label>
-                                    <div style={{
-                                        height: 200,
-                                        border: '2px dashed var(--border-color)',
-                                        borderRadius: 'var(--radius-md)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        background: facePic ? 'rgba(0, 212, 255, 0.05)' : 'transparent',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {facePic ? (
-                                            <>
-                                                <img src={URL.createObjectURL(facePic)} alt="Face Verification" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                <div style={{ position: 'absolute', top: 5, right: 5 }}><CheckCircle2 size={20} color="var(--accent)" /></div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <User size={32} className="mb-2" style={{ color: 'var(--text-dim)' }} />
-                                                <p style={{ fontSize: 12, opacity: 0.7 }}>Capture live face verification</p>
-                                            </>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            capture="user"
-                                            onChange={(e) => setFacePic(e.target.files[0])}
-                                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => setStep(1)} className="btn btn-secondary w-1/3">Back</button>
-                                <button type="submit" className="btn btn-primary w-2/3" disabled={loading}>
-                                    {loading ? <Activity className="animate-pulse" size={18} /> : <>Complete Enrollment <ShieldCheck size={18} /></>}
-                                </button>
-                            </div>
-                        </>
-                    )}
+                    <button type="submit" className="btn btn-primary btn-lg w-full mt-4" disabled={loading}>
+                        {loading ? <Activity className="animate-pulse" size={18} /> : <>Initialize Deployment <ArrowRight size={18} /></>}
+                    </button>
                 </form>
 
                 <p className="text-center mt-8" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
