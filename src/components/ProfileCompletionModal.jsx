@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 
 export default function ProfileCompletionModal({ isOpen, onClose, user, onComplete }) {
     const [formData, setFormData] = useState({
+        fullName: user?.full_name || '',
         dept: '',
         section: '',
         regNo: ''
@@ -17,7 +18,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
 
     const handleSave = async (e) => {
         e.preventDefault()
-        if (!formData.dept || !formData.section || !formData.regNo || !idBarcode || !facePic) {
+        if (!formData.fullName || !formData.dept || !formData.section || !formData.regNo || !idBarcode || !facePic) {
             return setError('All identity credentials and captures are required for secure authorization.')
         }
 
@@ -41,6 +42,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
             const { error: updateError } = await supabase
                 .from('profiles')
                 .update({
+                    full_name: formData.fullName,
                     dept: formData.dept,
                     section: formData.section,
                     reg_no: formData.regNo,
@@ -87,6 +89,20 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                     )}
 
                     <form onSubmit={handleSave} className="flex flex-col gap-4">
+                        <div className="form-group">
+                            <label className="form-label">Full Name</label>
+                            <div style={{ position: 'relative' }}>
+                                <User size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                                <input
+                                    className="form-input" style={{ paddingLeft: '36px' }}
+                                    placeholder="Enter your full name"
+                                    value={formData.fullName}
+                                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className="form-group">
                             <label className="form-label">Department</label>
                             <div style={{ position: 'relative' }}>
