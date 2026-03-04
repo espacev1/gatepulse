@@ -8,8 +8,7 @@ export default function Register() {
         fullName: '',
         email: '',
         password: '',
-        confirmPassword: '',
-        role: 'participant'
+        confirmPassword: ''
     })
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -29,7 +28,7 @@ export default function Register() {
 
         setLoading(true)
         try {
-            await register(formData.email, formData.password, formData.fullName, formData.role)
+            await register(formData.email, formData.password, formData.fullName, 'participant')
             navigate('/login')
         } catch (err) {
             setError(err.message || 'System error during registration.')
@@ -154,15 +153,6 @@ export default function Register() {
                                 />
                             </div>
                         </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Access Level Provisioning</label>
-                        <select name="role" className="form-select" value={formData.role} onChange={handleChange}>
-                            <option value="participant">LEVEL 1: Participant</option>
-                            <option value="staff">LEVEL 2: Operational Staff</option>
-                            <option value="admin">LEVEL 3: Security Admin</option>
-                        </select>
                     </div>
 
                     <button type="submit" className="btn btn-primary btn-lg w-full mt-4" disabled={loading}>
