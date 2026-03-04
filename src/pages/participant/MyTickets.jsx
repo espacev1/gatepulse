@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info } from 'lucide-react'
+import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -8,6 +8,7 @@ export default function MyTickets() {
     const { user } = useAuth()
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(true)
+    const [revealMap, setRevealMap] = useState({})
 
     useEffect(() => {
         if (user) {
@@ -34,17 +35,7 @@ export default function MyTickets() {
         if (!user) return
         setLoading(true)
 
-        // Fetch tickets where the participant's user_id matches current user
-        const { data, error } = await supabase
-            .from('tickets')
-            .select(`
-                *,
-                events (*)
-            `)
-            .eq('participants.user_id', user.id)
-
-        // Supabase doesn't support deep filtering directly on nested objects easily in a single select eq
-        // So we join via participant
+        // Supabase join via participant
         const { data: ticketData } = await supabase
             .from('tickets')
             .select(`
@@ -61,6 +52,13 @@ export default function MyTickets() {
             setTickets(ticketData)
         }
         setLoading(false)
+    }
+
+    const toggleReveal = (ticketId) => {
+        setRevealMap(prev => ({
+            ...prev,
+            [ticketId]: !prev[ticketId]
+        }))
     }
 
     const downloadBadge = (ticket) => {
@@ -94,103 +92,120 @@ export default function MyTickets() {
                     <p>Access level verification pending. Register for an event to provision tokens.</p>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 'var(--space-8)' }}>
-                    {tickets.map((ticket, i) => (
-                        <div key={ticket.id} className="card" style={{
-                            padding: 0, overflow: 'hidden', background: 'var(--bg-deepest)',
-                            border: '1px solid var(--border-accent)',
-                            animation: `fadeInUp 0.5s ease ${i * 0.12}s both`,
-                            boxShadow: 'var(--shadow-xl), var(--shadow-glow)'
-                        }}>
-                            {/* Badge Top Header */}
-                            <div style={{
-                                background: 'var(--bg-panel)', padding: '12px 20px',
-                                borderBottom: '1px solid var(--border-color)',
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 'var(--space-12)' }}>
+                    {tickets.map((ticket, i) => {
+                        const isRevealed = revealMap[ticket.id];
+                        return (
+                            <div key={ticket.id} className="card" style={{
+                                padding: 0, overflow: 'hidden', background: 'var(--bg-deepest)',
+                                border: '1px solid var(--border-accent)',
+                                animation: `fadeInUp 0.5s ease ${i * 0.12}s both`,
+                                boxShadow: 'var(--shadow-xl), var(--shadow-glow)',
+                                borderRadius: 'var(--radius-xl)'
                             }}>
-                                <div className="flex items-center gap-2">
-                                    <Shield size={14} color="var(--accent)" />
-                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>GATE PULSE SECURE</span>
-                                </div>
-                                <div className="live-dot" style={{ background: ticket.is_validated ? 'var(--status-warn)' : 'var(--status-ok)' }} />
-                            </div>
-
-                            {/* Identity Section */}
-                            <div style={{ padding: '24px 24px 0', textAlign: 'center' }}>
+                                {/* Badge Top Header */}
                                 <div style={{
-                                    width: 64, height: 64, borderRadius: 'var(--radius-xl)',
-                                    background: 'var(--accent-gradient)', margin: '0 auto 12px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    boxShadow: 'var(--shadow-glow)'
+                                    background: 'var(--bg-panel)', padding: '16px 20px',
+                                    borderBottom: '1px solid var(--border-color)',
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                 }}>
-                                    <ShieldCheck size={32} color="var(--bg-deepest)" />
-                                </div>
-                                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-                                    {user?.full_name || 'Authorized Entity'}
-                                </h2>
-                                <p style={{ fontSize: '10px', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-                                    Access Profile: {user?.role || 'PARTICIPANT'}
-                                </p>
-                            </div>
-
-                            {/* QR Token HUD */}
-                            <div style={{ padding: '24px', position: 'relative' }}>
-                                {/* HUD Corners */}
-                                <div style={{ position: 'absolute', top: 12, left: 12, width: 12, height: 12, borderLeft: '1px solid var(--accent)', borderTop: '1px solid var(--accent)', opacity: 0.4 }} />
-                                <div style={{ position: 'absolute', top: 12, right: 12, width: 12, height: 12, borderRight: '1px solid var(--accent)', borderTop: '1px solid var(--accent)', opacity: 0.4 }} />
-                                <div style={{ position: 'absolute', bottom: 12, left: 12, width: 12, height: 12, borderLeft: '1px solid var(--accent)', borderBottom: '1px solid var(--accent)', opacity: 0.4 }} />
-                                <div style={{ position: 'absolute', bottom: 12, right: 12, width: 12, height: 12, borderRight: '1px solid var(--accent)', borderBottom: '1px solid var(--accent)', opacity: 0.4 }} />
-
-                                <div style={{
-                                    background: 'white', padding: '16px', borderRadius: 'var(--radius-lg)',
-                                    display: 'flex', justifyContent: 'center', boxShadow: '0 0 40px rgba(0, 212, 255, 0.15)'
-                                }}>
-                                    <QRCodeSVG value={ticket.qr_token} size={150} level="H" bgColor="white" fgColor="#060E1A" />
-                                </div>
-                            </div>
-
-                            {/* Token Deets */}
-                            <div style={{ textAlign: 'center', paddingBottom: '12px' }}>
-                                <code style={{ fontSize: '9px', color: 'var(--text-dim)', letterSpacing: '2px', background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 'var(--radius-sm)' }}>
-                                    {ticket.qr_token}
-                                </code>
-                            </div>
-
-                            {/* Event Info Panel */}
-                            <div style={{ background: 'rgba(0,212,255,0.03)', padding: '20px 24px', borderTop: '1px solid var(--border-color)' }}>
-                                <div className="panel-header" style={{ marginBottom: '12px' }}>Operational Parameters</div>
-                                <h3 style={{ fontSize: 'var(--font-base)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>
-                                    {ticket.event?.name}
-                                </h3>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                        <div style={{ fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>DEPLOYMENT</div>
-                                        <div className="flex items-center gap-2"><MapPin size={10} /> {ticket.event?.location}</div>
+                                    <div className="flex items-center gap-2">
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }} />
+                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.15em' }}>ENCRYPTED CREDENTIAL</span>
                                     </div>
-                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                        <div style={{ fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>SCHEDULE</div>
-                                        <div className="flex items-center gap-2"><CalendarDays size={10} /> {ticket.event ? new Date(ticket.event.start_time).toLocaleDateString() : 'N/A'}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div style={{ padding: '16px 24px 24px' }}>
-                                <button onClick={() => downloadBadge(ticket)} className="btn btn-primary w-full" style={{ gap: 'var(--space-3)' }}>
-                                    <Download size={14} /> DOWNLOAD CREDENTIAL
-                                </button>
-                                <div style={{ height: '4px' }} />
-                                <div className="text-center">
-                                    <span style={{ fontSize: '9px', color: 'var(--text-dim)', fontStyle: 'italic' }}>
-                                        Authorized for GATE: {ticket.event?.location?.toUpperCase()}
+                                    <span className={`badge ${ticket.is_validated ? 'badge-warning' : 'badge-success'}`}>
+                                        {ticket.is_validated ? 'VALIDATED' : 'PROVISIONED'}
                                     </span>
                                 </div>
+
+                                {/* Identity Section */}
+                                <div style={{ padding: '32px 24px 0', textAlign: 'center' }}>
+                                    <div style={{
+                                        width: 80, height: 80, borderRadius: '50%',
+                                        background: 'var(--accent-glow)', margin: '0 auto 16px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: '1px solid var(--accent)',
+                                        boxShadow: 'inset 0 0 20px rgba(0,212,255,0.2)'
+                                    }}>
+                                        <ShieldCheck size={40} color="var(--accent)" />
+                                    </div>
+                                    <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        {user?.full_name}
+                                    </h2>
+                                    <div style={{ height: 1, width: 40, background: 'var(--accent)', margin: '12px auto' }} />
+                                    <p style={{ fontSize: '11px', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                        {ticket.event?.name} Security Node
+                                    </p>
+                                </div>
+
+                                {/* QR Token HUD with SECURITY OVERLAY */}
+                                <div style={{ padding: '32px', position: 'relative' }}>
+                                    <div style={{
+                                        background: '#fff', padding: '24px', borderRadius: '24px',
+                                        display: 'flex', justifyContent: 'center', position: 'relative',
+                                        transition: 'all 0.3s ease',
+                                        filter: isRevealed ? 'none' : 'blur(15px) grayscale(100%)',
+                                        transform: isRevealed ? 'scale(1)' : 'scale(0.95)',
+                                        opacity: isRevealed ? 1 : 0.3
+                                    }}>
+                                        <QRCodeSVG value={ticket.qr_token} size={180} level="H" bgColor="white" fgColor="#060E1A" />
+                                    </div>
+
+                                    {!isRevealed && (
+                                        <div style={{
+                                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+                                            zIndex: 2, cursor: 'pointer'
+                                        }} onClick={() => toggleReveal(ticket.id)}>
+                                            <div style={{ padding: '12px', background: 'var(--accent)', borderRadius: '50%', color: '#000', boxShadow: '0 0 20px var(--accent)' }}>
+                                                <Lock size={20} />
+                                            </div>
+                                            <span style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 800, letterSpacing: '0.1em' }}>TAP TO REVEAL KEY</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Token Meta Hud */}
+                                <div style={{ background: 'var(--bg-panel)', margin: '0 24px 24px', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '9px', color: 'var(--text-dim)', fontWeight: 800 }}>SECTOR_ID</div>
+                                            <div style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{ticket.event?.location}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '9px', color: 'var(--text-dim)', fontWeight: 800 }}>TOKEN_UUID</div>
+                                            <div style={{ fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
+                                                {isRevealed ? ticket.qr_token.slice(-8) : '********'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Actions HUD */}
+                                <div style={{ padding: '0 24px 32px' }}>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <button onClick={() => toggleReveal(ticket.id)} className="btn btn-secondary flex-1" style={{ fontSize: '11px', gap: '8px' }}>
+                                            {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />} {isRevealed ? 'HIDE' : 'SHOW'}
+                                        </button>
+                                        <button onClick={() => downloadBadge(ticket)} className="btn btn-primary flex-1" style={{ fontSize: '11px', gap: '8px' }}>
+                                            <Download size={14} /> DOWNLOAD
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
+
+            <div className="mt-12 p-6 card-glass text-center" style={{ maxWidth: 500, margin: '0 auto' }}>
+                <Info size={20} color="var(--accent)" className="mx-auto mb-3" />
+                <p style={{ fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
+                    This digital credential is cryptographically linked to your identity.
+                    Redistribution or sharing of the secure QR token may result in account termination
+                    and security sector blacklisting.
+                </p>
+            </div>
         </div>
     )
 }
