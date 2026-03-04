@@ -25,18 +25,24 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
         }
     }, [isCameraActive])
 
+    useEffect(() => {
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop())
+            }
+        }
+    }, [])
+
     if (!isOpen) return null
 
     const startCamera = async () => {
         try {
+            setError('')
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user' },
                 audio: false
             })
             streamRef.current = stream
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-            }
             setIsCameraActive(true)
         } catch (err) {
             setError('Unable to access camera. Please ensure permissions are granted.')
@@ -70,6 +76,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
     const handleSave = async (e) => {
         e.preventDefault()
         if (!formData.fullName || !formData.dept || !formData.section || !formData.regNo || !idBarcode || !facePic) {
+            if (isCameraActive) return setError('Please click the "CAPTURE" button to take your face photo first.')
             return setError('All identity credentials and captures are required for secure authorization.')
         }
 
@@ -231,6 +238,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                                                 ref={videoRef}
                                                 autoPlay
                                                 playsInline
+                                                muted
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
                                             />
                                             <div style={{ position: 'absolute', inset: 0, border: '2px solid var(--accent)', opacity: 0.3, pointerEvents: 'none', margin: '20px', borderRadius: '50%' }} />
