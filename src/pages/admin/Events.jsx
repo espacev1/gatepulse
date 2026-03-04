@@ -65,8 +65,16 @@ export default function AdminEvents() {
     }
 
     const handleSave = async () => {
+        if (!form.start_time || !form.end_time) {
+            return alert('Start time and End time are required.')
+        }
+        if (!form.name) {
+            return alert('Event name is required.')
+        }
         const payload = {
             ...form,
+            start_time: new Date(form.start_time).toISOString(),
+            end_time: new Date(form.end_time).toISOString(),
             created_by: user.id,
             updated_at: new Date().toISOString()
         }
@@ -208,6 +216,17 @@ export default function AdminEvents() {
                                 <div className="form-group">
                                     <label className="form-label">Max Capacity (Entities)</label>
                                     <input type="number" className="form-input" value={form.max_capacity} onChange={e => setForm({ ...form, max_capacity: parseInt(e.target.value) })} />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Activation Time (Start)</label>
+                                    <input type="datetime-local" className="form-input" value={form.start_time ? form.start_time.slice(0, 16) : ''} onChange={e => setForm({ ...form, start_time: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Deactivation Time (End)</label>
+                                    <input type="datetime-local" className="form-input" value={form.end_time ? form.end_time.slice(0, 16) : ''} onChange={e => setForm({ ...form, end_time: e.target.value })} />
                                 </div>
                             </div>
 
