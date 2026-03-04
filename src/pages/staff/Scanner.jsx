@@ -32,7 +32,7 @@ export default function StaffScanner() {
         setLoading(true)
         const [ticketsRes, eventsRes] = await Promise.all([
             supabase.from('tickets').select('qr_token').eq('is_validated', true),
-            supabase.from('events').select('*').order('date', { ascending: false })
+            supabase.from('events').select('*').order('created_at', { ascending: false })
         ])
 
         if (ticketsRes.data) setValidatedTickets(new Set(ticketsRes.data.map(t => t.qr_token)))
