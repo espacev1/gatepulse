@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
     staff_id UUID REFERENCES public.profiles(id)
 );
 
+-- 6. SYSTEM FRESH START (RUN THIS TO WIPE DATA)
+-- TRUNCATE public.attendance_logs, public.tickets, public.participants, public.events, public.profiles CASCADE;
+
 -- Row Level Security (RLS) Policies
 
 -- 1. Profiles: Ensure every auth user has a profile
@@ -69,7 +72,21 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO public.profiles (id, email, full_name, role)
-    VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name', 'participant');
+    VALUES (
+        new.id, 
+        new.email, 
+        new.raw_user_meta_data->>'full_name', 
+        CASE 
+            WHEN new.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
+            ELSE 'participant'
+        END
+    )
+    ON CONFLICT (id) DO UPDATE 
+    SET full_name = EXCLUDED.full_name, 
+        role = CASE 
+            WHEN EXCLUDED.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
+            ELSE profiles.role 
+        END;
     RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
