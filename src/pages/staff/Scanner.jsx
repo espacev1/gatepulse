@@ -21,7 +21,13 @@ export default function StaffScanner() {
     const [scanResult, setScanResult] = useState(null)
     const [scanning, setScanning] = useState(false)
     const [validatedTickets, setValidatedTickets] = useState(new Set())
+    const [toast, setToast] = useState(null)
     const html5QrRef = useRef(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     // Load initial data
     useEffect(() => {
@@ -133,9 +139,10 @@ export default function StaffScanner() {
 
         if (error) {
             console.error('Telemetric logging failed:', error)
-            // Fallback for UI feedback if needed
+            showToast(`LOG_SYNC_FAILED: ${error.message}`, 'error')
         } else {
             console.log('Telemetric log committed:', status)
+            showToast(`SYSLOG_COMMITTED: ${status.toUpperCase()}`)
         }
     }
 
@@ -254,6 +261,25 @@ export default function StaffScanner() {
 
     return (
         <div className="page-container" style={{ maxWidth: 1000 }}>
+            {/* Telemetric Toast Overlay */}
+            {toast && (
+                <div style={{
+                    position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999,
+                    animation: 'fadeInRight 0.3s ease both'
+                }}>
+                    <div className={`card ${toast.type === 'error' ? 'border-critical' : 'border-accent'}`} style={{
+                        padding: '12px 24px', background: 'var(--bg-panel)',
+                        backdropFilter: 'blur(10px)', borderLeft: '4px solid ' + (toast.type === 'error' ? 'var(--status-critical)' : 'var(--accent)'),
+                        boxShadow: 'var(--shadow-xl)'
+                    }}>
+                        <div className="flex items-center gap-3">
+                            <Activity size={18} color={toast.type === 'error' ? 'var(--status-critical)' : 'var(--accent)'} />
+                            <span className="font-mono" style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.05em' }}>{toast.message}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* HUD Header */}
             <div className="page-header" style={{ marginBottom: 'var(--space-8)' }}>
                 <div className="flex items-center gap-4">

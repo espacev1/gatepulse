@@ -68,6 +68,11 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
     staff_id UUID REFERENCES public.profiles(id)
 );
 
+-- Enable Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance_logs;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.participants;
+
 -- 6. SYSTEM FRESH START (RUN THIS TO WIPE DATA)
 -- TRUNCATE public.attendance_logs, public.tickets, public.participants, public.events, public.profiles CASCADE;
 
