@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
     Shield, Activity, Users, CalendarDays, TrendingUp, AlertTriangle,
-    Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight
+    Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight, Trash2, Plus
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { mockEvents, mockStats, mockUsers } from '../../data/mockData'
