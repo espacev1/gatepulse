@@ -67,13 +67,16 @@ export default function Register() {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div style={{
-                        width: 48, height: 48, background: 'var(--accent-gradient)',
-                        borderRadius: 'var(--radius-xl)', display: 'flex',
+                        width: 60, height: 60,
+                        display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
                         margin: '0 auto var(--space-4)',
-                        boxShadow: 'var(--shadow-glow-strong)',
                     }}>
-                        <ShieldCheck size={24} color="#060E1A" strokeWidth={2.5} />
+                        <img
+                            src="/logo_refined.png"
+                            alt="GatePulse Logo"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     <h1 className="page-title" style={{ fontSize: 'var(--font-xl)', marginBottom: 4 }}>Entity Registration</h1>
                     <p className="page-subtitle">Provision New Security Credentials</p>

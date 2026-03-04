@@ -30,12 +30,14 @@ export default function Landing() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                     <div style={{
-                        width: 34, height: 34, background: 'var(--accent-gradient)',
-                        borderRadius: 'var(--radius-lg)',
+                        width: 34, height: 34,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: 'var(--shadow-glow)',
                     }}>
-                        <Shield size={18} color="#060E1A" strokeWidth={2.5} />
+                        <img
+                            src="/logo_refined.png"
+                            alt="GatePulse Logo"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                         GATE PULSE
@@ -274,7 +276,11 @@ export default function Landing() {
                 letterSpacing: '0.03em',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-                    <Shield size={14} color="var(--accent)" />
+                    <img
+                        src="/logo_refined.png"
+                        alt="GatePulse Logo"
+                        style={{ width: 16, height: 16, objectFit: 'contain' }}
+                    />
                     <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>GATE PULSE</span>
                 </div>
                 © 2026 Gate Pulse — Secure Event Intelligence Platform

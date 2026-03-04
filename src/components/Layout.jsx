@@ -61,13 +61,15 @@ export default function Layout() {
                     minHeight: 'var(--navbar-height)',
                 }}>
                     <div style={{
-                        width: 34, height: 34,
-                        background: 'var(--accent-gradient)',
-                        borderRadius: 'var(--radius-lg)',
+                        width: 40, height: 40,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0, boxShadow: 'var(--shadow-glow)',
+                        flexShrink: 0,
                     }}>
-                        <Shield size={18} color="#060E1A" strokeWidth={2.5} />
+                        <img
+                            src="/logo_refined.png"
+                            alt="GatePulse Logo"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
                     </div>
                     {sidebarOpen && (
                         <div style={{ animation: 'fadeIn 0.2s ease' }}>
@@ -75,7 +77,7 @@ export default function Layout() {
                                 GATE PULSE
                             </div>
                             <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -1 }}>
-                                Event Security
+                                Unified Security
                             </div>
                         </div>
                     )}

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { mockUsers } from '../data/mockData'
+import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -9,49 +9,89 @@ export function AuthProvider({ children }) {
     const [unlockedRole, setUnlockedRole] = useState(null)
 
     useEffect(() => {
-        // Check for persisted session
-        const saved = localStorage.getItem('gatepulse_user')
-        if (saved) {
-            try { setUser(JSON.parse(saved)) } catch { }
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single()
+
+                if (profile) {
+                    setUser({
+                        ...session.user,
+                        ...profile,
+                        is_super_admin: profile.email === 'shanmukhamanikanta.inti@gmail.com'
+                    })
+                }
+            } else {
+                // Fallback to local storage for demo persistence if needed, 
+                // but prioritize real session
+                const saved = localStorage.getItem('gatepulse_user')
+                if (saved) {
+                    try { setUser(JSON.parse(saved)) } catch { }
+                }
+            }
+            setLoading(false)
         }
-        setLoading(false)
+        checkSession()
     }, [])
 
     const login = async (email, password, role) => {
-        // Super Admin check
-        const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
 
-        // Demo mode — match by email or fallback to role-based mock user
-        const demoUser = mockUsers.find(u => u.email === email) ||
-            mockUsers.find(u => u.role === (unlockedRole || role)) ||
-            mockUsers[0]
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single()
 
+        if (!profile) throw new Error('Profile not found')
+
+        const isSuperAdmin = profile.email === 'shanmukhamanikanta.inti@gmail.com'
         const sessionUser = {
-            ...demoUser,
-            role: isSuperAdmin ? 'admin' : (unlockedRole || role || demoUser.role),
+            ...data.user,
+            ...profile,
+            role: isSuperAdmin ? 'admin' : (unlockedRole || profile.role || role),
             is_super_admin: isSuperAdmin
         }
 
         setUser(sessionUser)
         localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
-        setUnlockedRole(null) // Reset after login
+        setUnlockedRole(null)
         return sessionUser
     }
 
     const register = async (email, password, fullName, role) => {
-        const newUser = {
-            id: `user-${Date.now()}`,
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: fullName }
+            }
+        })
+        if (error) throw error
+
+        const newUserProfile = {
+            id: data.user.id,
             email,
             full_name: fullName,
-            role: role || 'participant',
-            avatar: null,
+            role: role || 'participant'
         }
-        setUser(newUser)
-        localStorage.setItem('gatepulse_user', JSON.stringify(newUser))
-        return newUser
+
+        const { error: profileError } = await supabase.from('profiles').insert(newUserProfile)
+        if (profileError) throw profileError
+
+        const sessionUser = { ...data.user, ...newUserProfile }
+        setUser(sessionUser)
+        localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
+        return sessionUser
     }
 
-    const logout = () => {
+    const logout = async () => {
+        await supabase.auth.signOut()
         setUser(null)
         setUnlockedRole(null)
         localStorage.removeItem('gatepulse_user')
