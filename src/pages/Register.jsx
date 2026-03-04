@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { v4 as uuidv4 } from 'uuid'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Shield, Mail, Lock, User, ShieldCheck, ArrowRight, Activity, AlertCircle } from 'lucide-react'
 
@@ -12,6 +14,7 @@ export default function Register() {
     })
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [step, setStep] = useState(1) // Keep for potential future use or just use 1
     const { register } = useAuth()
     const navigate = useNavigate()
 
@@ -23,47 +26,21 @@ export default function Register() {
         e.preventDefault()
         setError('')
 
-        if (step === 1) {
-            if (formData.password !== formData.confirmPassword) {
-                return setError('Cryptographic mismatch: Passwords do not align.')
-            }
-            setStep(2)
-            return
-        }
-
-        if (!idBarcode || !facePic) {
-            return setError('Verification data missing. Both ID scan and Face verification required.')
+        if (formData.password !== formData.confirmPassword) {
+            return setError('Cryptographic mismatch: Passwords do not align.')
         }
 
         setLoading(true)
         try {
             const qrToken = `GP-${uuidv4().slice(0, 8).toUpperCase()}`
 
-            // Upload images
-            const idPath = `barcodes/${Date.now()}-${formData.email}.jpg`
-            const facePath = `faces/${Date.now()}-${formData.email}.jpg`
-
-            const [idUpload, faceUpload] = await Promise.all([
-                supabase.storage.from('id-barcodes').upload(idPath, idBarcode),
-                supabase.storage.from('face-verification').upload(facePath, facePic)
-            ])
-
-            if (idUpload.error) throw idUpload.error
-            if (faceUpload.error) throw faceUpload.error
-
-            const idUrl = supabase.storage.from('id-barcodes').getPublicUrl(idPath).data.publicUrl
-            const faceUrl = supabase.storage.from('face-verification').getPublicUrl(facePath).data.publicUrl
-
             await register(formData.email, formData.password, formData.fullName, 'participant', {
-                dept: formData.dept,
-                section: formData.section,
-                reg_no: formData.regNo,
-                id_barcode_url: idUrl,
-                face_url: faceUrl,
-                qr_token: qrToken
+                qr_token: qrToken,
+                created_at: new Date().toISOString()
             })
             navigate('/events')
         } catch (err) {
+            console.error('Registration failure:', err)
             setError(err.message || 'System error during registration.')
         } finally {
             setLoading(false)
