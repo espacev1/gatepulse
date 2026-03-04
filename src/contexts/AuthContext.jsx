@@ -123,10 +123,24 @@ export function AuthProvider({ children }) {
 
         if (!data.user) throw new Error('Registration failed: User identity not established.')
 
+        const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
+        const assignedRole = isSuperAdmin ? 'admin' : 'participant'
+
+        // Explicitly create profile in DB (don't rely solely on trigger)
+        if (data.session) {
+            await supabase.from('profiles').upsert({
+                id: data.user.id,
+                email: data.user.email,
+                full_name: fullName,
+                role: assignedRole
+            }, { onConflict: 'id' })
+        }
+
         const sessionUser = {
             ...data.user,
             full_name: fullName,
-            role: email === 'shanmukhamanikanta.inti@gmail.com' ? 'admin' : 'participant'
+            role: assignedRole,
+            is_super_admin: isSuperAdmin
         }
         setUser(sessionUser)
         localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
@@ -137,6 +151,7 @@ export function AuthProvider({ children }) {
 
         return sessionUser
     }
+
 
     const logout = async () => {
         await supabase.auth.signOut()
