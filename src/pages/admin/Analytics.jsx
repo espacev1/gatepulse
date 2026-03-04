@@ -51,10 +51,10 @@ export default function AdminAnalytics() {
             supabase.from('events').select('name, registered_count'),
             supabase.from('attendance_logs').select(`
                 timestamp,
+                event_id,
                 verification_status,
                 tickets (
                     ticket_type,
-                    event_id,
                     participants (
                         profiles (*)
                     )
@@ -232,19 +232,22 @@ export default function AdminAnalytics() {
                                 {analyticsData.recentLogs.map((log, i) => {
                                     const profile = log.tickets?.participants?.profiles;
                                     const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+                                    const isSuccess = log.verification_status === 'success';
 
                                     return (
                                         <tr key={i}>
                                             <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                                            <td><span className="badge badge-info">{log.tickets?.ticket_type?.toUpperCase() || 'UNSPECIFIED'}</span></td>
-                                            <td style={{ fontWeight: 600 }}>{safeName || 'ANONYMOUS_ENTITY'}</td>
-                                            <td className="font-mono" style={{ color: log.verification_status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
+                                            <td><span className={`badge ${log.tickets?.ticket_type ? 'badge-info' : 'badge-secondary'}`}>{log.tickets?.ticket_type?.toUpperCase() || 'AD-HOC'}</span></td>
+                                            <td style={{ fontWeight: 600 }}>{safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY')}</td>
+                                            <td className="font-mono" style={{ color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
                                                 {log.verification_status?.toUpperCase() || 'UNKNOWN'}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
-                                                    <Shield size={10} color="var(--status-ok)" />
-                                                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--status-ok)' }}>AUTHENTICATED</span>
+                                                    <Shield size={10} color={isSuccess ? 'var(--status-ok)' : 'var(--status-critical)'} />
+                                                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)' }}>
+                                                        {isSuccess ? 'AUTHENTICATED' : 'DENIED'}
+                                                    </span>
                                                 </div>
                                             </td>
                                         </tr>

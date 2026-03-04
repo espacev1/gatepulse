@@ -44,19 +44,19 @@ export default function StaffCheckIns() {
             .select(`
                 id,
                 ticket_id,
+                event_id,
                 timestamp,
                 verification_status,
+                events (name),
                 tickets (
-                    event_id,
                     ticket_type,
-                    events (name),
                     participants (
                         profiles (*)
                     )
                 )
             `)
             .order('timestamp', { ascending: false })
-            .limit(50)
+            .limit(100)
 
         if (error) {
             console.error('CRITICAL_LOGS_FETCH_ERROR:', error)
@@ -75,12 +75,12 @@ export default function StaffCheckIns() {
 
                 return {
                     id: log.id,
-                    ticket_id: log.ticket_id,
+                    ticket_id: log.ticket_id || 'N/A',
                     timestamp: log.timestamp,
-                    event_name: log.tickets?.events?.name || 'Unknown Event',
-                    event_id: log.tickets?.event_id,
-                    full_name: safeName || 'Anonymous Entity',
-                    verification_status: log.verification_status || 'success'
+                    event_name: log.events?.name || 'Unknown Sector',
+                    event_id: log.event_id,
+                    full_name: safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY'),
+                    verification_status: log.verification_status || 'invalid'
                 }
             }))
         }
