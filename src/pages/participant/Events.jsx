@@ -64,7 +64,12 @@ export default function ParticipantEvents() {
             .select()
             .single()
 
-        if (pError) return alert('Registration error: ' + pError.message)
+        if (pError) {
+            if (pError.code === '23503') {
+                return alert('IDENTITY VERIFICATION FAILURE: Your profile record is missing from the database. Please try logging out and logging back in to re-synchronize your identity.')
+            }
+            return alert('Registration error: ' + pError.message)
+        }
 
         setRegisteredEvents(prev => new Set([...prev, event.id]))
         setShowSuccess(event.id)

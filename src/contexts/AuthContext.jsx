@@ -52,12 +52,14 @@ export function AuthProvider({ children }) {
         }
         checkSession()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (!session) {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
                 setUser(null)
                 localStorage.removeItem('gatepulse_user')
+            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+                // Only re-check if we don't have a user or if the ID changed
+                checkSession()
             }
-            // We don't force setLoading(false) here because checkSession handles initial load
         })
 
         return () => subscription.unsubscribe()
