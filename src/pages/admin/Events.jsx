@@ -3,9 +3,11 @@ import {
     CalendarDays, MapPin, Users, Plus, Search, Filter,
     MoreVertical, Edit2, Trash2, X, Check, Activity, Clock
 } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 import { mockEvents as initialEvents } from '../../data/mockData'
 
 export default function AdminEvents() {
+    const { user } = useAuth()
     const [events, setEvents] = useState(initialEvents)
     const [search, setSearch] = useState('')
     const [showModal, setShowModal] = useState(false)
@@ -36,9 +38,11 @@ export default function AdminEvents() {
                     <h1 className="page-title">Operational Node Management</h1>
                     <p className="page-subtitle">Configure and monitor event deployments and availability.</p>
                 </div>
-                <button onClick={() => handleOpenModal()} className="btn btn-primary">
-                    <Plus size={16} /> Deploy New Node
-                </button>
+                {user?.is_super_admin && (
+                    <button onClick={() => handleOpenModal()} className="btn btn-primary">
+                        <Plus size={16} /> Deploy New Node
+                    </button>
+                )}
             </div>
 
             {/* Filters HUD */}
@@ -94,7 +98,9 @@ export default function AdminEvents() {
                         <div className="flex gap-2">
                             <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
                             <button className="btn btn-ghost btn-icon"><Activity size={14} /></button>
-                            <button className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
+                            {user?.is_super_admin && (
+                                <button className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
+                            )}
                         </div>
                     </div>
                 ))}

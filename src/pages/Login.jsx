@@ -129,17 +129,6 @@ export default function Login() {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-8" style={{ borderTop: '1px solid rgba(0,212,255,0.06)' }}>
-                    <p className="text-center" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-4)' }}>
-                        Protocol Shortcuts (Demo)
-                    </p>
-                    <div className="grid-3" style={{ gap: 'var(--space-2)' }}>
-                        <button onClick={() => quickLogin('admin@gatepulse.com', 'admin123')} className="btn btn-ghost btn-sm" style={{ fontSize: '10px' }}>ADMIN</button>
-                        <button onClick={() => quickLogin('staff@gatepulse.com', 'staff123')} className="btn btn-ghost btn-sm" style={{ fontSize: '10px' }}>STAFF</button>
-                        <button onClick={() => quickLogin('user@test.com', 'user123')} className="btn btn-ghost btn-sm" style={{ fontSize: '10px' }}>USER</button>
-                    </div>
-                </div>
-
                 <p className="text-center mt-8" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
                     Unauthorized access is strictly logged.{' '}
                     <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Apply for Credentials</Link>

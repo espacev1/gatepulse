@@ -4,9 +4,11 @@ import {
     Clock, Server, Zap, PieChart, BarChart3, ArrowUpRight
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import { mockEvents, mockStats } from '../../data/mockData'
+import { mockEvents, mockStats, mockUsers } from '../../data/mockData'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function AdminDashboard() {
+    const { user } = useAuth()
     const [timeRange, setTimeRange] = useState('5m')
 
     // SOC Style Metric Bar Component
@@ -180,55 +182,87 @@ export default function AdminDashboard() {
             </div>
 
             {/* Bottom Section — Active Operations Log */}
-            <div className="card">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="panel-header" style={{ marginBottom: 0 }}>Active Operational Nodes (Events)</div>
-                    <div className="badge badge-info"><Clock size={12} /> Real-time Streaming</div>
-                </div>
-                <div className="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Node ID</th>
-                                <th>Resource Name</th>
-                                <th>Status</th>
-                                <th>Load Factor</th>
-                                <th>Last Update</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mockEvents.map((event, i) => (
-                                <tr key={event.id}>
-                                    <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{event.id}</td>
-                                    <td>
-                                        <div className="flex items-center gap-2">
-                                            <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
-                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{event.name}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
-                                            {event.status}
-                                        </span>
-                                    </td>
-                                    <td style={{ width: '150px' }}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="progress-bar-track" style={{ flex: 1 }}>
-                                                <div className="progress-bar-fill" style={{ width: `${(event.registered_count / event.max_capacity) * 100}%` }} />
-                                            </div>
-                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 700 }}>{Math.round((event.registered_count / event.max_capacity) * 100)}%</span>
-                                        </div>
-                                    </td>
-                                    <td style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>{new Date(event.start_time).toLocaleTimeString()}</td>
-                                    <td>
-                                        <button className="btn-icon" title="View Source"><Activity size={14} /></button>
-                                    </td>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-6)' }}>
+                <div className="card">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="panel-header" style={{ marginBottom: 0 }}>Active Operational Nodes (Events)</div>
+                        <div className="badge badge-info"><Clock size={12} /> Real-time Streaming</div>
+                    </div>
+                    <div className="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Node ID</th>
+                                    <th>Resource Name</th>
+                                    <th>Status</th>
+                                    <th>Load Factor</th>
+                                    <th>Last Update</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {mockEvents.map((event, i) => (
+                                    <tr key={event.id}>
+                                        <td className="font-mono" style={{ color: 'var(--accent)', fontSize: '11px' }}>{event.id}</td>
+                                        <td>
+                                            <div className="flex items-center gap-2">
+                                                <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
+                                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{event.name}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
+                                                {event.status}
+                                            </span>
+                                        </td>
+                                        <td style={{ width: '150px' }}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="progress-bar-track" style={{ flex: 1 }}>
+                                                    <div className="progress-bar-fill" style={{ width: `${(event.registered_count / event.max_capacity) * 100}%` }} />
+                                                </div>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 700 }}>{Math.round((event.registered_count / event.max_capacity) * 100)}%</span>
+                                            </div>
+                                        </td>
+                                        <td style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>{new Date(event.start_time).toLocaleTimeString()}</td>
+                                        <td>
+                                            <button className="btn-icon" title="View Source"><Activity size={14} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                {/* Admin Management - ONLY FOR SUPER ADMIN */}
+                {user?.is_super_admin && (
+                    <div className="card">
+                        <div className="panel-header">Admin Management</div>
+                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)', marginBottom: 'var(--space-4)' }}>Privileged node authority control.</p>
+
+                        <div className="flex flex-col gap-3">
+                            {mockUsers.filter(u => u.role === 'admin' && u.email !== user?.email).map(admin => (
+                                <div key={admin.id} className="flex justify-between items-center p-3" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                    <div className="flex items-center gap-3">
+                                        <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--secondary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Shield size={16} color="var(--secondary)" />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>{admin.full_name}</div>
+                                            <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email}</div>
+                                        </div>
+                                    </div>
+                                    <button className="btn-icon" style={{ color: 'var(--status-critical)' }} title="Revoke Privilege">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                            <button className="btn btn-ghost btn-sm w-full mt-2" style={{ border: '1px dashed var(--border-color)' }}>
+                                <Plus size={14} /> Provision Temporary Admin
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
