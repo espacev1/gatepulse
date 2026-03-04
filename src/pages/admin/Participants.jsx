@@ -46,7 +46,7 @@ export default function AdminParticipants() {
                 registration_status,
                 user:profiles!inner (full_name, email),
                 event:events (name),
-                ticket:tickets (id, is_validated)
+                ticket:tickets (id, is_validated, qr_token)
             `)
             .order('created_at', { ascending: false })
 
