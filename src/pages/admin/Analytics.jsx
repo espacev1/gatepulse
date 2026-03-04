@@ -56,7 +56,7 @@ export default function AdminAnalytics() {
                     ticket_type,
                     event_id,
                     participants (
-                        profiles (full_name)
+                        profiles (*)
                     )
                 )
             `).order('timestamp', { ascending: false }).limit(50)
@@ -226,22 +226,27 @@ export default function AdminAnalytics() {
                                 {analyticsData.recentLogs.length === 0 && (
                                     <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">SECURE REGISTRY EMPTY - NO ACCESS LOGS DETECTED</td></tr>
                                 )}
-                                {analyticsData.recentLogs.map((log, i) => (
-                                    <tr key={i}>
-                                        <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                                        <td><span className="badge badge-info">{log.tickets?.ticket_type?.toUpperCase() || 'UNSPECIFIED'}</span></td>
-                                        <td style={{ fontWeight: 600 }}>{log.tickets?.participants?.profiles?.full_name || 'ANONYMOUS_ENTITY'}</td>
-                                        <td className="font-mono" style={{ color: log.verification_status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
-                                            {log.verification_status?.toUpperCase() || 'UNKNOWN'}
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center gap-2">
-                                                <Shield size={10} color="var(--status-ok)" />
-                                                <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--status-ok)' }}>AUTHENTICATED</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {analyticsData.recentLogs.map((log, i) => {
+                                    const profile = log.tickets?.participants?.profiles;
+                                    const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+
+                                    return (
+                                        <tr key={i}>
+                                            <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
+                                            <td><span className="badge badge-info">{log.tickets?.ticket_type?.toUpperCase() || 'UNSPECIFIED'}</span></td>
+                                            <td style={{ fontWeight: 600 }}>{safeName || 'ANONYMOUS_ENTITY'}</td>
+                                            <td className="font-mono" style={{ color: log.verification_status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
+                                                {log.verification_status?.toUpperCase() || 'UNKNOWN'}
+                                            </td>
+                                            <td>
+                                                <div className="flex items-center gap-2">
+                                                    <Shield size={10} color="var(--status-ok)" />
+                                                    <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--status-ok)' }}>AUTHENTICATED</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

@@ -47,7 +47,7 @@ export default function StaffCheckIns() {
                     ticket_type,
                     events (name),
                     participants (
-                        profiles (full_name)
+                        profiles (*)
                     )
                 )
             `)
@@ -55,15 +55,20 @@ export default function StaffCheckIns() {
             .limit(50)
 
         if (data) {
-            setLogs(data.map(log => ({
-                id: log.id,
-                ticket_id: log.ticket_id,
-                timestamp: log.timestamp,
-                event_name: log.tickets?.events?.name || 'Unknown Event',
-                event_id: log.tickets?.event_id,
-                full_name: log.tickets?.participants?.profiles?.full_name || 'Anonymous',
-                verification_status: log.verification_status || 'success'
-            })))
+            setLogs(data.map(log => {
+                const profile = log.tickets?.participants?.profiles;
+                const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+
+                return {
+                    id: log.id,
+                    ticket_id: log.ticket_id,
+                    timestamp: log.timestamp,
+                    event_name: log.tickets?.events?.name || 'Unknown Event',
+                    event_id: log.tickets?.event_id,
+                    full_name: safeName || 'Anonymous Entity',
+                    verification_status: log.verification_status || 'success'
+                }
+            }))
         }
     }
 

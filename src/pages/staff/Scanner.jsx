@@ -122,6 +122,20 @@ export default function StaffScanner() {
 
     useEffect(() => { return () => { stopCamera() } }, [])
 
+    const logScan = async (status, ticketId, eventIdOverride = null) => {
+        try {
+            await supabase.from('attendance_logs').insert([{
+                ticket_id: ticketId,
+                event_id: eventIdOverride || selectedEvent?.id,
+                verification_status: status,
+                staff_id: staffUser?.id,
+                timestamp: new Date().toISOString()
+            }])
+        } catch (err) {
+            console.error('Telemetric logging failed:', err)
+        }
+    }
+
     const handleScan = async (code) => {
         setScanResult(null);
 
@@ -133,9 +147,22 @@ export default function StaffScanner() {
             .single()
 
         if (identProfile) {
+            // Smart Check: Try to find a ticket for this profile in the selected event
+            const { data: ticketData } = await supabase
+                .from('tickets')
+                .select('*, events(*), participants!inner(user_id)')
+                .eq('participants.user_id', identProfile.id)
+                .eq('event_id', selectedEvent?.id)
+                .single()
+
+            if (ticketData) {
+                // If ticket found, proceed with ticket validation logic
+                return handleScan(ticketData.qr_token)
+            }
+
             const result = {
                 status: 'success',
-                message: 'IDENTITY AUTHENTICATED',
+                message: 'IDENTITY AUTHENTICATED (NO TICKET)',
                 profile: identProfile,
                 type: 'identity',
                 code,
@@ -143,13 +170,17 @@ export default function StaffScanner() {
             }
             setScanResult(result);
             setRecentScans(prev => [result, ...prev].slice(0, 8))
+            // Log as invalid since no ticket for this event
+            await logScan('invalid', null)
             return
         }
 
         // 2. Check local cache for tickets
         if (validatedTickets.has(code)) {
+            const { data: dupTicket } = await supabase.from('tickets').select('id, event_id').eq('qr_token', code.trim()).single()
             const result = { status: 'duplicate', message: 'Ticket previously authenticated', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+            if (dupTicket) await logScan('duplicate', dupTicket.id, dupTicket.event_id)
             return
         }
 
@@ -171,6 +202,7 @@ export default function StaffScanner() {
             console.error('Ticket fetch error:', error);
             const result = { status: 'invalid', message: 'Token not recognized in system or sector mismatch', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+            await logScan('invalid', null)
             return
         }
 
@@ -199,6 +231,7 @@ export default function StaffScanner() {
             time: new Date()
         }
         setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+        await logScan('success', ticket.id, ticket.event_id)
     }
 
     const getSafeProfile = (item) => {
