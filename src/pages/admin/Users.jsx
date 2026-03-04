@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Search, Shield, User, ShieldCheck, Activity, UserCog, ArrowUpRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -16,15 +16,15 @@ export default function AdminUsers() {
     const [search, setSearch] = useState('')
     const [filterRole, setFilterRole] = useState('all')
     const [escalatingUser, setEscalatingUser] = useState(null)
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+    const escalateBtnRefs = useRef({})
 
     useEffect(() => {
         fetchUsers()
-
         const channel = supabase
             .channel('profiles-admin-sync')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers())
             .subscribe()
-
         return () => { supabase.removeChannel(channel) }
     }, [])
 
@@ -34,7 +34,6 @@ export default function AdminUsers() {
             .from('profiles')
             .select('*')
             .order('created_at', { ascending: false })
-
         if (error) console.error('Failed to fetch users:', error)
         if (data) setUsers(data)
         setLoading(false)
@@ -43,18 +42,22 @@ export default function AdminUsers() {
     const escalateRole = async (userId, newRole) => {
         if (!currentUser?.is_super_admin) return alert('Only Super Admins can modify privilege levels.')
         if (userId === currentUser.id) return alert('You cannot modify your own privileges.')
+        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
+        if (error) alert('Escalation failed: ' + error.message)
+        else { setEscalatingUser(null); fetchUsers() }
+    }
 
-        const { error } = await supabase
-            .from('profiles')
-            .update({ role: newRole })
-            .eq('id', userId)
-
-        if (error) {
-            alert('Escalation failed: ' + error.message)
-        } else {
+    const handleEscalateClick = (userId) => {
+        if (escalatingUser === userId) {
             setEscalatingUser(null)
-            fetchUsers()
+            return
         }
+        const btn = escalateBtnRefs.current[userId]
+        if (btn) {
+            const rect = btn.getBoundingClientRect()
+            setDropdownPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+        }
+        setEscalatingUser(userId)
     }
 
     const filtered = users.filter(u => {
@@ -63,6 +66,8 @@ export default function AdminUsers() {
         const matchesRole = filterRole === 'all' || u.role === filterRole
         return matchesSearch && matchesRole
     })
+
+    const escalatingUserData = users.find(u => u.id === escalatingUser)
 
     return (
         <div className="page-container">
@@ -80,18 +85,9 @@ export default function AdminUsers() {
                 <div className="flex gap-4 flex-wrap" style={{ alignItems: 'center' }}>
                     <div className="search-bar flex-1">
                         <Search size={18} />
-                        <input
-                            placeholder="Search by name or email..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
+                        <input placeholder="Search by name or email..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
-                    <select
-                        className="form-select"
-                        value={filterRole}
-                        onChange={e => setFilterRole(e.target.value)}
-                        style={{ width: 'auto', minWidth: 160 }}
-                    >
+                    <select className="form-select" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
                         <option value="all">CLEARANCE: ALL</option>
                         <option value="admin">ADMIN</option>
                         <option value="staff">STAFF</option>
@@ -100,7 +96,7 @@ export default function AdminUsers() {
                 </div>
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="card" style={{ padding: 0 }}>
                 <div className="table-container">
                     <table>
                         <thead>
@@ -120,7 +116,6 @@ export default function AdminUsers() {
                             ) : filtered.map((u, i) => {
                                 const roleInfo = ROLE_LEVELS[u.role] || ROLE_LEVELS.participant
                                 const isCurrentUser = u.id === currentUser?.id
-                                const showEscalation = escalatingUser === u.id
 
                                 return (
                                     <tr key={u.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
@@ -163,69 +158,21 @@ export default function AdminUsers() {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             {isCurrentUser ? (
-                                                <span style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.05em' }}>
-                                                    SUPER ADMIN
-                                                </span>
+                                                <span style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.05em' }}>SUPER ADMIN</span>
                                             ) : currentUser?.is_super_admin ? (
-                                                <div style={{ position: 'relative', display: 'inline-block' }}>
-                                                    <button
-                                                        onClick={() => setEscalatingUser(showEscalation ? null : u.id)}
-                                                        className="btn btn-secondary btn-sm"
-                                                        style={{ gap: '6px', fontSize: '11px' }}
-                                                    >
-                                                        <ArrowUpRight size={13} />
-                                                        Escalate
-                                                        <ChevronDown size={12} style={{
-                                                            transform: showEscalation ? 'rotate(180deg)' : 'none',
-                                                            transition: 'transform 0.2s ease'
-                                                        }} />
-                                                    </button>
-
-                                                    {showEscalation && (
-                                                        <div style={{
-                                                            position: 'absolute', right: 0, top: '100%', marginTop: '6px',
-                                                            background: 'var(--bg-panel)', border: '1px solid var(--border-color)',
-                                                            borderRadius: 'var(--radius-lg)', padding: '6px',
-                                                            minWidth: '180px', zIndex: 50,
-                                                            boxShadow: 'var(--shadow-xl)',
-                                                            animation: 'fadeIn 0.15s ease'
-                                                        }}>
-                                                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', padding: '4px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                                                                SET CLEARANCE LEVEL
-                                                            </div>
-                                                            {Object.entries(ROLE_LEVELS).map(([roleKey, info]) => (
-                                                                <button
-                                                                    key={roleKey}
-                                                                    onClick={() => escalateRole(u.id, roleKey)}
-                                                                    disabled={u.role === roleKey}
-                                                                    style={{
-                                                                        width: '100%', textAlign: 'left',
-                                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                                        padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                                                                        background: u.role === roleKey ? 'rgba(0,212,255,0.05)' : 'transparent',
-                                                                        border: u.role === roleKey ? '1px solid var(--border-accent)' : '1px solid transparent',
-                                                                        color: u.role === roleKey ? 'var(--accent)' : 'var(--text-secondary)',
-                                                                        cursor: u.role === roleKey ? 'default' : 'pointer',
-                                                                        fontSize: '12px', fontWeight: 500,
-                                                                        fontFamily: 'var(--font-family)',
-                                                                        transition: 'all 0.15s ease',
-                                                                        opacity: u.role === roleKey ? 0.6 : 1
-                                                                    }}
-                                                                    onMouseOver={(e) => { if (u.role !== roleKey) e.target.style.background = 'rgba(0,212,255,0.05)' }}
-                                                                    onMouseOut={(e) => { if (u.role !== roleKey) e.target.style.background = 'transparent' }}
-                                                                >
-                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: info.color, flexShrink: 0 }} />
-                                                                        {info.label}
-                                                                    </span>
-                                                                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)' }}>
-                                                                        LVL {info.level}
-                                                                    </span>
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <button
+                                                    ref={el => escalateBtnRefs.current[u.id] = el}
+                                                    onClick={() => handleEscalateClick(u.id)}
+                                                    className="btn btn-secondary btn-sm"
+                                                    style={{ gap: '6px', fontSize: '11px' }}
+                                                >
+                                                    <ArrowUpRight size={13} />
+                                                    Escalate
+                                                    <ChevronDown size={12} style={{
+                                                        transform: escalatingUser === u.id ? 'rotate(180deg)' : 'none',
+                                                        transition: 'transform 0.2s ease'
+                                                    }} />
+                                                </button>
                                             ) : (
                                                 <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>—</span>
                                             )}
@@ -238,12 +185,59 @@ export default function AdminUsers() {
                 </div>
             </div>
 
-            {/* Click outside to close dropdown */}
-            {escalatingUser && (
-                <div
-                    onClick={() => setEscalatingUser(null)}
-                    style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-                />
+            {/* Fixed-position dropdown rendered OUTSIDE the table */}
+            {escalatingUser && escalatingUserData && (
+                <>
+                    <div onClick={() => setEscalatingUser(null)} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+                    <div style={{
+                        position: 'fixed',
+                        top: dropdownPos.top,
+                        right: dropdownPos.right,
+                        background: 'var(--bg-panel)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '6px',
+                        minWidth: '200px',
+                        zIndex: 999,
+                        boxShadow: 'var(--shadow-xl), 0 0 30px rgba(0,0,0,0.5)',
+                        animation: 'fadeIn 0.15s ease'
+                    }}>
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', padding: '6px 10px 4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                            SET CLEARANCE LEVEL
+                        </div>
+                        {Object.entries(ROLE_LEVELS).map(([roleKey, info]) => (
+                            <button
+                                key={roleKey}
+                                onClick={() => escalateRole(escalatingUser, roleKey)}
+                                disabled={escalatingUserData.role === roleKey}
+                                style={{
+                                    width: '100%', textAlign: 'left',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '10px 10px', borderRadius: 'var(--radius-md)',
+                                    background: escalatingUserData.role === roleKey ? 'rgba(0,212,255,0.08)' : 'transparent',
+                                    border: escalatingUserData.role === roleKey ? '1px solid var(--border-accent)' : '1px solid transparent',
+                                    color: escalatingUserData.role === roleKey ? 'var(--accent)' : 'var(--text-secondary)',
+                                    cursor: escalatingUserData.role === roleKey ? 'default' : 'pointer',
+                                    fontSize: '13px', fontWeight: 500,
+                                    fontFamily: 'var(--font-family)',
+                                    transition: 'all 0.15s ease',
+                                    opacity: escalatingUserData.role === roleKey ? 0.5 : 1,
+                                    marginBottom: '2px'
+                                }}
+                                onMouseOver={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'rgba(0,212,255,0.06)' }}
+                                onMouseOut={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'transparent' }}
+                            >
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: info.color, flexShrink: 0 }} />
+                                    {info.label}
+                                </span>
+                                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>
+                                    LVL {info.level}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </>
             )}
         </div>
     )
