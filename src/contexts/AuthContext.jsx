@@ -10,36 +10,42 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
-                let { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single()
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session) {
+                    let { data: profile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single()
 
-                // Robustness: If profile missing (e.g. after wipe), try to recover it
-                if (!profile) {
-                    const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
-                    const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
-                        id: session.user.id,
-                        email: session.user.email,
-                        full_name: session.user.user_metadata?.full_name || 'Admin Entity',
-                        role: isSuperAdmin ? 'admin' : 'participant'
-                    }).select().single()
+                    // Robustness: If profile missing (e.g. after wipe), try to recover it
+                    if (!profile) {
+                        const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
+                        const { data: newProfile, error: pError } = await supabase.from('profiles').insert({
+                            id: session.user.id,
+                            email: session.user.email,
+                            full_name: session.user.user_metadata?.full_name || 'Admin Entity',
+                            role: isSuperAdmin ? 'admin' : 'participant'
+                        }).select().single()
 
-                    if (!pError) profile = newProfile
+                        if (!pError) profile = newProfile
+                        else console.error('Profile recovery failed:', pError)
+                    }
+
+                    if (profile) {
+                        setUser({
+                            ...session.user,
+                            ...profile,
+                            is_super_admin: profile.email === 'shanmukhamanikanta.inti@gmail.com'
+                        })
+                    }
                 }
-
-                if (profile) {
-                    setUser({
-                        ...session.user,
-                        ...profile,
-                        is_super_admin: profile.email === 'shanmukhamanikanta.inti@gmail.com'
-                    })
-                }
+            } catch (err) {
+                console.error('Session initialization error:', err)
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
         checkSession()
 
