@@ -126,14 +126,17 @@ export function AuthProvider({ children }) {
         const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
         const assignedRole = isSuperAdmin ? 'admin' : 'participant'
 
-        // Explicitly create profile in DB (don't rely solely on trigger)
-        if (data.session) {
+        // Always create profile in DB — don't gate behind session check
+        // (session may be null if email confirmation is enabled)
+        try {
             await supabase.from('profiles').upsert({
                 id: data.user.id,
-                email: data.user.email,
+                email: data.user.email || email,
                 full_name: fullName,
                 role: assignedRole
             }, { onConflict: 'id' })
+        } catch (profileErr) {
+            console.error('Profile creation during register:', profileErr)
         }
 
         const sessionUser = {
