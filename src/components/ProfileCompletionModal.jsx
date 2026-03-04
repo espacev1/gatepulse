@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, Camera, User, Building2, Layers, Hash, Activity, CheckCircle2, ShieldCheck } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { X, Camera, User, Building2, Layers, Hash, Activity, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function ProfileCompletionModal({ isOpen, onClose, user, onComplete }) {
@@ -13,8 +13,57 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
     const [facePic, setFacePic] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [isCameraActive, setIsCameraActive] = useState(false)
+
+    const videoRef = useRef(null)
+    const canvasRef = useRef(null)
+    const streamRef = useRef(null)
+
+    useEffect(() => {
+        return () => stopCamera()
+    }, [])
 
     if (!isOpen) return null
+
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: false
+            })
+            streamRef.current = stream
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream
+            }
+            setIsCameraActive(true)
+        } catch (err) {
+            setError('Unable to access camera. Please ensure permissions are granted.')
+            console.error(err)
+        }
+    }
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+        }
+        setIsCameraActive(false)
+    }
+
+    const capturePhoto = () => {
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        if (video && canvas) {
+            const context = canvas.getContext('2d')
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+            canvas.toBlob((blob) => {
+                setFacePic(blob)
+                stopCamera()
+            }, 'image/jpeg', 0.9)
+        }
+    }
 
     const handleSave = async (e) => {
         e.preventDefault()
@@ -167,18 +216,49 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                             <div className="verification-slot">
                                 <label className="form-label mb-1 block">Live Face</label>
                                 <div style={{
-                                    height: 100, border: '1px dashed var(--border-color)', borderRadius: '4px',
+                                    height: 140, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)',
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    position: 'relative', background: facePic ? 'rgba(0,212,255,0.05)' : 'transparent',
+                                    position: 'relative', background: facePic || isCameraActive ? 'rgba(0,212,255,0.05)' : 'transparent',
                                     overflow: 'hidden'
                                 }}>
-                                    {facePic ? (
-                                        <img src={URL.createObjectURL(facePic)} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    {isCameraActive ? (
+                                        <>
+                                            <video
+                                                ref={videoRef}
+                                                autoPlay
+                                                playsInline
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+                                            />
+                                            <div style={{ position: 'absolute', inset: 0, border: '2px solid var(--accent)', opacity: 0.3, pointerEvents: 'none', margin: '20px', borderRadius: '50%' }} />
+                                            <button
+                                                type="button"
+                                                onClick={capturePhoto}
+                                                className="btn btn-primary btn-xs"
+                                                style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)' }}
+                                            >
+                                                CAPTURE
+                                            </button>
+                                        </>
+                                    ) : facePic ? (
+                                        <>
+                                            <img src={URL.createObjectURL(facePic)} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button
+                                                type="button"
+                                                onClick={startCamera}
+                                                className="btn btn-ghost btn-icon btn-xs"
+                                                style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(0,0,0,0.5)' }}
+                                            >
+                                                <RefreshCw size={14} />
+                                            </button>
+                                        </>
                                     ) : (
-                                        <User size={20} style={{ color: 'var(--text-dim)' }} />
+                                        <div onClick={startCamera} style={{ cursor: 'pointer', textAlign: 'center' }}>
+                                            <Camera size={24} style={{ color: 'var(--accent)', marginBottom: 8 }} />
+                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 700 }}>START CAMERA</span>
+                                        </div>
                                     )}
-                                    <input type="file" accept="image/*" capture="user" onChange={e => setFacePic(e.target.files[0])} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                                 </div>
+                                <canvas ref={canvasRef} style={{ display: 'none' }} />
                             </div>
                         </div>
 
