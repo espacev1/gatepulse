@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import {
     LayoutDashboard, CalendarDays, Users, BarChart3, ScanLine,
     ClipboardCheck, Ticket, CalendarSearch, LogOut, Menu, X,
-    Shield, ChevronLeft, Activity
+    Shield, ShieldCheck, ChevronLeft, Activity
 } from 'lucide-react'
 
 const navConfig = {
