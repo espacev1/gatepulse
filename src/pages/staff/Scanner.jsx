@@ -201,7 +201,11 @@ export default function StaffScanner() {
                 *,
                 participants (
                     *,
-                    profiles (*)
+                    profiles (*),
+                    teams (
+                        *,
+                        leader:profiles!leader_id (*)
+                    )
                 ),
                 events (*)
             `)
@@ -227,17 +231,20 @@ export default function StaffScanner() {
             .eq('id', ticket.id)
 
         if (updateError) console.error('Ticket validation update failed:', updateError)
-
         setValidatedTickets(prev => new Set([...prev, code]))
 
         const mappedProfile = ticket.participants?.profiles ||
             (Array.isArray(ticket.participants) ? ticket.participants[0]?.profiles : null);
+
+        const teamData = ticket.participants?.teams ||
+            (Array.isArray(ticket.participants) ? ticket.participants[0]?.teams : null);
 
         const result = {
             status: 'success',
             message: 'Ticket Validated',
             ticket: ticket,
             profile: mappedProfile,
+            team: teamData,
             type: 'ticket',
             code,
             time: new Date()
@@ -484,9 +491,22 @@ export default function StaffScanner() {
                                     )}
 
                                     <div className="flex-1">
-                                        <h3 className="page-title" style={{ fontSize: 'var(--font-lg)', color: scanResult.status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', marginBottom: 2 }}>
-                                            {scanResult.status === 'success' ? 'ACCESS GRANTED' : 'AUTH_FAILURE'}
-                                        </h3>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="page-title" style={{ fontSize: 'var(--font-lg)', color: scanResult.status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', marginBottom: 0 }}>
+                                                {scanResult.status === 'success' ? 'ACCESS GRANTED' : 'AUTH_FAILURE'}
+                                            </h3>
+                                            {scanResult.status === 'success' && (
+                                                <span style={{
+                                                    fontSize: '9px', fontWeight: 800, padding: '2px 8px', borderRadius: '4px',
+                                                    background: scanResult.ticket?.events?.participation_type === 'team' ? 'var(--status-ok-bg)' : 'var(--accent-bg)',
+                                                    color: scanResult.ticket?.events?.participation_type === 'team' ? 'var(--status-ok)' : 'var(--accent)',
+                                                    border: '1px solid currentColor'
+                                                }}>
+                                                    {scanResult.ticket?.events?.participation_type?.toUpperCase() || 'CORE'}
+                                                </span>
+                                            )}
+                                        </div>
+
                                         <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)', marginBottom: 8 }}>{scanResult.message}</p>
 
                                         {scanResult.profile && (
@@ -503,10 +523,21 @@ export default function StaffScanner() {
                                                     <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>SECTION / REG</div>
                                                     <div style={{ fontSize: 'var(--font-sm)' }}>{scanResult.profile.section || '-'} / {scanResult.profile.reg_no || '-'}</div>
                                                 </div>
-                                                {scanResult.ticket?.participants?.team_id && (
+                                                {scanResult.team ? (
                                                     <div>
-                                                        <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>TEAM</div>
-                                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--status-ok)' }}>ACTIVE_SQUAD</div>
+                                                        <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>TEAM / LEADER</div>
+                                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--status-ok)', fontWeight: 700 }}>
+                                                            {scanResult.team.name} / {scanResult.team.leader?.full_name || 'UNKNOWN'}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
+                                                        <div style={{
+                                                            fontSize: '10px', fontWeight: 800, color: 'var(--accent)',
+                                                            display: 'flex', alignItems: 'center', gap: '6px'
+                                                        }}>
+                                                            <ShieldCheck size={12} /> ZERO-TRUST VERIFIED SECTOR
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -514,10 +545,40 @@ export default function StaffScanner() {
                                     </div>
                                 </div>
 
-                                {scanResult.profile?.id_barcode_url && scanResult.ticket?.events?.participation_type !== 'team' && (
+                                {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type !== 'team' && (
                                     <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                                        <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID BARCODE VERIFICATION</div>
-                                        <img src={scanResult.profile.id_barcode_url} alt="ID Barcode" style={{ width: '100%', height: '40px', objectFit: 'contain', opacity: 0.8 }} />
+                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                                            PHYSICAL VERIFICATION PROTOCOL
+                                        </div>
+                                        <div className="flex gap-4">
+                                            {scanResult.profile?.face_url && (
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>BIOMETRIC_FACE_MATCH</div>
+                                                    <div style={{ height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                        <img src={scanResult.profile.face_url} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {scanResult.profile?.id_barcode_url && (
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID_BARCODE_VERIFY</div>
+                                                    <div style={{ height: '80px', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+                                                        <img src={scanResult.profile.id_barcode_url} alt="Barcode" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type === 'team' && (
+                                    <div className="mt-4 pt-4 p-3" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
+                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--status-ok)', marginBottom: '4px' }}>
+                                            GROUP_VALIDATION_PROTOCOL
+                                        </div>
+                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)' }}>
+                                            Verify with Team Leader: <span style={{ fontWeight: 800 }}>{scanResult.team?.leader?.full_name || 'UNRESOLVED'}</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
