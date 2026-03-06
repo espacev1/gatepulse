@@ -22,7 +22,9 @@ export default function StaffScanner() {
     const [scanning, setScanning] = useState(false)
     const [validatedTickets, setValidatedTickets] = useState(new Set())
     const [toast, setToast] = useState(null)
+    const [staffLocation, setStaffLocation] = useState(null)
     const html5QrRef = useRef(null)
+    const locationIntervalRef = useRef(null)
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type })
@@ -65,10 +67,39 @@ export default function StaffScanner() {
         setLoading(false)
     }
 
+    const startLocationTracking = (eventId) => {
+        if (!navigator.geolocation) return;
+
+        const updateLocation = () => {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                setStaffLocation({ lat, lng });
+
+                // Update session in DB
+                await supabase
+                    .from('attendance_sessions')
+                    .update({ staff_lat: lat, staff_lng: lng })
+                    .eq('event_id', eventId)
+                    .eq('status', 'active');
+            }, (err) => console.error('Location tracking failed', err));
+        };
+
+        updateLocation();
+        locationIntervalRef.current = setInterval(updateLocation, 10000); // Sync every 10s
+    }
+
+    const stopLocationTracking = () => {
+        if (locationIntervalRef.current) {
+            clearInterval(locationIntervalRef.current);
+            locationIntervalRef.current = null;
+        }
+    }
+
     const handleEventSelect = (event) => {
         setSelectedEvent(event)
         fetchParticipants(event.id)
         setDashView('participants')
+        startLocationTracking(event.id)
     }
 
     const handleParticipantSelect = (participant) => {
@@ -126,7 +157,12 @@ export default function StaffScanner() {
         setScanning(false)
     }
 
-    useEffect(() => { return () => { stopCamera() } }, [])
+    useEffect(() => {
+        return () => {
+            stopCamera();
+            stopLocationTracking();
+        }
+    }, [])
 
     const logScan = async (status, ticketId, eventIdOverride = null) => {
         const { error } = await supabase.from('attendance_logs').insert([{

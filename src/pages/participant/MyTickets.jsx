@@ -12,8 +12,9 @@ export default function MyTickets() {
     const [activeSessions, setActiveSessions] = useState([])
     const [verifyingTicket, setVerifyingTicket] = useState(null)
     const [showCamera, setShowCamera] = useState(false)
-    const [captureStep, setCaptureStep] = useState('face') // 'face' or 'id'
+    const [captureStep, setCaptureStep] = useState('face') // 'face', 'id', or 'match'
     const [capturedData, setCapturedData] = useState({ face: null, idCard: null, faceUrl: null, idUrl: null })
+    const [userLocation, setUserLocation] = useState(null)
     const [capturing, setCapturing] = useState(false)
 
     const videoRef = useRef(null)
@@ -50,7 +51,14 @@ export default function MyTickets() {
         if (!user) return
         const { data } = await supabase
             .from('tickets')
-            .select('*, event:events(*)')
+            .select(`
+                *,
+                event:events(*),
+                participant:participants(
+                    *,
+                    profile:profiles(*)
+                )
+            `)
             .order('created_at', { ascending: false })
         if (data) setTickets(data)
     }
@@ -92,11 +100,18 @@ export default function MyTickets() {
     }
 
     const startVerification = async (ticket) => {
-        setVerifyingTicket(ticket)
-        setShowCamera(true)
-        setCaptureStep('face')
-        setCapturedData({ face: null, idCard: null, faceUrl: null, idUrl: null })
-        await startCamera()
+        if (!navigator.geolocation) return alert('Location access is mandatory for attendance security.')
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+            setVerifyingTicket(ticket)
+            setShowCamera(true)
+            setCaptureStep('face')
+            setCapturedData({ face: null, idCard: null, faceUrl: null, idUrl: null })
+            await startCamera()
+        }, (err) => {
+            alert('Location access is required to verify your proximity to the operational sector.')
+        })
     }
 
     const handleCapture = async () => {
@@ -116,9 +131,23 @@ export default function MyTickets() {
                 setCaptureStep('id')
             } else {
                 setCapturedData(prev => ({ ...prev, idCard: blob, idUrl: tempUrl }))
-                await submitVerification({ ...capturedData, idCard: blob })
+                setCaptureStep('match')
+                stopCamera()
             }
         }, 'image/jpeg', 0.8)
+    }
+
+    const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // in metres
     }
 
     const submitVerification = async (data) => {
@@ -126,6 +155,14 @@ export default function MyTickets() {
         try {
             const session = activeSessions.find(s => s.event_id === verifyingTicket.event_id)
             if (!session) throw new Error('Session ended unexpectedly.')
+
+            // 1. Geography Check (6m Boundary)
+            if (session.staff_lat && session.staff_lng) {
+                const dist = getDistance(userLocation.lat, userLocation.lng, session.staff_lat, session.staff_lng)
+                if (dist > 6) throw new Error(`PROXIMITY_ERROR: You are ${dist.toFixed(1)}m away from the sector checkpoint. Please approach the staff (within 6m) to mark attendance.`)
+            } else {
+                throw new Error('Waiting for Staff Device GPS signal... Please wait a moment.')
+            }
 
             const facePath = `verification/face-${Date.now()}-${user.email}.jpg`
             const idPath = `verification/id-${Date.now()}-${user.email}.jpg`
@@ -223,7 +260,7 @@ export default function MyTickets() {
                                             boxShadow: activeSession ? '0 0 10px var(--status-ok)' : '0 0 10px var(--accent)'
                                         }} className={activeSession ? 'animate-pulse' : ''} />
                                         <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.15em' }}>
-                                            {activeSession ? 'ATTENDANCE OPEN' : 'ENCRYPTED CREDENTIAL'}
+                                            {ticket.is_validated ? 'VALIDATION_LOGGED' : activeSession ? 'ATTENDANCE OPEN' : 'ENCRYPTED CREDENTIAL'}
                                         </span>
                                     </div>
                                     <span className={`badge ${ticket.is_validated ? 'badge-warning' : 'badge-success'}`}>
@@ -300,8 +337,8 @@ export default function MyTickets() {
                                         </div>
                                         <div>
                                             <div style={{ fontSize: '9px', color: 'var(--text-dim)', fontWeight: 800 }}>SECURITY_LVL</div>
-                                            <div style={{ fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
-                                                {isRevealed || activeSession ? 'AUTHENTICATED' : 'PROTECTED'}
+                                            <div style={{ fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-mono)', color: (ticket.is_validated || isRevealed || activeSession) ? 'var(--status-ok)' : 'var(--accent)' }}>
+                                                {ticket.is_validated ? 'AUTHENTICATED' : (isRevealed || activeSession) ? 'AUTHORIZED' : 'PROTECTED'}
                                             </div>
                                         </div>
                                     </div>
@@ -353,7 +390,19 @@ export default function MyTickets() {
                                     <Activity size={48} color="var(--accent)" className="animate-spin" />
                                 ) : (
                                     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                                        {((captureStep === 'face' && !capturedData.face) || (captureStep === 'id' && !capturedData.idCard)) ? (
+                                        {captureStep === 'match' ? (
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', gap: '1px', background: 'var(--border-color)' }}>
+                                                <div style={{ background: 'var(--bg-deepest)', padding: '10px' }}>
+                                                    <div style={{ fontSize: '8px', color: 'var(--accent)', marginBottom: '4px' }}>PROFILE_FACE</div>
+                                                    <img src={verifyingTicket.participant?.profile?.face_url} alt="Profile" style={{ width: '100%', height: '70%', objectFit: 'cover', borderRadius: '4px' }} />
+                                                </div>
+                                                <div style={{ background: 'var(--bg-deepest)', padding: '10px' }}>
+                                                    <div style={{ fontSize: '8px', color: 'var(--status-ok)', marginBottom: '4px' }}>CAPTURED_DATA</div>
+                                                    <img src={capturedData.faceUrl} alt="Captured Face" style={{ width: '100%', height: '35%', objectFit: 'cover', borderRadius: '4px', marginBottom: '8px' }} />
+                                                    <img src={capturedData.idUrl} alt="Captured ID" style={{ width: '100%', height: '35%', objectFit: 'cover', borderRadius: '4px' }} />
+                                                </div>
+                                            </div>
+                                        ) : ((captureStep === 'face' && !capturedData.face) || (captureStep === 'id' && !capturedData.idCard)) ? (
                                             <>
                                                 <video
                                                     ref={videoRef}
@@ -372,11 +421,9 @@ export default function MyTickets() {
                                                 </div>
                                             </>
                                         ) : (
-                                            <img
-                                                src={captureStep === 'id' ? capturedData.faceUrl : capturedData.idUrl}
-                                                alt="Captured"
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            />
+                                            <div style={{ background: '#000', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Activity size={32} className="animate-pulse" color="var(--accent)" />
+                                            </div>
                                         )}
                                     </div>
                                 )}
@@ -386,16 +433,29 @@ export default function MyTickets() {
                             <div className="flex flex-col gap-4">
                                 <div className="flex justify-center gap-2 mb-2">
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'face' ? 'var(--accent)' : 'var(--status-ok)' }} />
-                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'id' ? 'var(--accent)' : (capturedData.idCard ? 'var(--status-ok)' : 'var(--bg-elevated)') }} />
+                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'id' ? 'var(--accent)' : 'var(--status-ok)' }} />
+                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'match' ? 'var(--accent)' : 'var(--bg-elevated)' }} />
                                 </div>
                                 <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>
                                     {captureStep === 'face'
                                         ? 'Please ensure you are in a well-lit area for biometric facial recognition.'
-                                        : 'Place your official ID card in front of the sensor for OCR validation.'}
+                                        : captureStep === 'id'
+                                            ? 'Place your official ID card in front of the sensor for OCR validation.'
+                                            : 'Confirm that the captured data matches your profile identity.'}
                                 </p>
-                                <button onClick={handleCapture} className="btn btn-primary w-full py-3" disabled={capturing}>
-                                    {capturing ? 'PROCESSING...' : `CAPTURE ${captureStep.toUpperCase()}`}
-                                </button>
+                                {captureStep !== 'match' ? (
+                                    <button onClick={handleCapture} className="btn btn-primary w-full py-3" disabled={capturing}>
+                                        {capturing ? 'PROCESSING...' : `CAPTURE ${captureStep.toUpperCase()}`}
+                                    </button>
+                                ) : (
+                                    <button onClick={() => submitVerification(capturedData)} className="btn btn-primary w-full py-3" disabled={capturing}>
+                                        {capturing ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Activity size={14} className="animate-spin" /> VERIFYING PROXIMITY...
+                                            </div>
+                                        ) : 'MARK ATTENDANCE'}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

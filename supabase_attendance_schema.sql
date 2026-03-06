@@ -46,8 +46,14 @@ CREATE POLICY "Allow full access for admins on sessions" ON public.attendance_se
 DROP POLICY IF EXISTS "Allow staff to manage sessions" ON public.attendance_sessions;
 CREATE POLICY "Allow staff to manage sessions" ON public.attendance_sessions FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'staff'));
 
+DROP POLICY IF EXISTS "Allow everyone to view active sessions" ON public.attendance_sessions;
+CREATE POLICY "Allow everyone to view active sessions" ON public.attendance_sessions FOR SELECT USING (true);
+
 DROP POLICY IF EXISTS "Allow admins to view all records" ON public.attendance_records;
 CREATE POLICY "Allow admins to view all records" ON public.attendance_records FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
 
 DROP POLICY IF EXISTS "Allow participants to create their own record" ON public.attendance_records;
 CREATE POLICY "Allow participants to create their own record" ON public.attendance_records FOR INSERT WITH CHECK (auth.uid() = participant_id);
+
+DROP POLICY IF EXISTS "Allow participants to view their own record" ON public.attendance_records;
+CREATE POLICY "Allow participants to view their own record" ON public.attendance_records FOR SELECT USING (auth.uid() = participant_id);
