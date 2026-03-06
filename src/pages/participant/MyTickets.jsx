@@ -16,6 +16,7 @@ export default function MyTickets() {
     const [capturedData, setCapturedData] = useState({ face: null, idCard: null, faceUrl: null, idUrl: null })
     const [userLocation, setUserLocation] = useState(null)
     const [capturing, setCapturing] = useState(false)
+    const heartbeatIntervalRef = useRef(null)
 
     const videoRef = useRef(null)
     const canvasRef = useRef(null)
@@ -38,8 +39,47 @@ export default function MyTickets() {
         return () => {
             supabase.removeChannel(channel)
             stopCamera()
+            if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
         }
     }, [])
+
+    // Presence Heartbeat: Sync location for checked-in participants
+    useEffect(() => {
+        const anyValidated = tickets.some(t => t.is_validated);
+
+        if (anyValidated && navigator.geolocation) {
+            const syncPresence = () => {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    // Update all participant records for this user that are validated
+                    const validatedParticipants = tickets
+                        .filter(t => t.is_validated && t.participant_id)
+                        .map(t => t.participant_id);
+
+                    if (validatedParticipants.length > 0) {
+                        await supabase
+                            .from('participants')
+                            .update({
+                                last_lat: lat,
+                                last_lng: lng,
+                                last_seen_at: new Date().toISOString()
+                            })
+                            .in('id', validatedParticipants);
+                    }
+                }, null, { enableHighAccuracy: true });
+            };
+
+            syncPresence();
+            heartbeatIntervalRef.current = setInterval(syncPresence, 30000); // 30s heartbeat
+        }
+
+        return () => {
+            if (heartbeatIntervalRef.current) {
+                clearInterval(heartbeatIntervalRef.current);
+                heartbeatIntervalRef.current = null;
+            }
+        };
+    }, [tickets]);
 
     const fetchInitialData = async () => {
         setLoading(true)
@@ -156,10 +196,10 @@ export default function MyTickets() {
             const session = activeSessions.find(s => s.event_id === verifyingTicket.event_id)
             if (!session) throw new Error('Session ended unexpectedly.')
 
-            // 1. Geography Check (6m Boundary)
+            // 1. Geography Check (10m Boundary)
             if (session.staff_lat && session.staff_lng) {
                 const dist = getDistance(userLocation.lat, userLocation.lng, session.staff_lat, session.staff_lng)
-                if (dist > 6) throw new Error(`PROXIMITY_ERROR: You are ${dist.toFixed(1)}m away from the sector checkpoint. Please approach the staff (within 6m) to mark attendance.`)
+                if (dist > 10) throw new Error(`PROXIMITY_ERROR: You are ${dist.toFixed(1)}m away from the sector checkpoint. Please approach the staff (within 10m) to mark attendance.`)
             } else {
                 throw new Error('Waiting for Staff Device GPS signal... Please wait a moment.')
             }

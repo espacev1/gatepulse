@@ -68,29 +68,39 @@ export default function StaffScanner() {
     }
 
     const startLocationTracking = (eventId) => {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation) {
+            alert('CRITICAL_ERROR: GPS hardware not detected. Geolocation is mandatory for sector activation.');
+            return;
+        }
 
-        const updateLocation = () => {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude: lat, longitude: lng } = pos.coords;
-                setStaffLocation({ lat, lng });
+        // Request persistent high-accuracy tracking
+        const watchId = navigator.geolocation.watchPosition(async (pos) => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            setStaffLocation({ lat, lng });
 
-                // Update session in DB
-                await supabase
-                    .from('attendance_sessions')
-                    .update({ staff_lat: lat, staff_lng: lng })
-                    .eq('event_id', eventId)
-                    .eq('status', 'active');
-            }, (err) => console.error('Location tracking failed', err));
-        };
+            // Broadcast coordinates to session
+            const { error } = await supabase
+                .from('attendance_sessions')
+                .update({ staff_lat: lat, staff_lng: lng })
+                .eq('event_id', eventId)
+                .eq('status', 'active');
 
-        updateLocation();
-        locationIntervalRef.current = setInterval(updateLocation, 10000); // Sync every 10s
+            if (error) console.error('SESSION_SYNC_ERROR:', error);
+        }, (err) => {
+            console.error('Location tracking failed', err);
+            alert('PROXIMITY_LOCK: GPS signal lost or denied. Please ensure location services are enabled to maintain sector status.');
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        });
+
+        locationIntervalRef.current = watchId;
     }
 
     const stopLocationTracking = () => {
         if (locationIntervalRef.current) {
-            clearInterval(locationIntervalRef.current);
+            navigator.geolocation.clearWatch(locationIntervalRef.current);
             locationIntervalRef.current = null;
         }
     }
