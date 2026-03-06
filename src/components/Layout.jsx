@@ -12,12 +12,14 @@ const navConfig = {
     admin: [
         { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/admin/events', icon: CalendarDays, label: 'Events' },
+        { to: '/admin/attendance', icon: ClipboardCheck, label: 'Attendance' },
         { to: '/admin/participants', icon: Users, label: 'Participants' },
         { to: '/admin/users', icon: ShieldCheck, label: 'User Management' },
         { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     ],
     staff: [
         { to: '/staff/scanner', icon: ScanLine, label: 'QR Scanner' },
+        { to: '/staff/attendance', icon: ClipboardCheck, label: 'Attendance' },
         { to: '/staff/checkins', icon: ClipboardCheck, label: 'Check-ins' },
     ],
     participant: [

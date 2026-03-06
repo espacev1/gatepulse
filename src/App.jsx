@@ -12,8 +12,10 @@ import AdminEvents from './pages/admin/Events'
 import AdminParticipants from './pages/admin/Participants'
 import AdminAnalytics from './pages/admin/Analytics'
 import AdminUsers from './pages/admin/Users'
+import AdminAttendance from './pages/admin/Attendance'
 import StaffScanner from './pages/staff/Scanner'
 import StaffCheckIns from './pages/staff/CheckIns'
+import StaffAttendance from './pages/staff/Attendance'
 import ParticipantEvents from './pages/participant/Events'
 import MyTickets from './pages/participant/MyTickets'
 import MyQR from './pages/participant/MyQR'
@@ -69,6 +71,7 @@ function AppRoutes() {
           <Route path="/admin/participants" element={<AdminParticipants />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/attendance" element={<AdminAttendance />} />
           <Route path="/admin/profile" element={<Profile />} />
         </Route>
 
@@ -76,6 +79,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={['staff']}><Layout /></ProtectedRoute>}>
           <Route path="/staff/scanner" element={<StaffScanner />} />
           <Route path="/staff/checkins" element={<StaffCheckIns />} />
+          <Route path="/staff/attendance" element={<StaffAttendance />} />
           <Route path="/staff/profile" element={<Profile />} />
         </Route>
 
