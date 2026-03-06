@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
     Users, Calendar, ClipboardCheck, Activity, Search,
-    UserPlus, Shield, Clock, BarChart3, ChevronRight
+    UserPlus, Shield, Clock, BarChart3, ChevronRight, Play
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -130,7 +130,7 @@ export default function AdminAttendance() {
                                     event_id: eventId,
                                     status: 'opened',
                                     activated_at: new Date().toISOString(),
-                                    activated_by: user.id
+                                    activated_by: user?.id
                                 }]);
 
                                 if (error) alert('Deployment failed: ' + error.message);

@@ -36,7 +36,7 @@ export default function StaffAttendance() {
         const { data: assignments } = await supabase
             .from('staff_assignments')
             .select('event_id')
-            .eq('staff_id', staffUser.id)
+            .eq('staff_id', staffUser?.id)
 
         const eventIds = assignments?.map(a => a.event_id) || []
 
