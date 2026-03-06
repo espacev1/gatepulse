@@ -21,20 +21,20 @@
   --accent-gradient: linear-gradient(180deg, #e7aa51 0%, #ffe499 25%, #8d5a1b 50%, #e7aa51 75%, #ac7031 100%);
   --golden-noir: linear-gradient(180deg, #e7aa51, #ffe499, #8d5a1b, #e7aa51, #ac7031);
 
-  /* Secondary - Magenta / Teal */
-  --secondary: #7B61FF;
-  --secondary-dim: #5A40DB;
-  --secondary-glow: rgba(123, 97, 255, 0.15);
-  --teal: #00BFA5;
-  --teal-glow: rgba(0, 191, 165, 0.15);
-  --magenta: #FF4DA6;
-  --magenta-glow: rgba(255, 77, 166, 0.12);
+  /* Secondary - Noir & Earth Tones */
+  --secondary: #8d5a1b;
+  --secondary-dim: #704513;
+  --secondary-glow: rgba(141, 90, 27, 0.1);
+  --teal: #ac7031;
+  --teal-glow: rgba(172, 112, 49, 0.1);
+  --magenta: #e7aa51;
+  --magenta-glow: rgba(231, 170, 81, 0.1);
 
-  /* Text Colors */
+  /* Text Colors (Neutral/Gold Muted) */
   --text-primary: #FFFFFF;
-  --text-secondary: #B0C4DE;
-  --text-muted: #6B8DB5;
-  --text-dim: #4A6F96;
+  --text-secondary: #D1D1D1;
+  --text-muted: #888888;
+  --text-dim: #555555;
 
   /* Status Indicators */
   --status-ok: #00E676;
@@ -46,17 +46,17 @@
   --status-critical: #FF3D3D;
   --status-critical-bg: rgba(255, 61, 61, 0.1);
   --status-critical-border: rgba(255, 61, 61, 0.25);
-  --status-info: #00D4FF;
-  --status-info-bg: rgba(0, 212, 255, 0.1);
-  --status-info-border: rgba(0, 212, 255, 0.25);
+  --status-info: #e7aa51;
+  --status-info-bg: rgba(231, 170, 81, 0.1);
+  --status-info-border: rgba(231, 170, 81, 0.2);
 
-  /* Gradients */
-  --gradient-bg: linear-gradient(145deg, #0A1A2F 0%, #0F2D4D 60%, #0A1A2F 100%);
-  --gradient-card: linear-gradient(160deg, #112A45 0%, #0D2240 100%);
-  --gradient-panel: linear-gradient(180deg, rgba(17, 42, 69, 0.95) 0%, rgba(13, 34, 64, 0.98) 100%);
-  --gradient-accent-line: linear-gradient(90deg, #00D4FF 0%, #7B61FF 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-  --gradient-hero: linear-gradient(145deg, #060E1A 0%, #0A1A2F 30%, #0F2D4D 60%, #0A1A2F 100%);
+  /* Gradients (Noir/Gold) */
+  --gradient-bg: linear-gradient(145deg, #000000 0%, #050505 60%, #000000 100%);
+  --gradient-card: linear-gradient(160deg, #0c0c0c 0%, #050505 100%);
+  --gradient-panel: linear-gradient(180deg, #080808 0%, #000000 100%);
+  --gradient-accent-line: linear-gradient(90deg, #e7aa51 0%, #8d5a1b 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(231, 170, 81, 0.04) 0%, rgba(231, 170, 81, 0.01) 100%);
+  --gradient-hero: linear-gradient(145deg, #000000 0%, #050505 30%, #0a0a0a 60%, #000000 100%);
 
   /* Typography */
   --font-family: 'Times New Roman', Times, serif;
@@ -270,7 +270,7 @@ img {
 }
 
 .btn-ghost:hover {
-  background: rgba(0, 212, 255, 0.05);
+  background: rgba(231, 170, 81, 0.05);
   color: var(--text-primary);
   border-color: var(--border-color);
 }
@@ -710,7 +710,7 @@ tr:hover td {
 /* --- Progress Bars (Gauge Style) --- */
 .progress-bar-track {
   height: 4px;
-  background: rgba(0, 212, 255, 0.08);
+  background: rgba(231, 170, 81, 0.08);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
