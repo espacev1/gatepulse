@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff } from 'lucide-react'
+import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff, X, Activity } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -9,10 +9,59 @@ export default function MyTickets() {
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(true)
     const [revealMap, setRevealMap] = useState({})
+    const [activeSessions, setActiveSessions] = useState([])
+    const [verifyingTicket, setVerifyingTicket] = useState(null)
+    const [showCamera, setShowCamera] = useState(false)
+    const [captureStep, setCaptureStep] = useState('face') // 'face' or 'id'
+    const [capturedData, setCapturedData] = useState({ face: null, idCard: null, faceUrl: null, idUrl: null })
+    const [capturing, setCapturing] = useState(false)
 
     const videoRef = useRef(null)
     const canvasRef = useRef(null)
     const streamRef = useRef(null)
+
+    useEffect(() => {
+        fetchInitialData()
+
+        // Real-time subscriptions for session updates
+        const channel = supabase
+            .channel('attendance-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => {
+                fetchActiveSessions()
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tickets' }, () => {
+                fetchMyTickets()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+            stopCamera()
+        }
+    }, [])
+
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([fetchMyTickets(), fetchActiveSessions()])
+        setLoading(false)
+    }
+
+    const fetchMyTickets = async () => {
+        if (!user) return
+        const { data } = await supabase
+            .from('tickets')
+            .select('*, event:events(*)')
+            .order('created_at', { ascending: false })
+        if (data) setTickets(data)
+    }
+
+    const fetchActiveSessions = async () => {
+        const { data } = await supabase
+            .from('attendance_sessions')
+            .select('*')
+            .eq('status', 'active')
+        if (data) setActiveSessions(data)
+    }
 
     useEffect(() => {
         if (showCamera && videoRef.current && streamRef.current) {
@@ -22,10 +71,16 @@ export default function MyTickets() {
 
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: false
+            })
             streamRef.current = stream
+            if (videoRef.current) videoRef.current.srcObject = stream
         } catch (err) {
-            alert('Camera access failed.')
+            console.error('Camera fail:', err)
+            alert('Camera access failed. Please ensure permissions are granted.')
+            setShowCamera(false)
         }
     }
 
@@ -38,10 +93,10 @@ export default function MyTickets() {
 
     const startVerification = async (ticket) => {
         setVerifyingTicket(ticket)
-        await startCamera()
         setShowCamera(true)
         setCaptureStep('face')
-        setCapturedData({ face: null, idCard: null })
+        setCapturedData({ face: null, idCard: null, faceUrl: null, idUrl: null })
+        await startCamera()
     }
 
     const handleCapture = async () => {

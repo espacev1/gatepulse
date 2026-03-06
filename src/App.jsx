@@ -87,6 +87,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={['participant']}><Layout /></ProtectedRoute>}>
           <Route path="/events" element={<ParticipantEvents />} />
           <Route path="/my-tickets" element={<MyTickets />} />
+          <Route path="/my tickets" element={<Navigate to="/my-tickets" replace />} />
           <Route path="/my-qr" element={<MyQR />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
