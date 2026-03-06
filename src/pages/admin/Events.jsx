@@ -4,7 +4,18 @@ import {
     MoreVertical, Edit2, Trash2, X, Check, Activity, Clock, CreditCard, DollarSign
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { db } from '../../lib/firebase'
+import {
+    collection,
+    query,
+    onSnapshot,
+    orderBy,
+    addDoc,
+    updateDoc,
+    doc,
+    deleteDoc,
+    serverTimestamp
+} from 'firebase/firestore'
 
 export default function AdminEvents() {
     const { user } = useAuth()
@@ -19,41 +30,37 @@ export default function AdminEvents() {
         max_capacity: 100, description: '', status: 'upcoming',
         is_free: true, price: 0,
         participation_type: 'solo',
-        allowed_departments: [] // Empty means all
+        allowed_departments: []
     })
 
     const DEPARTMENTS = ['AIML', 'AIDS', 'IT', 'CSE', 'ECE', 'EEE', 'ME', 'CE', 'CSBS']
 
     useEffect(() => {
-        fetchEvents()
-        const subscription = supabase
-            .channel('admin-events-live')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-                fetchEvents()
-            })
-            .subscribe()
+        const q = query(collection(db, 'events'), orderBy('created_at', 'desc'))
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            setEvents(data)
+            setLoading(false)
+        }, (err) => {
+            console.error("Firestore subscription error:", err)
+            setLoading(false)
+        })
 
-        return () => {
-            supabase.removeChannel(subscription)
-        }
+        return () => unsubscribe()
     }, [])
-
-    const fetchEvents = async () => {
-        setLoading(true)
-        const { data, error } = await supabase
-            .from('events')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (!error && data) setEvents(data)
-        setLoading(false)
-    }
 
     const handleOpenModal = (event = null) => {
         if (event) {
             setEditingEvent(event)
             setForm({
-                ...event,
+                name: event.name || '',
+                location: event.location || '',
+                start_time: event.start_time || '',
+                end_time: event.end_time || '',
+                event_date: event.event_date || '',
+                max_capacity: event.max_capacity || 100,
+                description: event.description || '',
+                status: event.status || 'upcoming',
                 is_free: event.is_free ?? true,
                 price: event.price ?? 0,
                 participation_type: event.participation_type || 'solo',
@@ -79,34 +86,30 @@ export default function AdminEvents() {
         if (!form.name) {
             return alert('Event name is required.')
         }
+
         const payload = {
             ...form,
-            start_time: new Date(form.start_time).toISOString(),
-            end_time: new Date(form.end_time).toISOString(),
-            event_date: form.event_date ? new Date(form.event_date).toISOString() : null,
-            created_by: user.id,
-            updated_at: new Date().toISOString()
+            created_by: user.uid,
+            updated_at: serverTimestamp(),
+            // Ensure numbers are numbers
+            max_capacity: Number(form.max_capacity),
+            price: Number(form.price)
         }
 
-        let error
-        if (editingEvent) {
-            const { error: err } = await supabase
-                .from('events')
-                .update(payload)
-                .eq('id', editingEvent.id)
-            error = err
-        } else {
-            const { error: err } = await supabase
-                .from('events')
-                .insert([payload])
-            error = err
-        }
-
-        if (!error) {
+        try {
+            if (editingEvent) {
+                const docRef = doc(db, 'events', editingEvent.id)
+                await updateDoc(docRef, payload)
+            } else {
+                await addDoc(collection(db, 'events'), {
+                    ...payload,
+                    created_at: serverTimestamp(),
+                    registered_count: 0
+                })
+            }
             setShowModal(false)
-            fetchEvents()
-        } else {
-            alert('Error saving event: ' + error.message)
+        } catch (err) {
+            alert('Error saving event: ' + err.message)
         }
     }
 
@@ -123,14 +126,10 @@ export default function AdminEvents() {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to decommission this node?')) return
-        const { data, error } = await supabase.from('events').delete().eq('id', id).select()
-
-        if (error) {
-            alert('Error deleting event: ' + error.message)
-        } else if (data.length === 0) {
-            alert('PERMISSION DENIED: Your account does not have sufficient clearance to decommission this node. Please contact the high-level administrator.')
-        } else {
-            fetchEvents()
+        try {
+            await deleteDoc(doc(db, 'events', id))
+        } catch (err) {
+            alert('Error deleting event: ' + err.message)
         }
     }
 
@@ -150,7 +149,6 @@ export default function AdminEvents() {
                 )}
             </div>
 
-            {/* Filters HUD */}
             <div className="card mb-6" style={{ padding: 'var(--space-4)' }}>
                 <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                     <div className="search-bar">
@@ -160,67 +158,66 @@ export default function AdminEvents() {
                 </div>
             </div>
 
-            {/* Events Grid */}
             <div className="grid-3">
                 {loading && <div className="col-span-3 text-center py-12">Synchronizing with secure database...</div>}
                 {!loading && filtered.length === 0 && (
                     <div className="col-span-3 text-center py-12 text-dim">No active nodes detected. Deploy a new node to begin.</div>
                 )}
                 {filtered.map((event, i) => (
-                    <div key={event.id} className="card" style={{ animation: `fadeInUp 0.4s ease ${i * 0.05}s both` }}>
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                    <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
-                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>NODE_{event.id.slice(-4)}</span>
+                    <div key={event.id} className="card p-0 overflow-hidden" style={{ animation: `fadeInUp 0.4s ease ${i * 0.05}s both` }}>
+                        <div style={{ padding: '24px' }}>
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
+                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>NODE_{event.id.slice(-4)}</span>
+                                    </div>
+                                    <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>{event.name}</h3>
                                 </div>
-                                <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>{event.name}</h3>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={`badge ${event.participation_type === 'team' ? 'badge-primary' : 'badge-info'}`} style={{ fontSize: '9px' }}>
+                                        {event.participation_type?.toUpperCase()}
+                                    </span>
+                                    <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{event.status}</span>
+                                </div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <span className={`badge ${event.participation_type === 'team' ? 'badge-primary' : 'badge-info'}`} style={{ fontSize: '9px' }}>
-                                    {event.participation_type?.toUpperCase()}
-                                </span>
-                                <span className={`badge ${event.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{event.status}</span>
-                            </div>
-                        </div>
 
-                        <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)', marginBottom: 'var(--space-5)', lineHeight: 1.6 }} className="truncate-2">
-                            {event.description}
-                        </p>
+                            <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)', marginBottom: 'var(--space-5)', lineHeight: 1.6 }} className="truncate-2">
+                                {event.description}
+                            </p>
 
-                        <div className="flex flex-col gap-2 mb-4" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
-                            <div className="flex items-center gap-2"><MapPin size={12} color="var(--accent)" /> {event.location}</div>
-                            <div className="flex items-center gap-2"><Clock size={12} color="var(--accent)" /> {new Date(event.start_time).toLocaleString()}</div>
-                            <div className="flex items-center gap-2">
-                                <Users size={12} color="var(--accent)" />
-                                {event.allowed_departments && event.allowed_departments.length > 0 ?
-                                    `RESTRICTED: ${event.allowed_departments.join(', ')}` :
-                                    'OPEN TO ALL BRANCHES'}
+                            <div className="flex flex-col gap-2 mb-4" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+                                <div className="flex items-center gap-2"><MapPin size={12} color="var(--accent)" /> {event.location}</div>
+                                <div className="flex items-center gap-2"><Clock size={12} color="var(--accent)" /> {new Date(event.start_time).toLocaleString()}</div>
+                                <div className="flex items-center gap-2">
+                                    <Users size={12} color="var(--accent)" />
+                                    {event.allowed_departments && event.allowed_departments.length > 0 ?
+                                        `RESTRICTED: ${event.allowed_departments.join(', ')}` :
+                                        'OPEN TO ALL BRANCHES'}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Load Capacity */}
-                        <div className="mb-6">
-                            <div className="flex justify-between items-center mb-1">
-                                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>LOAD FACTOR</span>
-                                <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-primary)' }}>{event.registered_count || 0} / {event.max_capacity}</span>
+                            <div className="mb-6">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>LOAD FACTOR</span>
+                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-primary)' }}>{event.registered_count || 0} / {event.max_capacity}</span>
+                                </div>
+                                <div className="progress-bar-track">
+                                    <div className="progress-bar-fill" style={{ width: `${((event.registered_count || 0) / event.max_capacity) * 100}%` }} />
+                                </div>
                             </div>
-                            <div className="progress-bar-track">
-                                <div className="progress-bar-fill" style={{ width: `${((event.registered_count || 0) / event.max_capacity) * 100}%` }} />
-                            </div>
-                        </div>
 
-                        <div className="flex gap-2">
-                            <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
-                            {user?.role === 'admin' && (
-                                <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
-                            )}
+                            <div className="flex gap-2">
+                                <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
+                                {user?.role === 'admin' && (
+                                    <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Config Modal */}
             {showModal && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ border: '2px solid var(--border-accent)', maxWidth: '600px' }}>
@@ -274,9 +271,6 @@ export default function AdminEvents() {
                                         style={{ fontSize: '10px', marginLeft: 'auto' }}
                                     >RESET (OPEN ALL)</button>
                                 </div>
-                                <p style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '4px' }}>
-                                    * Selection restricts registration to specific branches. Leave unselected for Global Access.
-                                </p>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>

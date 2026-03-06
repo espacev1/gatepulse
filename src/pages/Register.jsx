@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
-import { supabase } from '../lib/supabase'
+import { db, storage } from '../lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '../contexts/AuthContext'
 import {
     Shield, Mail, Lock, User, ArrowRight, ArrowLeft,
@@ -128,20 +129,20 @@ export default function Register() {
             const qrToken = `GP-${uuidv4().slice(0, 8).toUpperCase()}`
             const email = formData.email.toLowerCase().trim()
 
-            // 1. Storage Uplink
+            // 1. Biometric Uplink to Firebase Storage
             const idPath = `barcodes/${Date.now()}-${email}.jpg`
             const facePath = `faces/${Date.now()}-${email}.jpg`
 
-            const [idUpload, faceUpload] = await Promise.all([
-                supabase.storage.from('id-barcodes').upload(idPath, idBarcode),
-                supabase.storage.from('face-verification').upload(facePath, facePic)
+            const idRef = ref(storage, idPath)
+            const faceRef = ref(storage, facePath)
+
+            await Promise.all([
+                uploadBytes(idRef, idBarcode),
+                uploadBytes(faceRef, facePic)
             ])
 
-            if (idUpload.error) throw idUpload.error
-            if (faceUpload.error) throw faceUpload.error
-
-            const idUrl = supabase.storage.from('id-barcodes').getPublicUrl(idPath).data.publicUrl
-            const faceUrl = supabase.storage.from('face-verification').getPublicUrl(facePath).data.publicUrl
+            const idUrl = await getDownloadURL(idRef)
+            const faceUrl = await getDownloadURL(faceRef)
 
             // 2. Auth & Profile Synchronization
             await register(formData.email, formData.password, formData.fullName, 'participant', {
@@ -150,8 +151,7 @@ export default function Register() {
                 reg_no: formData.regNo,
                 id_barcode_url: idUrl,
                 face_url: faceUrl,
-                qr_token: qrToken,
-                created_at: new Date().toISOString()
+                qr_token: qrToken
             })
 
             navigate('/events')

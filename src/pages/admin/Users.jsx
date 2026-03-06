@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, Shield, User, ShieldCheck, Activity, UserCog, ArrowUpRight, ChevronDown } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { db } from '../../lib/firebase'
 import { useAuth } from '../../contexts/AuthContext'
+import {
+    collection,
+    query,
+    onSnapshot,
+    orderBy,
+    doc,
+    updateDoc,
+    serverTimestamp
+} from 'firebase/firestore'
 
 const ROLE_LEVELS = {
     participant: { label: 'Participant', level: 1, color: 'var(--status-info)', bg: 'var(--status-info-bg)', border: 'var(--status-info-border)' },
@@ -20,31 +29,33 @@ export default function AdminUsers() {
     const escalateBtnRefs = useRef({})
 
     useEffect(() => {
-        fetchUsers()
-        const channel = supabase
-            .channel('profiles-admin-sync')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers())
-            .subscribe()
-        return () => { supabase.removeChannel(channel) }
-    }, [])
+        const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            setUsers(data)
+            setLoading(false)
+        }, (err) => {
+            console.error("Firestore error:", err)
+            setLoading(false)
+        })
 
-    const fetchUsers = async () => {
-        setLoading(true)
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .order('created_at', { ascending: false })
-        if (error) console.error('Failed to fetch users:', error)
-        if (data) setUsers(data)
-        setLoading(false)
-    }
+        return () => unsubscribe()
+    }, [])
 
     const escalateRole = async (userId, newRole) => {
         if (!currentUser?.is_super_admin) return alert('Only Super Admins can modify privilege levels.')
-        if (userId === currentUser.id) return alert('You cannot modify your own privileges.')
-        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
-        if (error) alert('Escalation failed: ' + error.message)
-        else { setEscalatingUser(null); fetchUsers() }
+        if (userId === currentUser.uid) return alert('You cannot modify your own privileges.')
+
+        try {
+            const userRef = doc(db, 'profiles', userId)
+            await updateDoc(userRef, {
+                role: newRole,
+                updated_at: serverTimestamp()
+            })
+            setEscalatingUser(null)
+        } catch (err) {
+            alert('Escalation failed: ' + err.message)
+        }
     }
 
     const handleEscalateClick = (userId) => {
@@ -115,7 +126,7 @@ export default function AdminUsers() {
                                 <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>NO IDENTITIES MATCHING QUERY</td></tr>
                             ) : filtered.map((u, i) => {
                                 const roleInfo = ROLE_LEVELS[u.role] || ROLE_LEVELS.participant
-                                const isCurrentUser = u.id === currentUser?.id
+                                const isCurrentUser = u.id === currentUser?.uid
 
                                 return (
                                     <tr key={u.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
@@ -149,7 +160,7 @@ export default function AdminUsers() {
                                             </span>
                                         </td>
                                         <td style={{ fontSize: '12px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-                                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                                            {u.created_at?.toDate ? u.created_at.toDate().toLocaleDateString() : '—'}
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: 'var(--status-ok)' }}>
@@ -185,7 +196,6 @@ export default function AdminUsers() {
                 </div>
             </div>
 
-            {/* Fixed-position dropdown rendered OUTSIDE the table */}
             {escalatingUser && escalatingUserData && (
                 <>
                     <div onClick={() => setEscalatingUser(null)} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
@@ -224,8 +234,6 @@ export default function AdminUsers() {
                                     opacity: escalatingUserData.role === roleKey ? 0.5 : 1,
                                     marginBottom: '2px'
                                 }}
-                                onMouseOver={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'rgba(231,170,81,0.06)' }}
-                                onMouseOut={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'transparent' }}
                             >
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: info.color, flexShrink: 0 }} />

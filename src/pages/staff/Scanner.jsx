@@ -4,8 +4,22 @@ import {
     ChevronRight, ScanLine, CheckCircle2, XCircle,
     ShieldCheck, AlertTriangle, Activity
 } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { db } from '../../lib/firebase'
 import { useAuth } from '../../contexts/AuthContext'
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+    doc,
+    updateDoc,
+    getDoc,
+    addDoc,
+    serverTimestamp,
+    orderBy,
+    limit
+} from 'firebase/firestore'
 
 export default function StaffScanner() {
     const { user: staffUser } = useAuth()
@@ -31,36 +45,41 @@ export default function StaffScanner() {
 
     // Load initial data
     useEffect(() => {
+        const fetchInitialData = async () => {
+            setLoading(true)
+            const qEvents = query(collection(db, 'events'), orderBy('created_at', 'desc'))
+            const eventsSnap = await getDocs(qEvents)
+            setEvents(eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+            setLoading(false)
+        }
         fetchInitialData()
+
+        const qTickets = query(collection(db, 'tickets'), where('is_validated', '==', true))
+        const unsubscribeTickets = onSnapshot(qTickets, (snapshot) => {
+            const tokens = new Set(snapshot.docs.map(doc => doc.data().qr_token))
+            setValidatedTickets(tokens)
+        })
+
+        return () => unsubscribeTickets()
     }, [])
-
-    const fetchInitialData = async () => {
-        setLoading(true)
-        const [ticketsRes, eventsRes] = await Promise.all([
-            supabase.from('tickets').select('qr_token').eq('is_validated', true),
-            supabase.from('events').select('*').order('created_at', { ascending: false })
-        ])
-
-        if (ticketsRes.data) setValidatedTickets(new Set(ticketsRes.data.map(t => t.qr_token)))
-        if (eventsRes.data) setEvents(eventsRes.data)
-        setLoading(false)
-    }
 
     const fetchParticipants = async (eventId) => {
         setLoading(true)
-        const { data, error } = await supabase
-            .from('participants')
-            .select(`
-                *,
-                profiles:user_id (*)
-            `)
-            .eq('event_id', eventId)
-
-        if (error) {
-            console.error('Fetch error:', error)
+        try {
+            const q = query(collection(db, 'participants'), where('event_id', '==', eventId))
+            const snapshot = await getDocs(q)
+            const data = await Promise.all(snapshot.docs.map(async d => {
+                const p = { id: d.id, ...d.data() }
+                const profileSnap = await getDoc(doc(db, 'profiles', p.user_id))
+                return {
+                    ...p,
+                    profiles: profileSnap.exists() ? profileSnap.data() : null
+                }
+            }))
+            setParticipants(data)
+        } catch (err) {
+            console.error('Fetch error:', err)
             setParticipants([])
-        } else {
-            setParticipants(data || [])
         }
         setLoading(false)
     }
@@ -82,8 +101,6 @@ export default function StaffScanner() {
         setScanResult(null)
         try {
             const { Html5Qrcode } = await import('html5-qrcode')
-
-            // Check for cameras first to give better error messages
             const devices = await Html5Qrcode.getCameras().catch(() => []);
             if (devices.length === 0) {
                 setScanning(false)
@@ -104,9 +121,7 @@ export default function StaffScanner() {
                     handleScan(decodedText)
                     stopCamera()
                 },
-                (errorMessage) => {
-                    // Silent retry for scanning frames
-                }
+                (errorMessage) => { }
             ).catch(err => {
                 setScanning(false)
                 const msg = err?.message || err || 'Check hardware permissions';
@@ -114,7 +129,7 @@ export default function StaffScanner() {
             })
         } catch (err) {
             setScanning(false)
-            setScanResult({ status: 'error', message: 'Sensor initialization failure. Critical system error.' })
+            setScanResult({ status: 'error', message: 'Sensor initialization failure.' })
         }
     }
 
@@ -129,162 +144,136 @@ export default function StaffScanner() {
     useEffect(() => { return () => { stopCamera() } }, [])
 
     const logScan = async (status, ticketId, eventIdOverride = null) => {
-        const { error } = await supabase.from('attendance_logs').insert([{
-            ticket_id: ticketId,
-            event_id: eventIdOverride || selectedEvent?.id,
-            verification_status: status,
-            staff_id: staffUser?.id,
-            timestamp: new Date().toISOString()
-        }])
-
-        if (error) {
+        try {
+            await addDoc(collection(db, 'attendance_logs'), {
+                ticket_id: ticketId || null,
+                event_id: eventIdOverride || selectedEvent?.id,
+                verification_status: status,
+                staff_id: staffUser?.uid,
+                timestamp: serverTimestamp()
+            })
+            showToast(`SYSLOG_COMMITTED: ${status.toUpperCase()}`)
+        } catch (error) {
             console.error('Telemetric logging failed:', error)
             showToast(`LOG_SYNC_FAILED: ${error.message}`, 'error')
-        } else {
-            console.log('Telemetric log committed:', status)
-            showToast(`SYSLOG_COMMITTED: ${status.toUpperCase()}`)
         }
     }
 
-    // Real-time listener for ticket validations from other devices
-    useEffect(() => {
-        const ticketSubscription = supabase
-            .channel('tickets-realtime')
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'tickets',
-                filter: 'is_validated=eq.true'
-            }, (payload) => {
-                if (payload.new && payload.new.qr_token) {
-                    setValidatedTickets(prev => new Set([...prev, payload.new.qr_token]));
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(ticketSubscription);
-        }
-    }, []);
-
     const handleScan = async (code) => {
         setScanResult(null);
+        code = code.trim();
 
-        // 1. First, check if it is a Profile Identity QR (format GP-XXXXXX)
-        const { data: identProfile, error: pError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('qr_token', code)
-            .single()
+        try {
+            // 1. Check if Identity QR
+            const qProfiles = query(collection(db, 'profiles'), where('qr_token', '==', code))
+            const profilesSnap = await getDocs(qProfiles)
+            const identProfile = !profilesSnap.empty ? { id: profilesSnap.docs[0].id, ...profilesSnap.docs[0].data() } : null
 
-        if (identProfile) {
-            // Smart Check: Try to find a ticket for this profile in the selected event
-            const { data: ticketData } = await supabase
-                .from('tickets')
-                .select('*, events(*), participants!inner(user_id)')
-                .eq('participants.user_id', identProfile.id)
-                .eq('event_id', selectedEvent?.id)
-                .single()
+            if (identProfile) {
+                // Try to find a ticket for this profile in selected event
+                // Need to find a participant record first
+                const qP = query(collection(db, 'participants'), where('user_id', '==', identProfile.id), where('event_id', '==', selectedEvent?.id))
+                const pSnap = await getDocs(qP)
 
-            if (ticketData) {
-                // If ticket found, proceed with ticket validation logic
-                return handleScan(ticketData.qr_token)
+                if (!pSnap.empty) {
+                    const participantId = pSnap.docs[0].id
+                    const qT = query(collection(db, 'tickets'), where('participant_id', '==', participantId))
+                    const tSnap = await getDocs(qT)
+                    if (!tSnap.empty) {
+                        return handleScan(tSnap.docs[0].data().qr_token)
+                    }
+                }
+
+                const result = {
+                    status: 'success',
+                    message: 'IDENTITY AUTHENTICATED (NO TICKET)',
+                    profile: identProfile,
+                    type: 'identity',
+                    code,
+                    time: new Date()
+                }
+                setScanResult(result);
+                setRecentScans(prev => [result, ...prev].slice(0, 8))
+                await logScan('invalid', null)
+                return
             }
+
+            // 2. Check cache
+            if (validatedTickets.has(code)) {
+                const qT = query(collection(db, 'tickets'), where('qr_token', '==', code))
+                const tSnap = await getDocs(qT)
+                const dupTicket = !tSnap.empty ? { id: tSnap.docs[0].id, ...tSnap.docs[0].data() } : null
+
+                const result = { status: 'duplicate', message: 'Ticket previously authenticated', code, time: new Date() }
+                setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+                if (dupTicket) await logScan('duplicate', dupTicket.id, dupTicket.event_id)
+                return
+            }
+
+            // 3. Verify Ticket
+            const qTicket = query(collection(db, 'tickets'), where('qr_token', '==', code))
+            const ticketSnap = await getDocs(qTicket)
+            if (ticketSnap.empty) {
+                const result = { status: 'invalid', message: 'Token not recognized in system', code, time: new Date() }
+                setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
+                await logScan('invalid', null)
+                return
+            }
+
+            const ticketDoc = ticketSnap.docs[0]
+            const ticket = { id: ticketDoc.id, ...ticketDoc.data() }
+
+            // Manual joins for result display
+            const participantSnap = await getDoc(doc(db, 'participants', ticket.participant_id))
+            let profile = null
+            let team = null
+            let event = null
+
+            if (participantSnap.exists()) {
+                const pData = participantSnap.data()
+                const [profSnap, evtSnap, tSnap] = await Promise.all([
+                    getDoc(doc(db, 'profiles', pData.user_id)),
+                    getDoc(doc(db, 'events', pData.event_id)),
+                    pData.team_id ? getDoc(doc(db, 'teams', pData.team_id)) : Promise.resolve({ exists: () => false })
+                ])
+                profile = profSnap.exists() ? profSnap.data() : null
+                event = evtSnap.exists() ? evtSnap.data() : null
+                if (tSnap.exists()) {
+                    const teamData = tSnap.data()
+                    const leaderSnap = await getDoc(doc(db, 'profiles', teamData.leader_id))
+                    team = { ...teamData, leader: leaderSnap.exists() ? leaderSnap.data() : null }
+                }
+            }
+
+            // 4. Update DB
+            await updateDoc(doc(db, 'tickets', ticket.id), {
+                is_validated: true,
+                validated_at: serverTimestamp(),
+                validated_by: staffUser?.uid
+            })
 
             const result = {
                 status: 'success',
-                message: 'IDENTITY AUTHENTICATED (NO TICKET)',
-                profile: identProfile,
-                type: 'identity',
+                message: 'Ticket Validated',
+                ticket: { ...ticket, events: event },
+                profile: profile,
+                team: team,
+                type: 'ticket',
                 code,
                 time: new Date()
             }
-            setScanResult(result);
-            setRecentScans(prev => [result, ...prev].slice(0, 8))
-            // Log as invalid since no ticket for this event
-            await logScan('invalid', null)
-            return
-        }
-
-        // 2. Check local cache for tickets
-        if (validatedTickets.has(code)) {
-            const { data: dupTicket } = await supabase.from('tickets').select('id, event_id').eq('qr_token', code.trim()).single()
-            const result = { status: 'duplicate', message: 'Ticket previously authenticated', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-            if (dupTicket) await logScan('duplicate', dupTicket.id, dupTicket.event_id)
-            return
+            await logScan('success', ticket.id, ticket.event_id)
+
+        } catch (err) {
+            console.error('Scan error:', err)
+            showToast('Scan processing failed.', 'error')
         }
-
-        // 3. Verify with Supabase (Ticket Verification)
-        const { data: ticket, error } = await supabase
-            .from('tickets')
-            .select(`
-                *,
-                participants (
-                    *,
-                    profiles (*),
-                    teams (
-                        *,
-                        leader:profiles!leader_id (*)
-                    )
-                ),
-                events (*)
-            `)
-            .eq('qr_token', code.trim())
-            .single()
-
-        if (error || !ticket) {
-            console.error('Ticket fetch error:', error);
-            const result = { status: 'invalid', message: 'Token not recognized in system or sector mismatch', code, time: new Date() }
-            setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-            await logScan('invalid', null)
-            return
-        }
-
-        // 4. Mark as validated in DB
-        const { error: updateError } = await supabase
-            .from('tickets')
-            .update({
-                is_validated: true,
-                validated_at: new Date().toISOString(),
-                validated_by: staffUser?.id
-            })
-            .eq('id', ticket.id)
-
-        if (updateError) console.error('Ticket validation update failed:', updateError)
-        setValidatedTickets(prev => new Set([...prev, code]))
-
-        const mappedProfile = ticket.participants?.profiles ||
-            (Array.isArray(ticket.participants) ? ticket.participants[0]?.profiles : null);
-
-        const teamData = ticket.participants?.teams ||
-            (Array.isArray(ticket.participants) ? ticket.participants[0]?.teams : null);
-
-        const result = {
-            status: 'success',
-            message: 'Ticket Validated',
-            ticket: ticket,
-            profile: mappedProfile,
-            team: teamData,
-            type: 'ticket',
-            code,
-            time: new Date()
-        }
-        setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
-        await logScan('success', ticket.id, ticket.event_id)
     }
 
     const getSafeProfile = (item) => {
         if (!item) return null;
-        // If it's a participant object directly
-        if (item.profiles) {
-            return Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
-        }
-        // If it's a join object from tickets
-        if (item.participants?.profiles) {
-            return Array.isArray(item.participants.profiles) ? item.participants.profiles[0] : item.participants.profiles;
-        }
-        return null;
+        return item.profiles;
     }
 
     return (
@@ -426,7 +415,6 @@ export default function StaffScanner() {
 
             {dashView === 'scanner' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'var(--space-6)' }}>
-                    {/* Main Scanner HUD */}
                     <div>
                         {selectedParticipant && (
                             <div className="card mb-4" style={{
@@ -448,13 +436,11 @@ export default function StaffScanner() {
                             </div>
                         )}
                         <div className="card" style={{ padding: 'var(--space-2)', background: 'var(--bg-deepest)', border: '2px solid var(--border-color)', position: 'relative' }}>
-                            {/* Corner Brackets */}
                             <div style={{ position: 'absolute', top: 10, left: 10, width: 20, height: 20, borderLeft: '2px solid var(--accent)', borderTop: '2px solid var(--accent)' }} />
                             <div style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRight: '2px solid var(--accent)', borderTop: '2px solid var(--accent)' }} />
                             <div style={{ position: 'absolute', bottom: 10, left: 10, width: 20, height: 20, borderLeft: '2px solid var(--accent)', borderBottom: '2px solid var(--accent)' }} />
                             <div style={{ position: 'absolute', bottom: 10, right: 10, width: 20, height: 20, borderRight: '2px solid var(--accent)', borderBottom: '2px solid var(--accent)' }} />
 
-                            {/* Scanline Animation */}
                             {scanning && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)', zIndex: 10, animation: 'scanline 2s linear infinite' }} />}
 
                             {mode === 'camera' ? (
@@ -467,7 +453,7 @@ export default function StaffScanner() {
                                             </div>
                                         )}
                                     </div>
-                                    <button onClick={scanning ? stopCamera : startCamera} className={`btn ${scanning ? 'btn-danger' : 'btn-primary'} w-full mt-4`} style={{ borderRadius: 'var(--radius-md)' }}>
+                                    <button onClick={scanning ? stopCamera : startCamera} className={`btn ${scanning ? 'btn-danger' : 'btn-primary'} w-full mt-4`}>
                                         {scanning ? 'OFFLINE SENSOR' : 'INITIALIZE SENSOR SCAN'}
                                     </button>
                                 </div>
@@ -488,7 +474,6 @@ export default function StaffScanner() {
                             )}
                         </div>
 
-                        {/* Result Hud Overlay */}
                         {scanResult && (
                             <div className="animate-fade-in-up mt-6 card" style={{
                                 background: scanResult.status === 'success' ? 'var(--status-ok-bg)' : 'var(--status-critical-bg)',
@@ -506,7 +491,7 @@ export default function StaffScanner() {
                                     ) : (
                                         <div style={{
                                             width: 60, height: 60, borderRadius: 'var(--radius-xl)',
-                                            background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center'
                                         }}>
                                             {scanResult.status === 'success' ? <CheckCircle2 size={32} color="var(--status-ok)" /> : <XCircle size={32} color="var(--status-critical)" />}
                                         </div>
@@ -554,10 +539,7 @@ export default function StaffScanner() {
                                                     </div>
                                                 ) : (
                                                     <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
-                                                        <div style={{
-                                                            fontSize: '10px', fontWeight: 800, color: 'var(--accent)',
-                                                            display: 'flex', alignItems: 'center', gap: '6px'
-                                                        }}>
+                                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                             <ShieldCheck size={12} /> ZERO-TRUST VERIFIED SECTOR
                                                         </div>
                                                     </div>
@@ -566,48 +548,10 @@ export default function StaffScanner() {
                                         )}
                                     </div>
                                 </div>
-
-                                {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type !== 'team' && (
-                                    <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                                            PHYSICAL VERIFICATION PROTOCOL
-                                        </div>
-                                        <div className="flex gap-4">
-                                            {scanResult.profile?.face_url && (
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>BIOMETRIC_FACE_MATCH</div>
-                                                    <div style={{ height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                                                        <img src={scanResult.profile.face_url} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {scanResult.profile?.id_barcode_url && (
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID_BARCODE_VERIFY</div>
-                                                    <div style={{ height: '80px', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
-                                                        <img src={scanResult.profile.id_barcode_url} alt="Barcode" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type === 'team' && (
-                                    <div className="mt-4 pt-4 p-3" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
-                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--status-ok)', marginBottom: '4px' }}>
-                                            GROUP_VALIDATION_PROTOCOL
-                                        </div>
-                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)' }}>
-                                            Verify with Team Leader: <span style={{ fontWeight: 800 }}>{scanResult.team?.leader?.full_name || 'UNRESOLVED'}</span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
 
-                    {/* Operational Log */}
                     <div className="card">
                         <div className="panel-header"><Activity size={12} /> Local Scan Log</div>
                         <div className="flex flex-col gap-3 mt-4">

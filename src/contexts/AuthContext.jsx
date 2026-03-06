@@ -1,5 +1,18 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { auth, db } from '../lib/firebase'
+import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    updateProfile
+} from 'firebase/auth'
+import {
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp
+} from 'firebase/firestore'
 
 const AuthContext = createContext(null)
 
@@ -9,161 +22,128 @@ export function AuthProvider({ children }) {
     const [unlockedRole, setUnlockedRole] = useState(null)
 
     useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
-                if (session) {
-                    let { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single()
+        let unsubscribeProfile = null
 
-                    // Robustness: If profile missing or role out of sync for Super Admin
-                    const isSuperAdmin = session.user.email === 'shanmukhamanikanta.inti@gmail.com'
+        const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                try {
+                    const profileRef = doc(db, 'profiles', firebaseUser.uid)
+
+                    // Initial sync/creation
+                    let profileSnap = await getDoc(profileRef)
+                    let profile = profileSnap.exists() ? profileSnap.data() : null
+                    const isSuperAdmin = firebaseUser.email === 'shanmukhamanikanta.inti@gmail.com'
 
                     if (!profile || (isSuperAdmin && profile.role !== 'admin')) {
-                        const { data: newProfile, error: pError } = await supabase.from('profiles').upsert({
-                            id: session.user.id,
-                            email: session.user.email,
-                            full_name: profile?.full_name || session.user.user_metadata?.full_name || 'Admin Entity',
-                            role: isSuperAdmin ? 'admin' : (profile?.role || 'participant')
-                        }, { onConflict: 'id' }).select().single()
-
-                        if (!pError) profile = newProfile
-                        else console.error('Profile sync failed:', pError)
+                        const newProfile = {
+                            id: firebaseUser.uid,
+                            email: firebaseUser.email,
+                            full_name: firebaseUser.displayName || 'Admin Entity',
+                            role: isSuperAdmin ? 'admin' : (profile?.role || 'participant'),
+                            updated_at: serverTimestamp()
+                        }
+                        await setDoc(profileRef, newProfile, { merge: true })
                     }
 
-                    if (profile) {
-                        setUser({
-                            ...session.user,
-                            ...profile,
-                            is_super_admin: profile.email === 'shanmukhamanikanta.inti@gmail.com'
-                        })
-                    }
+                    // Setup real-time listener
+                    unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const profileData = docSnap.data()
+                            setUser({
+                                ...firebaseUser,
+                                ...profileData,
+                                uid: firebaseUser.uid,
+                                is_super_admin: firebaseUser.email === 'shanmukhamanikanta.inti@gmail.com'
+                            })
+                        }
+                    })
+
+                } catch (err) {
+                    console.error('Profile sync error:', err)
                 }
-            } catch (err) {
-                console.error('Session initialization error:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-        checkSession()
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT' || !session) {
+            } else {
                 setUser(null)
-                localStorage.removeItem('gatepulse_user')
-            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
-                // Only re-check if we don't have a user or if the ID changed
-                checkSession()
+                if (unsubscribeProfile) unsubscribeProfile()
             }
+            setLoading(false)
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            unsubscribeAuth()
+            if (unsubscribeProfile) unsubscribeProfile()
+        }
     }, [])
 
     const login = async (email, password, role) => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+        const userCredential = await signInWithEmailAndPassword(auth, email, password)
+        const firebaseUser = userCredential.user
 
-        let { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single()
+        const profileRef = doc(db, 'profiles', firebaseUser.uid)
+        const profileSnap = await getDoc(profileRef)
+        let profile = profileSnap.exists() ? profileSnap.data() : null
 
-        // Recovery logic for missing profiles — use upsert to handle conflicts
-        if (!profile || profileError) {
-            const isSuperAdmin = data.user.email === 'shanmukhamanikanta.inti@gmail.com'
-            const profileData = {
-                id: data.user.id,
-                email: data.user.email,
-                full_name: data.user.user_metadata?.full_name || (isSuperAdmin ? 'Super Admin' : 'User'),
-                role: isSuperAdmin ? 'admin' : 'participant'
+        if (!profile) {
+            const isSuperAdmin = firebaseUser.email === 'shanmukhamanikanta.inti@gmail.com'
+            profile = {
+                id: firebaseUser.uid,
+                email: firebaseUser.email,
+                full_name: firebaseUser.displayName || (isSuperAdmin ? 'Super Admin' : 'User'),
+                role: isSuperAdmin ? 'admin' : 'participant',
+                updated_at: serverTimestamp()
             }
-
-            // Try upsert first (handles both insert and conflict)
-            const { data: upserted, error: upsertErr } = await supabase
-                .from('profiles')
-                .upsert(profileData, { onConflict: 'id' })
-                .select()
-                .single()
-
-            if (upsertErr) {
-                console.error('Profile recovery failed during login:', upsertErr)
-                throw new Error(`Profile synchronization failed: ${upsertErr.message}. Ensure your database schema is up to date.`)
-            } else {
-                profile = upserted
-            }
+            await setDoc(profileRef, profile)
         }
 
-        const isSuperAdmin = (profile.email || email) === 'shanmukhamanikanta.inti@gmail.com'
+        const isSuperAdmin = firebaseUser.email === 'shanmukhamanikanta.inti@gmail.com'
         const sessionUser = {
-            ...data.user,
+            ...firebaseUser,
             ...profile,
+            uid: firebaseUser.uid,
             role: isSuperAdmin ? 'admin' : (unlockedRole || profile.role || role),
             is_super_admin: isSuperAdmin
         }
 
         setUser(sessionUser)
-        localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
         setUnlockedRole(null)
         return sessionUser
     }
 
-
     const register = async (email, password, fullName, role, metadata = {}) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { full_name: fullName }
-            }
-        })
-        if (error) throw error
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const firebaseUser = userCredential.user
 
-        if (!data.user) throw new Error('Registration failed: User identity not established.')
+        await updateProfile(firebaseUser, { displayName: fullName })
 
         const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
         const assignedRole = isSuperAdmin ? 'admin' : (role || 'participant')
 
-        // Always create profile in DB — don't gate behind session check
-        const { error: pError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            email: data.user.email || email,
+        const profile = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
             full_name: fullName,
             role: assignedRole,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
             ...metadata
-        }, { onConflict: 'id' })
-
-        if (pError) {
-            console.error('Profile creation failed:', pError)
-            throw new Error(`Profile creation failed: ${pError.message}. Please check if the database columns exist.`)
         }
 
+        await setDoc(doc(db, 'profiles', firebaseUser.uid), profile)
+
         const sessionUser = {
-            ...data.user,
+            ...firebaseUser,
             full_name: fullName,
             role: assignedRole,
             is_super_admin: isSuperAdmin
         }
+
         setUser(sessionUser)
-        localStorage.setItem('gatepulse_user', JSON.stringify(sessionUser))
-
-        if (!data.session) {
-            throw new Error('Entity Provisioned. Please check your deployment email for activation instructions.')
-        }
-
         return sessionUser
     }
 
-
     const logout = async () => {
-        await supabase.auth.signOut()
+        await signOut(auth)
         setUser(null)
         setUnlockedRole(null)
-        localStorage.removeItem('gatepulse_user')
     }
 
     const value = { user, loading, login, register, logout, isAuthenticated: !!user, unlockedRole, setUnlockedRole }

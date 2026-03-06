@@ -3,8 +3,21 @@ import {
     Activity, Play, Square, ClipboardCheck,
     Calendar, Users, Shield, Clock, BarChart3, Info, X, MapPin, CheckCircle2, AlertCircle
 } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { db } from '../../lib/firebase'
 import { useAuth } from '../../contexts/AuthContext'
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+    doc,
+    updateDoc,
+    getDoc,
+    serverTimestamp,
+    orderBy,
+    limit
+} from 'firebase/firestore'
 
 export default function StaffAttendance() {
     const { user: staffUser } = useAuth()
@@ -16,94 +29,89 @@ export default function StaffAttendance() {
     const [loadingIntel, setLoadingIntel] = useState(false)
 
     useEffect(() => {
-        if (staffUser) {
-            fetchStaffData()
+        if (!staffUser) return
 
-            const channel = supabase
-                .channel('staff-attendance-sync')
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'attendance_sessions'
-                }, () => fetchStaffData())
-                .subscribe()
+        const fetchStaffData = async () => {
+            setLoading(true)
+            try {
+                // 1. Fetch Assigned Events
+                const qAssignments = query(collection(db, 'staff_assignments'), where('staff_id', '==', staffUser.uid))
+                const assignmentsSnap = await getDocs(qAssignments)
+                const eventIds = assignmentsSnap.docs.map(doc => doc.data().event_id)
 
-            return () => { supabase.removeChannel(channel) }
+                if (eventIds.length > 0) {
+                    // 2. Fetch Sessions - Firestore 'in' query has limits, but here it's fine for small sets
+                    const qCurrent = query(collection(db, 'attendance_sessions'), where('event_id', 'in', eventIds), where('status', '!=', 'ended'))
+                    const currentSnap = await getDocs(qCurrent)
+                    const currentData = await Promise.all(currentSnap.docs.map(async d => {
+                        const session = { id: d.id, ...d.data() }
+                        const eventSnap = await getDoc(doc(db, 'events', session.event_id))
+                        return { ...session, event: eventSnap.exists() ? eventSnap.data() : null }
+                    }))
+                    setAvailableSessions(currentData)
+
+                    // 3. Historical Reports
+                    const qHistory = query(collection(db, 'attendance_sessions'), where('event_id', 'in', eventIds), where('status', '==', 'ended'), orderBy('ended_at', 'desc'), limit(10))
+                    const historySnap = await getDocs(qHistory)
+                    const historyData = await Promise.all(historySnap.docs.map(async d => {
+                        const session = { id: d.id, ...d.data() }
+                        const eventSnap = await getDoc(doc(db, 'events', session.event_id))
+                        return { ...session, event: eventSnap.exists() ? eventSnap.data() : null }
+                    }))
+                    setHistoricalSessions(historyData)
+                }
+            } catch (err) {
+                console.error("Fetch data error:", err)
+            }
+            setLoading(false)
         }
+
+        fetchStaffData()
+
+        const unsubscribe = onSnapshot(collection(db, 'attendance_sessions'), () => {
+            fetchStaffData()
+        })
+
+        return () => unsubscribe()
     }, [staffUser])
 
-    const fetchStaffData = async () => {
-        setLoading(true)
-
-        // 1. Fetch Assigned Events
-        const { data: assignments } = await supabase
-            .from('staff_assignments')
-            .select('event_id')
-            .eq('staff_id', staffUser?.id)
-
-        const eventIds = assignments?.map(a => a.event_id) || []
-
-        if (eventIds.length > 0) {
-            // 2. Fetch Sessions for these events that are NOT ended
-            const { data: current } = await supabase
-                .from('attendance_sessions')
-                .select('*, event:events(*)')
-                .in('event_id', eventIds)
-                .neq('status', 'ended')
-
-            setAvailableSessions(current || [])
-
-            // 3. Fetch Historical Reports
-            const { data: history } = await supabase
-                .from('attendance_sessions')
-                .select('*, event:events(*)')
-                .in('event_id', eventIds)
-                .eq('status', 'ended')
-                .order('ended_at', { ascending: false })
-                .limit(10)
-
-            setHistoricalSessions(history || [])
-        }
-
-        setLoading(false)
-    }
-
     const activateProtocol = async (sessionId) => {
-        const { error } = await supabase
-            .from('attendance_sessions')
-            .update({ status: 'active' })
-            .eq('id', sessionId)
-
-        if (error) alert('Critical: Protocol activation failure. ' + error.message)
-        else fetchStaffData()
+        try {
+            await updateDoc(doc(db, 'attendance_sessions', sessionId), { status: 'active' })
+        } catch (err) {
+            alert('Critical: Protocol activation failure. ' + err.message)
+        }
     }
 
     const endSession = async (sessionId) => {
-        const { error } = await supabase
-            .from('attendance_sessions')
-            .update({
+        try {
+            await updateDoc(doc(db, 'attendance_sessions', sessionId), {
                 status: 'ended',
-                ended_at: new Date().toISOString()
+                ended_at: serverTimestamp()
             })
-            .eq('id', sessionId)
-
-        if (error) alert('Critical: Session termination failure. ' + error.message)
-        else fetchStaffData()
+        } catch (err) {
+            alert('Critical: Session termination failure. ' + err.message)
+        }
     }
 
     const fetchIntel = async (session) => {
         setSelectedSession(session)
         setLoadingIntel(true)
-
-        const { data, error } = await supabase
-            .from('attendance_records')
-            .select(`
-                *,
-                profile:profiles!participant_id (*)
-            `)
-            .eq('session_id', session.id)
-
-        if (data) setAttendanceRecords(data)
+        try {
+            const q = query(collection(db, 'attendance_records'), where('session_id', '==', session.id))
+            const snapshot = await getDocs(q)
+            const records = await Promise.all(snapshot.docs.map(async d => {
+                const record = { id: d.id, ...d.data() }
+                const profileSnap = await getDoc(doc(db, 'profiles', record.user_id || record.participant_id))
+                return {
+                    ...record,
+                    profile: profileSnap.exists() ? profileSnap.data() : null
+                }
+            }))
+            setAttendanceRecords(records)
+        } catch (err) {
+            console.error("Intel error:", err)
+        }
         setLoadingIntel(false)
     }
 
@@ -175,12 +183,14 @@ export default function StaffAttendance() {
                                 </thead>
                                 <tbody>
                                     {historicalSessions.map(s => {
-                                        const duration = Math.round((new Date(s.ended_at) - new Date(s.activated_at)) / 60000)
+                                        const end = s.ended_at?.toDate ? s.ended_at.toDate() : new Date()
+                                        const start = s.activated_at?.toDate ? s.activated_at.toDate() : new Date()
+                                        const duration = Math.round((end - start) / 60000)
                                         return (
                                             <tr key={s.id}>
                                                 <td>
                                                     <div style={{ fontWeight: 700, fontSize: 'var(--font-sm)' }}>{s.event?.name}</div>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{new Date(s.ended_at).toLocaleDateString()}</div>
+                                                    <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{end.toLocaleDateString()}</div>
                                                 </td>
                                                 <td className="font-mono text-xs">{duration} MIN</td>
                                                 <td style={{ textAlign: 'right' }}>
@@ -191,16 +201,13 @@ export default function StaffAttendance() {
                                             </tr>
                                         )
                                     })}
-                                    {historicalSessions.length === 0 && (
-                                        <tr><td colSpan="3" className="text-center py-8 text-dim">No historical reports generated.</td></tr>
-                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
-            {/* Attendance Intel Modal */}
+
             {selectedSession && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '900px', border: '1px solid var(--accent)' }}>
@@ -227,7 +234,7 @@ export default function StaffAttendance() {
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-card-label">ACTIVATION_TIMESTAMP</div>
-                                    <div className="stat-card-value text-xs font-mono">{new Date(selectedSession.activated_at).toLocaleTimeString()}</div>
+                                    <div className="stat-card-value text-xs font-mono">{selectedSession.activated_at?.toDate ? selectedSession.activated_at.toDate().toLocaleTimeString() : ''}</div>
                                 </div>
                             </div>
 
@@ -277,7 +284,7 @@ export default function StaffAttendance() {
                                                         </div>
                                                     </td>
                                                     <td className="font-mono text-xs">
-                                                        {new Date(record.verified_at).toLocaleTimeString()}
+                                                        {record.verified_at?.toDate ? record.verified_at.toDate().toLocaleTimeString() : ''}
                                                     </td>
                                                     <td style={{ textAlign: 'right' }}>
                                                         <span className="badge badge-success text-xs">VERIFIED</span>

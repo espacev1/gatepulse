@@ -5,10 +5,12 @@ import {
     X, Edit3, Fingerprint, BadgeCheck, Upload
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { db, storage } from '../../lib/firebase'
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 export default function Profile() {
-    const { user, refreshUser } = useAuth()
+    const { user } = useAuth()
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -33,6 +35,19 @@ export default function Profile() {
     const videoRef = useRef(null)
     const canvasRef = useRef(null)
     const streamRef = useRef(null)
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                full_name: user.full_name || '',
+                dept: user.dept || '',
+                section: user.section || '',
+                reg_no: user.reg_no || ''
+            })
+            setFacePicPreview(user.face_url || null)
+            setIdBarcodePreview(user.id_barcode_url || null)
+        }
+    }, [user])
 
     useEffect(() => {
         if (isCameraActive && videoRef.current && streamRef.current) {
@@ -97,41 +112,33 @@ export default function Profile() {
         setSuccess('')
 
         try {
-            let faceUrl = user.face_url
-            let idUrl = user.id_barcode_url
+            let faceUrl = user.face_url || null
+            let idUrl = user.id_barcode_url || null
 
             // Upload new media if changed
             if (facePic) {
-                const facePath = `faces/${Date.now()}-${user.email}.jpg`
-                const { error: fErr } = await supabase.storage.from('face-verification').upload(facePath, facePic)
-                if (fErr) throw fErr
-                faceUrl = supabase.storage.from('face-verification').getPublicUrl(facePath).data.publicUrl
+                const faceRef = ref(storage, `faces/${user.uid}-${Date.now()}.jpg`)
+                await uploadBytes(faceRef, facePic)
+                faceUrl = await getDownloadURL(faceRef)
             }
 
             if (idBarcode) {
-                const idPath = `barcodes/${Date.now()}-${user.email}.jpg`
-                const { error: iErr } = await supabase.storage.from('id-barcodes').upload(idPath, idBarcode)
-                if (iErr) throw iErr
-                idUrl = supabase.storage.from('id-barcodes').getPublicUrl(idPath).data.publicUrl
+                const idRef = ref(storage, `barcodes/${user.uid}-${Date.now()}.jpg`)
+                await uploadBytes(idRef, idBarcode)
+                idUrl = await getDownloadURL(idRef)
             }
 
             // Update Database
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: formData.full_name,
-                    dept: formData.dept,
-                    section: formData.section,
-                    reg_no: formData.reg_no,
-                    face_url: faceUrl,
-                    id_barcode_url: idUrl,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user.id)
+            await updateDoc(doc(db, 'profiles', user.uid), {
+                full_name: formData.full_name,
+                dept: formData.dept,
+                section: formData.section,
+                reg_no: formData.reg_no,
+                face_url: faceUrl,
+                id_barcode_url: idUrl,
+                updated_at: serverTimestamp()
+            })
 
-            if (updateError) throw updateError
-
-            await refreshUser()
             setSuccess('PROTOCOL_UPDATED: Identity record successfully synchronized.')
             setIsEditing(false)
         } catch (err) {
