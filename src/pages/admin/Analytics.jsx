@@ -60,7 +60,6 @@ export default function AdminAnalytics() {
                 event_id,
                 verification_status,
                 tickets (
-                    ticket_type,
                     participants (
                         profiles (*)
                     )
@@ -237,13 +236,14 @@ export default function AdminAnalytics() {
                                 )}
                                 {analyticsData.recentLogs.map((log, i) => {
                                     const profile = log.tickets?.participants?.profiles;
-                                    const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+                                    const actualProfile = Array.isArray(profile) ? profile[0] : profile;
+                                    const safeName = actualProfile?.full_name;
                                     const isSuccess = log.verification_status === 'success';
 
                                     return (
                                         <tr key={i}>
                                             <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                                            <td><span className={`badge ${log.tickets?.ticket_type ? 'badge-info' : 'badge-secondary'}`}>{log.tickets?.ticket_type?.toUpperCase() || 'AD-HOC'}</span></td>
+                                            <td><span className={`badge badge-secondary`}>AD-HOC</span></td>
                                             <td style={{ fontWeight: 600 }}>{safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY')}</td>
                                             <td className="font-mono" style={{ color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
                                                 {log.verification_status?.toUpperCase() || 'UNKNOWN'}
