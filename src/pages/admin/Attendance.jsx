@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
     Users, Calendar, ClipboardCheck, Activity, Search,
-    UserPlus, Shield, Clock, BarChart3, ChevronRight, Play
+    UserPlus, Shield, Clock, BarChart3, ChevronRight, Play, X, MapPin, CheckCircle2, AlertCircle
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -14,6 +14,9 @@ export default function AdminAttendance() {
     const [sessions, setSessions] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
+    const [selectedSession, setSelectedSession] = useState(null)
+    const [attendanceRecords, setAttendanceRecords] = useState([])
+    const [loadingIntel, setLoadingIntel] = useState(false)
 
     useEffect(() => {
         fetchInitialData()
@@ -73,6 +76,22 @@ export default function AdminAttendance() {
         const { error } = await supabase.from('staff_assignments').delete().eq('id', id)
         if (error) alert('De-assignment failed: ' + error.message)
         else fetchAssignments()
+    }
+
+    const fetchIntel = async (session) => {
+        setSelectedSession(session)
+        setLoadingIntel(true)
+
+        const { data, error } = await supabase
+            .from('attendance_records')
+            .select(`
+                *,
+                profile:profiles!participant_id (*)
+            `)
+            .eq('session_id', session.id)
+
+        if (data) setAttendanceRecords(data)
+        setLoadingIntel(false)
     }
 
     return (
@@ -185,7 +204,12 @@ export default function AdminAttendance() {
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke Access</button>
+                                                <div className="flex justify-end gap-2">
+                                                    {session && (
+                                                        <button onClick={() => fetchIntel(session)} className="btn btn-secondary btn-xs">Intel</button>
+                                                    )}
+                                                    <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke</button>
+                                                </div>
                                             </td>
                                         </tr>
                                     )
@@ -238,7 +262,11 @@ export default function AdminAttendance() {
                                             {s.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td className="text-xs text-dim">ID: {s.id.slice(0, 8)}</td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <button onClick={() => fetchIntel(s)} className="btn-icon">
+                                            <BarChart3 size={14} />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                             {sessions.length === 0 && (
@@ -248,6 +276,101 @@ export default function AdminAttendance() {
                     </table>
                 </div>
             </div>
+            {/* Attendance Intel Modal */}
+            {selectedSession && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '900px', border: '1px solid var(--accent)' }}>
+                        <div className="modal-header">
+                            <div className="flex items-center gap-2">
+                                <Activity size={18} color="var(--accent)" />
+                                <h2 className="modal-title">GLOBAL_INTEL: {selectedSession.event?.name}</h2>
+                            </div>
+                            <button onClick={() => setSelectedSession(null)} className="btn-icon"><X size={20} /></button>
+                        </div>
+                        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                            <div className="grid grid-cols-4 gap-4 mb-6">
+                                <div className="stat-card">
+                                    <div className="stat-card-label">PROTOCOL_STATUS</div>
+                                    <div className="stat-card-value">{selectedSession.status.toUpperCase()}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card-label">VERIFIED_ENTITIES</div>
+                                    <div className="stat-card-value">{attendanceRecords.length}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card-label">SECTOR_LOCATION</div>
+                                    <div className="stat-card-value text-xs">{selectedSession.event?.location}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card-label">ACTIVATION_TIMESTAMP</div>
+                                    <div className="stat-card-value text-xs font-mono">{new Date(selectedSession.activated_at).toLocaleTimeString()}</div>
+                                </div>
+                            </div>
+
+                            {loadingIntel ? (
+                                <div className="flex justify-center py-12"><Activity className="animate-spin" /></div>
+                            ) : attendanceRecords.length === 0 ? (
+                                <div className="text-center py-12 text-dim font-mono text-xs">NO_VERIFICATION_SIGNALS_DETECTED</div>
+                            ) : (
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Entity Profile</th>
+                                                <th>Biometric Uplink (ID/Face)</th>
+                                                <th>Verification Time</th>
+                                                <th style={{ textAlign: 'right' }}>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {attendanceRecords.map(record => (
+                                                <tr key={record.id}>
+                                                    <td>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded bg-accent-glow flex items-center justify-center font-bold text-accent">
+                                                                {record.profile?.full_name?.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold">{record.profile?.full_name}</div>
+                                                                <div className="text-xs text-dim font-mono">{record.profile?.reg_no}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ minWidth: '180px' }}>
+                                                        <div className="flex gap-2">
+                                                            {record.id_capture_url && (
+                                                                <a href={record.id_capture_url} target="_blank" rel="noreferrer" className="relative group">
+                                                                    <img src={record.id_capture_url} alt="ID" className="w-12 h-8 object-cover rounded border border-white/10 hover:border-accent transition-colors" />
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded"><Users size={12} /></div>
+                                                                </a>
+                                                            )}
+                                                            {record.face_capture_url && (
+                                                                <a href={record.face_capture_url} target="_blank" rel="noreferrer" className="relative group">
+                                                                    <img src={record.face_capture_url} alt="Face" className="w-12 h-8 object-cover rounded border border-white/10 hover:border-accent transition-colors" />
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded"><Shield size={12} /></div>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="font-mono text-xs">
+                                                        {new Date(record.verified_at).toLocaleTimeString()}
+                                                    </td>
+                                                    <td style={{ textAlign: 'right' }}>
+                                                        <span className="badge badge-success text-xs">VERIFIED</span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => setSelectedSession(null)} className="btn btn-secondary">ABORT_INTEL</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

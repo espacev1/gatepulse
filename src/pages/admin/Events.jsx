@@ -15,7 +15,7 @@ export default function AdminEvents() {
     const [loading, setLoading] = useState(true)
 
     const [form, setForm] = useState({
-        name: '', location: '', start_time: '', end_time: '',
+        name: '', location: '', start_time: '', end_time: '', event_date: '',
         max_capacity: 100, description: '', status: 'upcoming',
         is_free: true, price: 0,
         participation_type: 'solo',
@@ -62,7 +62,7 @@ export default function AdminEvents() {
         } else {
             setEditingEvent(null)
             setForm({
-                name: '', location: '', start_time: '', end_time: '',
+                name: '', location: '', start_time: '', end_time: '', event_date: '',
                 max_capacity: 100, description: '', status: 'upcoming',
                 is_free: true, price: 0,
                 participation_type: 'solo',
@@ -83,6 +83,7 @@ export default function AdminEvents() {
             ...form,
             start_time: new Date(form.start_time).toISOString(),
             end_time: new Date(form.end_time).toISOString(),
+            event_date: form.event_date ? new Date(form.event_date).toISOString() : null,
             created_by: user.id,
             updated_at: new Date().toISOString()
         }
@@ -303,6 +304,11 @@ export default function AdminEvents() {
                                     <label className="form-label">Deactivation Time (End)</label>
                                     <input type="datetime-local" className="form-input" value={form.end_time ? form.end_time.slice(0, 16) : ''} onChange={e => setForm({ ...form, end_time: e.target.value })} />
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Node Activation Date (Event Takes Place)</label>
+                                <input type="datetime-local" className="form-input" value={form.event_date ? form.event_date.slice(0, 16) : ''} onChange={e => setForm({ ...form, event_date: e.target.value })} />
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>

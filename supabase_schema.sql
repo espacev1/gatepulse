@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.events (
     location TEXT,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
+    event_date TIMESTAMPTZ,
     created_by UUID REFERENCES public.profiles(id),
     status TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('active', 'upcoming', 'completed', 'cancelled')),
     image_url TEXT,

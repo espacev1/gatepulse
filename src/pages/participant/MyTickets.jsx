@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff } from 'lucide-react'
+import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff, X, Camera, RefreshCw, AlertCircle, Activity } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -16,6 +16,9 @@ export default function MyTickets() {
     const [captureStep, setCaptureStep] = useState('face') // 'face' or 'id'
     const [capturing, setCapturing] = useState(false)
     const [capturedData, setCapturedData] = useState({ face: null, idCard: null })
+    const [cameraError, setCameraError] = useState(null)
+    const videoRef = useRef(null)
+    const streamRef = useRef(null)
 
     useEffect(() => {
         if (user) {
@@ -57,31 +60,87 @@ export default function MyTickets() {
         setLoading(false)
     }
 
+    const startCamera = async () => {
+        try {
+            setCameraError(null)
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: captureStep === 'face' ? 'user' : 'environment' }
+            })
+            videoRef.current.srcObject = stream
+            streamRef.current = stream
+        } catch (err) {
+            console.error('Camera access error:', err)
+            setCameraError('CAMERA_UPLINK_FAILED: ' + err.message)
+        }
+    }
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+    }
+
     const startVerification = (ticket) => {
         setVerifyingTicket(ticket)
         setShowCamera(true)
         setCaptureStep('face')
         setCapturedData({ face: null, idCard: null })
+        setTimeout(startCamera, 100)
+    }
+
+    const handleCloseCamera = () => {
+        stopCamera()
+        setShowCamera(false)
+        setVerifyingTicket(null)
     }
 
     const handleCapture = async () => {
+        if (!videoRef.current) return
         setCapturing(true)
-        // Simulate camera capture - in a real implementation, this would use a video ref and canvas
-        const mockUrl = `https://generated-capture-${Math.random().toString(36).substring(7)}.jpg`
 
-        if (captureStep === 'face') {
-            setCapturedData(prev => ({ ...prev, face: mockUrl }))
-            setCaptureStep('id')
-        } else {
-            setCapturedData(prev => ({ ...prev, idCard: mockUrl }))
-            await submitVerification({ ...capturedData, idCard: mockUrl })
+        try {
+            const canvas = document.createElement('canvas')
+            canvas.width = videoRef.current.videoWidth
+            canvas.height = videoRef.current.videoHeight
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(videoRef.current, 0, 0)
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8))
+            const fileName = `${user.id}-${Date.now()}.jpg`
+            const bucket = captureStep === 'face' ? 'face-verification' : 'id-barcodes'
+
+            const { data, error } = await supabase.storage
+                .from(bucket)
+                .upload(fileName, blob)
+
+            if (error) throw error
+
+            const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName)
+
+            if (captureStep === 'face') {
+                setCapturedData(prev => ({ ...prev, face: publicUrl }))
+                stopCamera()
+                setCaptureStep('id')
+                setTimeout(startCamera, 100)
+            } else {
+                setCapturedData(prev => ({ ...prev, idCard: publicUrl }))
+                await submitVerification({ ...capturedData, idCard: publicUrl })
+            }
+        } catch (err) {
+            alert('CAPTURE_ERROR: ' + err.message)
+        } finally {
+            setCapturing(false)
         }
-        setCapturing(false)
     }
 
     const submitVerification = async (data) => {
         const session = activeSessions.find(s => s.event_id === verifyingTicket.event_id)
-        if (!session) return alert('Session ended unexpectedly.')
+        if (!session) {
+            alert('Session ended unexpectedly.')
+            handleCloseCamera()
+            return
+        }
 
         const { error } = await supabase.from('attendance_records').insert([{
             session_id: session.id,
@@ -91,11 +150,11 @@ export default function MyTickets() {
             verified_at: new Date().toISOString()
         }])
 
-        if (error) alert('Verification submission failed: ' + error.message)
-        else {
-            alert('Identity verified and attendance recorded successfully!')
-            setShowCamera(false)
-            setVerifyingTicket(null)
+        if (error) {
+            alert('Verification submission failed: ' + error.message)
+        } else {
+            alert('IDENTITY_VERIFIED: Attendance recorded for sector.')
+            handleCloseCamera()
         }
     }
 
@@ -266,12 +325,16 @@ export default function MyTickets() {
             {showCamera && (
                 <div style={{
                     position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.95)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)',
+                    backdropFilter: 'blur(10px)'
                 }}>
                     <div className="card" style={{ maxWidth: 500, width: '100%', background: 'var(--bg-deepest)', border: '1px solid var(--accent)' }}>
                         <div className="panel-header flex justify-between">
-                            <span>BIOMETRIC_LOCK: {captureStep.toUpperCase()} CAPTURE</span>
-                            <button onClick={() => setShowCamera(false)} className="btn-icon"><X size={18} /></button>
+                            <span className="flex items-center gap-2">
+                                <Shield size={16} color="var(--accent)" />
+                                BIOMETRIC_LOCK: {captureStep.toUpperCase()} CAPTURE
+                            </span>
+                            <button onClick={handleCloseCamera} className="btn-icon"><X size={18} /></button>
                         </div>
 
                         <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
@@ -281,26 +344,34 @@ export default function MyTickets() {
                                 marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'center',
                                 justifyContent: 'center', position: 'relative', overflow: 'hidden'
                             }}>
+                                <video
+                                    ref={videoRef}
+                                    autoPlay
+                                    playsInline
+                                    muted
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+
                                 <div className="animate-scanline" style={{
                                     position: 'absolute', top: 0, left: 0, right: 0, height: 2,
                                     background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)', zIndex: 10
                                 }} />
-                                {capturing ? (
-                                    <Activity size={48} color="var(--accent)" className="animate-spin" />
-                                ) : (
-                                    <div style={{ textAlign: 'center', color: 'var(--text-dim)' }}>
-                                        {captureStep === 'face' ? (
-                                            <>
-                                                <div style={{ width: 120, height: 120, border: '2px dashed var(--accent)', borderRadius: '50%', margin: '0 auto 16px' }} />
-                                                <p className="font-mono text-xs">ALIGN FACE WITHIN VECTOR</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div style={{ width: 200, height: 120, border: '2px dashed var(--accent)', borderRadius: 'var(--radius-md)', margin: '0 auto 16px' }} />
-                                                <p className="font-mono text-xs">ALIGN ID CARD WITHIN BOUNDS</p>
-                                            </>
-                                        )}
+
+                                {cameraError && (
+                                    <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-panel)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 4, zIndex: 20 }}>
+                                        <AlertCircle size={32} color="var(--status-critical)" className="mb-2" />
+                                        <p style={{ fontSize: '10px', color: 'var(--status-critical)' }}>{cameraError}</p>
+                                        <button onClick={startCamera} className="btn btn-secondary btn-xs mt-4">
+                                            <RefreshCw size={12} /> RETRY_UPLINK
+                                        </button>
                                     </div>
+                                )}
+
+                                {captureStep === 'face' && (
+                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '200px', height: '200px', borderRadius: '50%', border: '2px dashed var(--accent)', opacity: 0.5, pointerEvents: 'none' }} />
+                                )}
+                                {captureStep === 'id' && (
+                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '280px', height: '180px', borderRadius: 'var(--radius-md)', border: '2px dashed var(--accent)', opacity: 0.5, pointerEvents: 'none' }} />
                                 )}
                             </div>
 
@@ -309,13 +380,17 @@ export default function MyTickets() {
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'face' ? 'var(--accent)' : 'var(--status-ok)' }} />
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: captureStep === 'id' ? 'var(--accent)' : (capturedData.idCard ? 'var(--status-ok)' : 'var(--bg-elevated)') }} />
                                 </div>
-                                <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>
+                                <p style={{ fontSize: '11px', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                     {captureStep === 'face'
-                                        ? 'Please ensure you are in a well-lit area for biometric facial recognition.'
-                                        : 'Place your official ID card in front of the sensor for OCR validation.'}
+                                        ? 'PROVISIONAL FACIAL SCAN: Please align biometric features within the oval.'
+                                        : 'OCR_ID_VERIFICATION: Place legal identifier within the alignment frame.'}
                                 </p>
-                                <button onClick={handleCapture} className="btn btn-primary w-full py-3" disabled={capturing}>
-                                    {capturing ? 'PROCESSING...' : `CAPTURE ${captureStep.toUpperCase()}`}
+                                <button onClick={handleCapture} className="btn btn-primary w-full py-4 text-sm" disabled={capturing || !!cameraError}>
+                                    {capturing ? (
+                                        <span className="flex items-center gap-2"><Activity size={16} className="animate-spin" /> ANALYZING_BIOMETRICS...</span>
+                                    ) : (
+                                        <span className="flex items-center gap-2"><Camera size={18} /> INITIALIZE_CAPTURE</span>
+                                    )}
                                 </button>
                             </div>
                         </div>

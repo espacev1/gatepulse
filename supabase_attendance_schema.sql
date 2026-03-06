@@ -41,4 +41,12 @@ CREATE POLICY "Allow full access for admins on sessions" ON public.attendance_se
 CREATE POLICY "Allow staff to manage sessions" ON public.attendance_sessions FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'staff'));
 
 CREATE POLICY "Allow admins to view all records" ON public.attendance_records FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+CREATE POLICY "Allow staff to view their assigned records" ON public.attendance_records FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM attendance_sessions s
+        JOIN staff_assignments a ON s.event_id = a.event_id
+        WHERE s.id = attendance_records.session_id
+        AND a.staff_id = auth.uid()
+    )
+);
 CREATE POLICY "Allow participants to create their own record" ON public.attendance_records FOR INSERT WITH CHECK (auth.uid() = participant_id);

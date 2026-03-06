@@ -296,11 +296,13 @@ export default function ParticipantEvents() {
                                     </div>
                                 </div>
 
-                                {isRegistered ? (
-                                    <button className="btn btn-secondary w-full" disabled style={{ opacity: 0.6, borderStyle: 'dashed' }}>
-                                        <CheckCircle2 size={14} /> ACCESS_GRANTED
-                                    </button>
-                                ) : isFull ? (
+                                {isRegistered && (
+                                    <div className="badge badge-success w-full mb-3" style={{ fontSize: '10px', padding: '8px' }}>
+                                        <CheckCircle2 size={12} /> ACCESS_GRANTED
+                                    </div>
+                                )}
+
+                                {isFull && !isRegistered ? (
                                     <button className="btn btn-secondary w-full" disabled style={{ opacity: 0.5 }}>
                                         SECTOR_FULL
                                     </button>
@@ -358,6 +360,28 @@ export default function ParticipantEvents() {
                                         <Clock size={12} color="var(--status-critical)" /> DEACTIVATION_SIGNAL
                                     </div>
                                     <div style={{ fontWeight: 600 }}>{new Date(selectedEvent.end_time).toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-lg bg-accent-glow border border-accent/20 mb-8">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <div className="flex items-center gap-2 text-dim text-xs mb-2 uppercase">
+                                            <CalendarDays size={12} color="var(--accent)" /> NODE_ACTIVATION_DATE
+                                        </div>
+                                        <div style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--accent)' }}>
+                                            {selectedEvent.event_date ? new Date(selectedEvent.event_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'NOT_SCHEDULED'}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div className="text-dim text-xs mb-2 uppercase">REGISTRATION_COUNTDOWN</div>
+                                        {(() => {
+                                            const diff = new Date(selectedEvent.end_time) - new Date()
+                                            const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+                                            if (days <= 0) return <div style={{ fontWeight: 800, color: 'var(--status-critical)' }}>EXPIRED</div>
+                                            return <div style={{ fontWeight: 800, color: 'var(--status-ok)' }}>{days} DAYS LEFT</div>
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
 
