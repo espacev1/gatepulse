@@ -30,11 +30,11 @@
   --magenta: #e7aa51;
   --magenta-glow: rgba(231, 170, 81, 0.1);
 
-  /* Text Colors (Neutral/Gold Muted) */
-  --text-primary: #FFFFFF;
-  --text-secondary: #D1D1D1;
-  --text-muted: #888888;
-  --text-dim: #555555;
+  /* Text Colors (Golden) */
+  --text-primary: #cea455;
+  --text-secondary: rgba(206, 164, 85, 0.9);
+  --text-muted: rgba(206, 164, 85, 0.65);
+  --text-dim: rgba(206, 164, 85, 0.4);
 
   /* Status Indicators */
   --status-ok: #00E676;
@@ -136,7 +136,7 @@ html {
 body {
   font-family: var(--font-family);
   font-size: var(--font-base);
-  color: #E5E5E5;
+  color: #cea455;
   background: var(--bg-deepest);
   line-height: 1.55;
   min-height: 100vh;

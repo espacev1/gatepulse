@@ -190,7 +190,7 @@ export default function Layout() {
                     borderBottom: '1px solid var(--border-color)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '0 var(--space-6)',
-                    background: 'rgba(10,26,47,0.85)',
+                    background: 'rgba(8,8,8,0.85)',
                     backdropFilter: 'blur(12px)',
                     position: 'sticky', top: 0, zIndex: 30,
                 }}>
