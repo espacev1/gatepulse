@@ -110,10 +110,43 @@ export default function StaffScanner() {
         setGpsStatus('offline');
     }
 
-    const handleEventSelect = (event) => {
+    const handleEventSelect = async (event) => {
         setSelectedEvent(event)
         fetchParticipants(event.id)
         setDashView('participants')
+
+        // Auto-create and activate attendance session if none exists
+        const { data: existingSessions } = await supabase
+            .from('attendance_sessions')
+            .select('*')
+            .eq('event_id', event.id)
+            .in('status', ['opened', 'active'])
+
+        if (!existingSessions || existingSessions.length === 0) {
+            // Create a new session directly as active
+            const { error } = await supabase
+                .from('attendance_sessions')
+                .insert([{
+                    event_id: event.id,
+                    status: 'active',
+                    activated_at: new Date().toISOString(),
+                    activated_by: staffUser?.id
+                }])
+            if (error) {
+                console.error('Session creation error:', error)
+                showToast('Failed to open attendance session: ' + error.message, 'error')
+            } else {
+                showToast('Attendance protocol activated for this sector!')
+            }
+        } else if (existingSessions[0].status === 'opened') {
+            // Activate the existing opened session
+            await supabase
+                .from('attendance_sessions')
+                .update({ status: 'active' })
+                .eq('id', existingSessions[0].id)
+            showToast('Existing session activated!')
+        }
+
         startLocationTracking(event.id)
     }
 
