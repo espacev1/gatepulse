@@ -210,9 +210,11 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                             <div className="verification-slot">
                                 <label className="form-label mb-1 block">ID Barcode</label>
                                 <div style={{
-                                    height: 100, border: '1px dashed var(--border-color)', borderRadius: '4px',
+                                    height: 100,
+                                    border: idBarcode ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+                                    borderRadius: '4px',
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    position: 'relative', background: idBarcode ? 'rgba(0,212,255,0.05)' : 'transparent',
+                                    position: 'relative', background: idBarcode ? 'rgba(231,170,81,0.05)' : 'transparent',
                                     overflow: 'hidden'
                                 }}>
                                     {idBarcode ? (
@@ -227,9 +229,11 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                             <div className="verification-slot">
                                 <label className="form-label mb-1 block">Live Face</label>
                                 <div style={{
-                                    height: 140, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)',
+                                    height: 140,
+                                    border: facePic || isCameraActive ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-lg)',
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    position: 'relative', background: facePic || isCameraActive ? 'rgba(0,212,255,0.05)' : 'transparent',
+                                    position: 'relative', background: facePic || isCameraActive ? 'rgba(231,170,81,0.05)' : 'transparent',
                                     overflow: 'hidden'
                                 }}>
                                     {isCameraActive ? (
