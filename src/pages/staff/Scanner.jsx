@@ -134,9 +134,9 @@ export default function StaffScanner() {
                 }])
             if (error) {
                 console.error('Session creation error:', error)
-                showToast('Failed to open attendance session: ' + error.message, 'error')
+                alert('Failed to open attendance session: ' + error.message)
             } else {
-                showToast('Attendance protocol activated for this sector!')
+                alert('✅ Attendance protocol activated for this sector!')
             }
         } else if (existingSessions[0].status === 'opened') {
             // Activate the existing opened session
@@ -144,7 +144,7 @@ export default function StaffScanner() {
                 .from('attendance_sessions')
                 .update({ status: 'active' })
                 .eq('id', existingSessions[0].id)
-            showToast('Existing session activated!')
+            alert('✅ Existing session activated!')
         }
 
         startLocationTracking(event.id)

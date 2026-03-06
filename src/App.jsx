@@ -18,6 +18,7 @@ import StaffCheckIns from './pages/staff/CheckIns'
 import StaffAttendance from './pages/staff/Attendance'
 import ParticipantEvents from './pages/participant/Events'
 import MyTickets from './pages/participant/MyTickets'
+import ParticipantAttendance from './pages/participant/Attendance'
 import MyQR from './pages/participant/MyQR'
 import Profile from './pages/shared/Profile'
 
@@ -88,6 +89,7 @@ function AppRoutes() {
           <Route path="/events" element={<ParticipantEvents />} />
           <Route path="/my-tickets" element={<MyTickets />} />
           <Route path="/my tickets" element={<Navigate to="/my-tickets" replace />} />
+          <Route path="/attendance" element={<ParticipantAttendance />} />
           <Route path="/my-qr" element={<MyQR />} />
           <Route path="/profile" element={<Profile />} />
         </Route>

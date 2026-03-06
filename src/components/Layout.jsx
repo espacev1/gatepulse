@@ -25,6 +25,7 @@ const navConfig = {
     participant: [
         { to: '/events', icon: CalendarSearch, label: 'Browse Events', end: true },
         { to: '/my-tickets', icon: Ticket, label: 'My Tickets' },
+        { to: '/attendance', icon: ClipboardCheck, label: 'Attendance' },
     ],
 }
 
