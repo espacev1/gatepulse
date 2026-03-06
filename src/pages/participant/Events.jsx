@@ -308,6 +308,8 @@ export default function ParticipantEvents() {
                                                 const now = new Date()
                                                 const start = new Date(event.start_time)
                                                 const end = new Date(event.end_time)
+
+                                                if (event.status === 'active') return 'SCAN_WINDOW_ACTIVE: System Override'
                                                 if (now < start) return `DEPLOYMENT_PENDING: Opens in ${Math.ceil((start - now) / (1000 * 60 * 60 * 24))} days`
                                                 if (now > end) return 'REGISTRATION_CLOSED'
                                                 const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
@@ -345,12 +347,22 @@ export default function ParticipantEvents() {
                                             const now = new Date()
                                             const start = new Date(event.start_time)
                                             const end = new Date(event.end_time)
-                                            if (now < start) return alert('DEPLOYMENT_NOT_ACTIVE: Registration window has not opened yet.')
-                                            if (now > end) return alert('ACCESS_TERMINATED: Registration window is closed.')
+
+                                            // Allow override if admin manually set status to active
+                                            if (event.status === 'active') {
+                                                return handleRegister(event)
+                                            }
+
+                                            if (now < start) {
+                                                return alert(`DEPLOYMENT_PENDING: The registration window for this sector opens on ${start.toLocaleDateString()} at ${start.toLocaleTimeString()}. Current local time: ${now.toLocaleString()}`)
+                                            }
+                                            if (now > end) {
+                                                return alert(`ACCESS_TERMINATED: The registration window for this sector closed on ${end.toLocaleDateString()} at ${end.toLocaleTimeString()}.`)
+                                            }
+
                                             handleRegister(event)
                                         }}
                                         className="btn btn-primary w-full"
-                                        disabled={new Date() < new Date(event.start_time) || new Date() > new Date(event.end_time)}
                                     >
                                         INITIALIZE ACCESS <ArrowRight size={14} />
                                     </button>
