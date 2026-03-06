@@ -1,5 +1,19 @@
--- Gate Pulse: Smart Event Management System
--- Database Schema for Supabase (PostgreSQL)
+-- 0. Storage Buckets Setup
+-- Note: Run these individually or ensure extensions are enabled
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('id-barcodes', 'id-barcodes', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('face-verification', 'face-verification', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS Policies
+DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
+CREATE POLICY "Public Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id IN ('id-barcodes', 'face-verification'));
+
+DROP POLICY IF EXISTS "Public View" ON storage.objects;
+CREATE POLICY "Public View" ON storage.objects FOR SELECT USING (bucket_id IN ('id-barcodes', 'face-verification'));
 
 -- 1. Users Profile Table (Extends Supabase Auth)
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -113,7 +127,11 @@ END $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email, full_name, role)
+    INSERT INTO public.profiles (
+        id, email, full_name, role, 
+        dept, section, reg_no, 
+        id_barcode_url, face_url, qr_token
+    )
     VALUES (
         new.id, 
         new.email, 
@@ -121,11 +139,23 @@ BEGIN
         CASE 
             WHEN new.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
             WHEN new.email LIKE '%@vishnu.edu.in' THEN COALESCE(new.raw_user_meta_data->>'role', 'participant')
-            ELSE 'participant' -- Fallback, though frontend will block non-vishnu domains
-        END
+            ELSE 'participant'
+        END,
+        new.raw_user_meta_data->>'dept',
+        new.raw_user_meta_data->>'section',
+        new.raw_user_meta_data->>'reg_no',
+        new.raw_user_meta_data->>'id_barcode_url',
+        new.raw_user_meta_data->>'face_url',
+        new.raw_user_meta_data->>'qr_token'
     )
     ON CONFLICT (id) DO UPDATE 
     SET full_name = EXCLUDED.full_name, 
+        dept = EXCLUDED.dept,
+        section = EXCLUDED.section,
+        reg_no = EXCLUDED.reg_no,
+        id_barcode_url = EXCLUDED.id_barcode_url,
+        face_url = EXCLUDED.face_url,
+        qr_token = EXCLUDED.qr_token,
         role = CASE 
             WHEN EXCLUDED.email = 'shanmukhamanikanta.inti@gmail.com' THEN 'admin'
             WHEN EXCLUDED.email LIKE '%@vishnu.edu.in' THEN COALESCE(new.raw_user_meta_data->>'role', profiles.role)

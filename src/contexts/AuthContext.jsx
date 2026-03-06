@@ -114,32 +114,39 @@ export function AuthProvider({ children }) {
 
 
     const register = async (email, password, fullName, role, metadata = {}) => {
+        const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
+        const assignedRole = isSuperAdmin ? 'admin' : (role || 'participant')
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { full_name: fullName }
+                data: {
+                    full_name: fullName,
+                    role: assignedRole,
+                    ...metadata
+                }
             }
         })
         if (error) throw error
 
         if (!data.user) throw new Error('Registration failed: User identity not established.')
 
-        const isSuperAdmin = email === 'shanmukhamanikanta.inti@gmail.com'
-        const assignedRole = isSuperAdmin ? 'admin' : (role || 'participant')
-
-        // Always create profile in DB — don't gate behind session check
-        const { error: pError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            email: data.user.email || email,
-            full_name: fullName,
-            role: assignedRole,
-            ...metadata
-        }, { onConflict: 'id' })
-
-        if (pError) {
-            console.error('Profile creation failed:', pError)
-            throw new Error(`Profile creation failed: ${pError.message}. Please check if the database columns exist.`)
+        // The profile is created by the database trigger (handle_new_user).
+        // We attempt a client-side update only if a session exists (to satisfy RLS).
+        // Even if this fails due to RLS, the trigger has already provisioned the core identity.
+        if (data.session) {
+            try {
+                await supabase.from('profiles').upsert({
+                    id: data.user.id,
+                    email: data.user.email || email,
+                    full_name: fullName,
+                    role: assignedRole,
+                    ...metadata
+                }, { onConflict: 'id' })
+            } catch (pError) {
+                console.warn('Profile client-sync skipped (Identity preserved by trigger):', pError)
+            }
         }
 
         const sessionUser = {
