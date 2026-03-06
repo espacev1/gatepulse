@@ -80,7 +80,7 @@ export default function Login() {
                         margin: '0 auto var(--space-4)',
                     }}>
                         <img
-                            src="/logo_refined.png"
+                            src="/logo_ecell.jpg"
                             alt="E-MEDIA Logo"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />

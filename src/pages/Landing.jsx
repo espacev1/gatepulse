@@ -34,7 +34,7 @@ export default function Landing() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                         <img
-                            src="/logo_refined.png"
+                            src="/logo_ecell.jpg"
                             alt="E-MEDIA Logo"
                             style={{
                                 height: 32,

@@ -69,7 +69,7 @@ export default function Layout() {
                         flexShrink: 0,
                     }}>
                         <img
-                            src="/logo_refined.png"
+                            src="/logo_ecell.jpg"
                             alt="E-MEDIA Logo"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
@@ -80,7 +80,7 @@ export default function Layout() {
                                 E-MEDIA
                             </div>
                             <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -1 }}>
-                                Unified Security
+                                AN E-CELL INITIATIVE
                             </div>
                         </div>
                     )}
