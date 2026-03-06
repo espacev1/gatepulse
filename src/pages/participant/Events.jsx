@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap, DollarSign } from 'lucide-react'
+import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap, DollarSign, X, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -12,6 +12,7 @@ export default function ParticipantEvents() {
     const [loading, setLoading] = useState(true)
     const [teamModal, setTeamModal] = useState(false)
     const [pendingEvent, setPendingEvent] = useState(null)
+    const [selectedEvent, setSelectedEvent] = useState(null)
     const [teamName, setTeamName] = useState('')
     const [teamMembers, setTeamMembers] = useState(['']) // Array of emails or reg_nos
 
@@ -304,8 +305,8 @@ export default function ParticipantEvents() {
                                         SECTOR_FULL
                                     </button>
                                 ) : (
-                                    <button onClick={() => handleRegister(event)} className="btn btn-primary w-full">
-                                        INITIALIZE ACCESS <ArrowRight size={14} />
+                                    <button onClick={() => setSelectedEvent(event)} className="btn btn-primary w-full">
+                                        VIEW SECTOR DETAILS <ArrowRight size={14} />
                                     </button>
                                 )}
                             </div>
@@ -314,7 +315,123 @@ export default function ParticipantEvents() {
                 })}
             </div>
 
-            {/* Profile modal removed as registration is now unified */}
+            {/* Detail Modal */}
+            {selectedEvent && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '600px', border: '1px solid var(--accent)' }}>
+                        <div className="modal-header">
+                            <div className="flex items-center gap-2">
+                                <Zap size={18} color="var(--accent)" />
+                                <h2 className="modal-title">SECTOR_DETAILS: {selectedEvent.name}</h2>
+                            </div>
+                            <button onClick={() => setSelectedEvent(null)} className="btn-icon"><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="mb-6">
+                                <span className={`badge ${getStatusStyle(selectedEvent.status).badge} mb-2`}>{selectedEvent.status}</span>
+                                <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)', lineHeight: 1.8 }}>
+                                    {selectedEvent.description}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6 mb-8">
+                                <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                                    <div className="flex items-center gap-2 text-dim text-xs mb-2 uppercase">
+                                        <MapPin size={12} color="var(--accent)" /> DEPLOYMENT_LOCAL
+                                    </div>
+                                    <div style={{ fontWeight: 600 }}>{selectedEvent.location}</div>
+                                </div>
+                                <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                                    <div className="flex items-center gap-2 text-dim text-xs mb-2 uppercase">
+                                        <Users size={12} color="var(--accent)" /> CAPACITY_QUOTA
+                                    </div>
+                                    <div style={{ fontWeight: 600 }}>{selectedEvent.registered_count || 0} / {selectedEvent.max_capacity} ENTITIES</div>
+                                </div>
+                                <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                                    <div className="flex items-center gap-2 text-dim text-xs mb-2 uppercase">
+                                        <Clock size={12} color="var(--accent)" /> ACTIVATION_SIGNAL
+                                    </div>
+                                    <div style={{ fontWeight: 600 }}>{new Date(selectedEvent.start_time).toLocaleString()}</div>
+                                </div>
+                                <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                                    <div className="flex items-center gap-2 text-dim text-xs mb-2 uppercase">
+                                        <Clock size={12} color="var(--status-critical)" /> DEACTIVATION_SIGNAL
+                                    </div>
+                                    <div style={{ fontWeight: 600 }}>{new Date(selectedEvent.end_time).toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            {/* Temporal Logic Gauge */}
+                            {(() => {
+                                const now = new Date()
+                                const start = new Date(selectedEvent.start_time)
+                                const end = new Date(selectedEvent.end_time)
+                                const isRegistered = registeredEvents.has(selectedEvent.id)
+
+                                if (isRegistered) return null
+
+                                if (now < start) {
+                                    return (
+                                        <div className="badge badge-warning w-full p-4 flex flex-col gap-2" style={{ textTransform: 'none', background: 'rgba(231,170,81,0.1)' }}>
+                                            <div className="flex items-center gap-2"><Activity className="animate-pulse" size={14} /> STANDBY_MODE</div>
+                                            <div style={{ fontSize: '10px' }}>UPLINK_AWAITING_TIME_SYNC: Initializing access is restricted until {start.toLocaleString()}.</div>
+                                        </div>
+                                    )
+                                }
+
+                                if (now > end) {
+                                    return (
+                                        <div className="badge badge-error w-full p-4 flex flex-col gap-2" style={{ textTransform: 'none', background: 'rgba(255,107,107,0.1)' }}>
+                                            <div className="flex items-center gap-2"><AlertCircle size={14} /> DEPLOYMENT_WINDOW_CLOSED</div>
+                                            <div style={{ fontSize: '10px' }}>PROTOCOL_EXPIRED: Access initialization session has terminated.</div>
+                                        </div>
+                                    )
+                                }
+
+                                return null
+                            })()}
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => setSelectedEvent(null)} className="btn btn-secondary">ABORT</button>
+                            {(() => {
+                                const now = new Date()
+                                const start = new Date(selectedEvent.start_time)
+                                const end = new Date(selectedEvent.end_time)
+                                const isRegistered = registeredEvents.has(selectedEvent.id)
+                                const isFull = (selectedEvent.registered_count || 0) >= selectedEvent.max_capacity
+
+                                if (isRegistered) {
+                                    return <button className="btn btn-secondary" disabled style={{ opacity: 0.6 }}>ACCESS_ALREADY_GRANTED</button>
+                                }
+
+                                if (now < start) {
+                                    return <button className="btn btn-secondary" disabled style={{ opacity: 0.5 }}>AWAITING_ACTIVATION_SIGNAL</button>
+                                }
+
+                                if (now > end) {
+                                    return <button className="btn btn-secondary" disabled style={{ opacity: 0.5 }}>DEPLOYMENT_EXPIRED</button>
+                                }
+
+                                if (isFull) {
+                                    return <button className="btn btn-secondary" disabled style={{ opacity: 0.5 }}>CAPACITY_EXHAUSTED</button>
+                                }
+
+                                return (
+                                    <button
+                                        onClick={() => {
+                                            handleRegister(selectedEvent)
+                                            setSelectedEvent(null)
+                                        }}
+                                        className="btn btn-primary"
+                                    >
+                                        INITIALIZE ACCESS <ArrowRight size={16} />
+                                    </button>
+                                )
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {teamModal && (
                 <div className="modal-overlay">
