@@ -34,11 +34,20 @@ ALTER TABLE public.attendance_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance_records ENABLE ROW LEVEL SECURITY;
 
 -- Basic Policies (Adjust as needed for production)
+DROP POLICY IF EXISTS "Allow full access for admins" ON public.staff_assignments;
 CREATE POLICY "Allow full access for admins" ON public.staff_assignments FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+
+DROP POLICY IF EXISTS "Allow staff to view their assignments" ON public.staff_assignments;
 CREATE POLICY "Allow staff to view their assignments" ON public.staff_assignments FOR SELECT USING (auth.uid() = staff_id);
 
+DROP POLICY IF EXISTS "Allow full access for admins on sessions" ON public.attendance_sessions;
 CREATE POLICY "Allow full access for admins on sessions" ON public.attendance_sessions FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+
+DROP POLICY IF EXISTS "Allow staff to manage sessions" ON public.attendance_sessions;
 CREATE POLICY "Allow staff to manage sessions" ON public.attendance_sessions FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'staff'));
 
+DROP POLICY IF EXISTS "Allow admins to view all records" ON public.attendance_records;
 CREATE POLICY "Allow admins to view all records" ON public.attendance_records FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+
+DROP POLICY IF EXISTS "Allow participants to create their own record" ON public.attendance_records;
 CREATE POLICY "Allow participants to create their own record" ON public.attendance_records FOR INSERT WITH CHECK (auth.uid() = participant_id);

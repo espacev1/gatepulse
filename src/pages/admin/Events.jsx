@@ -16,6 +16,7 @@ export default function AdminEvents() {
 
     const [form, setForm] = useState({
         name: '', location: '', start_time: '', end_time: '',
+        event_date: '',
         max_capacity: 100, description: '', status: 'upcoming',
         is_free: true, price: 0,
         participation_type: 'solo',
@@ -57,12 +58,14 @@ export default function AdminEvents() {
                 is_free: event.is_free ?? true,
                 price: event.price ?? 0,
                 participation_type: event.participation_type || 'solo',
-                allowed_departments: event.allowed_departments || []
+                allowed_departments: event.allowed_departments || [],
+                event_date: event.event_date || ''
             })
         } else {
             setEditingEvent(null)
             setForm({
                 name: '', location: '', start_time: '', end_time: '',
+                event_date: '',
                 max_capacity: 100, description: '', status: 'upcoming',
                 is_free: true, price: 0,
                 participation_type: 'solo',
@@ -83,6 +86,7 @@ export default function AdminEvents() {
             ...form,
             start_time: new Date(form.start_time).toISOString(),
             end_time: new Date(form.end_time).toISOString(),
+            event_date: form.event_date ? new Date(form.event_date).toISOString() : null,
             created_by: user.id,
             updated_at: new Date().toISOString()
         }
@@ -294,7 +298,7 @@ export default function AdminEvents() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
                                     <label className="form-label">Activation Time (Start)</label>
                                     <input type="datetime-local" className="form-input" value={form.start_time ? form.start_time.slice(0, 16) : ''} onChange={e => setForm({ ...form, start_time: e.target.value })} />
@@ -302,6 +306,10 @@ export default function AdminEvents() {
                                 <div className="form-group">
                                     <label className="form-label">Deactivation Time (End)</label>
                                     <input type="datetime-local" className="form-input" value={form.end_time ? form.end_time.slice(0, 16) : ''} onChange={e => setForm({ ...form, end_time: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Node Activation Date (Event Date)</label>
+                                    <input type="date" className="form-input" value={form.event_date ? form.event_date.slice(0, 10) : ''} onChange={e => setForm({ ...form, event_date: e.target.value })} />
                                 </div>
                             </div>
 

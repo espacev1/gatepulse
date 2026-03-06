@@ -81,10 +81,28 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
 );
 
 -- Enable Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance_logs;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.participants;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.teams;
+DO $$
+BEGIN
+    -- Attendance Logs
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'attendance_logs') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance_logs;
+    END IF;
+    
+    -- Tickets
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'tickets') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;
+    END IF;
+    
+    -- Participants
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'participants') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.participants;
+    END IF;
+    
+    -- Teams
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'teams') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.teams;
+    END IF;
+END $$;
 
 -- 6. SYSTEM FRESH START (RUN THIS TO WIPE DATA)
 -- TRUNCATE public.attendance_logs, public.tickets, public.participants, public.events, public.profiles CASCADE;
@@ -144,31 +162,49 @@ RETURNS boolean AS $$
     );
 $$ LANGUAGE sql SECURITY DEFINER;
 
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can create own profile" ON public.profiles;
 CREATE POLICY "Users can create own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id OR is_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "Admins can manage any profile" ON public.profiles;
 CREATE POLICY "Admins can manage any profile" ON public.profiles FOR ALL USING (is_admin(auth.uid()));
 
 -- 2. Events
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Events are viewable by everyone" ON public.events;
 CREATE POLICY "Events are viewable by everyone" ON public.events FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admins can manage events" ON public.events;
 CREATE POLICY "Admins can manage events" ON public.events FOR ALL USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
 -- 3. Participants
 ALTER TABLE public.participants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own participation" ON public.participants;
 CREATE POLICY "Users can view own participation" ON public.participants FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins and Staff can view all participants" ON public.participants;
 CREATE POLICY "Admins and Staff can view all participants" ON public.participants FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
+
+DROP POLICY IF EXISTS "Users can register themselves" ON public.participants;
 CREATE POLICY "Users can register themselves" ON public.participants FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins can update participant status" ON public.participants;
 CREATE POLICY "Admins can update participant status" ON public.participants FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
 -- 4. Tickets
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own tickets" ON public.tickets;
 CREATE POLICY "Users can view own tickets" ON public.tickets FOR SELECT USING (
     EXISTS (
         SELECT 1 FROM public.participants 
@@ -176,31 +212,45 @@ CREATE POLICY "Users can view own tickets" ON public.tickets FOR SELECT USING (
         AND participants.user_id = auth.uid()
     )
 );
+
+DROP POLICY IF EXISTS "Admins and Staff can view all tickets" ON public.tickets;
 CREATE POLICY "Admins and Staff can view all tickets" ON public.tickets FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
+
+DROP POLICY IF EXISTS "Admins can provision tickets" ON public.tickets;
 CREATE POLICY "Admins can provision tickets" ON public.tickets FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
+
+DROP POLICY IF EXISTS "Staff can validate tickets" ON public.tickets;
 CREATE POLICY "Staff can validate tickets" ON public.tickets FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
 
 -- 5. Attendance Logs
 ALTER TABLE public.attendance_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admins and Staff can log attendance" ON public.attendance_logs;
 CREATE POLICY "Admins and Staff can log attendance" ON public.attendance_logs FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
+
+DROP POLICY IF EXISTS "Admins and Staff can view logs" ON public.attendance_logs;
 CREATE POLICY "Admins and Staff can view logs" ON public.attendance_logs FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
 );
 
 -- 6. Teams RLS
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Teams are viewable by participants of that team" ON public.teams;
 CREATE POLICY "Teams are viewable by participants of that team" ON public.teams FOR SELECT USING (
     auth.uid() = leader_id OR 
     EXISTS (SELECT 1 FROM public.participants WHERE team_id = teams.id AND user_id = auth.uid()) OR
     is_staff(auth.uid())
 );
+
+DROP POLICY IF EXISTS "Leaders can manage their teams" ON public.teams;
 CREATE POLICY "Leaders can manage their teams" ON public.teams FOR ALL USING (auth.uid() = leader_id OR is_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "Participants can create teams during registration" ON public.teams;
 CREATE POLICY "Participants can create teams during registration" ON public.teams FOR INSERT WITH CHECK (true);

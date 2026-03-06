@@ -10,92 +10,101 @@ export default function MyTickets() {
     const [loading, setLoading] = useState(true)
     const [revealMap, setRevealMap] = useState({})
 
-    const [activeSessions, setActiveSessions] = useState([])
-    const [verifyingTicket, setVerifyingTicket] = useState(null)
-    const [showCamera, setShowCamera] = useState(false)
-    const [captureStep, setCaptureStep] = useState('face') // 'face' or 'id'
-    const [capturing, setCapturing] = useState(false)
-    const [capturedData, setCapturedData] = useState({ face: null, idCard: null })
+    const videoRef = useRef(null)
+    const canvasRef = useRef(null)
+    const streamRef = useRef(null)
 
     useEffect(() => {
-        if (user) {
-            fetchMyTickets()
-            fetchActiveSessions()
-
-            const subscription = supabase
-                .channel('my-tickets-attendance-live')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchMyTickets())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => fetchActiveSessions())
-                .subscribe()
-
-            return () => { supabase.removeChannel(subscription) }
+        if (showCamera && videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current
         }
-    }, [user])
+    }, [showCamera, captureStep])
 
-    const fetchActiveSessions = async () => {
-        const { data } = await supabase.from('attendance_sessions').select('*').eq('status', 'active')
-        if (data) setActiveSessions(data)
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            streamRef.current = stream
+        } catch (err) {
+            alert('Camera access failed.')
+        }
     }
 
-    const fetchMyTickets = async () => {
-        if (!user) return
-        setLoading(true)
-
-        const { data: ticketData } = await supabase
-            .from('tickets')
-            .select(`
-                id,
-                qr_token,
-                is_validated,
-                event_id,
-                event:events (*),
-                participant:participants!inner (user_id)
-            `)
-            .eq('participant.user_id', user.id)
-
-        if (ticketData) setTickets(ticketData)
-        setLoading(false)
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+        }
+        streamRef.current = null
     }
 
-    const startVerification = (ticket) => {
+    const startVerification = async (ticket) => {
         setVerifyingTicket(ticket)
+        await startCamera()
         setShowCamera(true)
         setCaptureStep('face')
         setCapturedData({ face: null, idCard: null })
     }
 
     const handleCapture = async () => {
-        setCapturing(true)
-        // Simulate camera capture - in a real implementation, this would use a video ref and canvas
-        const mockUrl = `https://generated-capture-${Math.random().toString(36).substring(7)}.jpg`
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        if (!video || !canvas) return
 
-        if (captureStep === 'face') {
-            setCapturedData(prev => ({ ...prev, face: mockUrl }))
-            setCaptureStep('id')
-        } else {
-            setCapturedData(prev => ({ ...prev, idCard: mockUrl }))
-            await submitVerification({ ...capturedData, idCard: mockUrl })
-        }
-        setCapturing(false)
+        const context = canvas.getContext('2d')
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        canvas.toBlob(async (blob) => {
+            const tempUrl = URL.createObjectURL(blob)
+            if (captureStep === 'face') {
+                setCapturedData(prev => ({ ...prev, face: blob, faceUrl: tempUrl }))
+                setCaptureStep('id')
+            } else {
+                setCapturedData(prev => ({ ...prev, idCard: blob, idUrl: tempUrl }))
+                await submitVerification({ ...capturedData, idCard: blob })
+            }
+        }, 'image/jpeg', 0.8)
     }
 
     const submitVerification = async (data) => {
-        const session = activeSessions.find(s => s.event_id === verifyingTicket.event_id)
-        if (!session) return alert('Session ended unexpectedly.')
+        setCapturing(true)
+        try {
+            const session = activeSessions.find(s => s.event_id === verifyingTicket.event_id)
+            if (!session) throw new Error('Session ended unexpectedly.')
 
-        const { error } = await supabase.from('attendance_records').insert([{
-            session_id: session.id,
-            participant_id: user.id,
-            face_capture_url: data.face,
-            id_capture_url: data.idCard,
-            verified_at: new Date().toISOString()
-        }])
+            const facePath = `verification/face-${Date.now()}-${user.email}.jpg`
+            const idPath = `verification/id-${Date.now()}-${user.email}.jpg`
 
-        if (error) alert('Verification submission failed: ' + error.message)
-        else {
+            const [faceUp, idUp] = await Promise.all([
+                supabase.storage.from('face-verification').upload(facePath, data.face),
+                supabase.storage.from('id-barcodes').upload(idPath, data.idCard)
+            ])
+
+            if (faceUp.error) throw faceUp.error
+            if (idUp.error) throw idUp.error
+
+            const faceUrl = supabase.storage.from('face-verification').getPublicUrl(facePath).data.publicUrl
+            const idUrl = supabase.storage.from('id-barcodes').getPublicUrl(idPath).data.publicUrl
+
+            const { error } = await supabase.from('attendance_records').insert([{
+                session_id: session.id,
+                participant_id: user.id,
+                face_capture_url: faceUrl,
+                id_capture_url: idUrl,
+                verified_at: new Date().toISOString()
+            }])
+
+            if (error) throw error
+
             alert('Identity verified and attendance recorded successfully!')
+            stopCamera()
             setShowCamera(false)
             setVerifyingTicket(null)
+            fetchMyTickets()
+        } catch (err) {
+            alert('Verification failed: ' + err.message)
+        } finally {
+            setCapturing(false)
         }
     }
 
@@ -288,21 +297,36 @@ export default function MyTickets() {
                                 {capturing ? (
                                     <Activity size={48} color="var(--accent)" className="animate-spin" />
                                 ) : (
-                                    <div style={{ textAlign: 'center', color: 'var(--text-dim)' }}>
-                                        {captureStep === 'face' ? (
+                                    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                        {((captureStep === 'face' && !capturedData.face) || (captureStep === 'id' && !capturedData.idCard)) ? (
                                             <>
-                                                <div style={{ width: 120, height: 120, border: '2px dashed var(--accent)', borderRadius: '50%', margin: '0 auto 16px' }} />
-                                                <p className="font-mono text-xs">ALIGN FACE WITHIN VECTOR</p>
+                                                <video
+                                                    ref={videoRef}
+                                                    autoPlay playsInline muted
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                                <div style={{
+                                                    position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                                                    alignItems: 'center', justifyContent: 'center', pointerEvents: 'none'
+                                                }}>
+                                                    {captureStep === 'face' ? (
+                                                        <div style={{ width: 140, height: 180, border: '2px dashed var(--accent)', borderRadius: '50%' }} />
+                                                    ) : (
+                                                        <div style={{ width: '80%', height: '70%', border: '2px dashed var(--accent)', borderRadius: '12px' }} />
+                                                    )}
+                                                </div>
                                             </>
                                         ) : (
-                                            <>
-                                                <div style={{ width: 200, height: 120, border: '2px dashed var(--accent)', borderRadius: 'var(--radius-md)', margin: '0 auto 16px' }} />
-                                                <p className="font-mono text-xs">ALIGN ID CARD WITHIN BOUNDS</p>
-                                            </>
+                                            <img
+                                                src={captureStep === 'id' ? capturedData.faceUrl : capturedData.idUrl}
+                                                alt="Captured"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
                                         )}
                                     </div>
                                 )}
                             </div>
+                            <canvas ref={canvasRef} style={{ display: 'none' }} />
 
                             <div className="flex flex-col gap-4">
                                 <div className="flex justify-center gap-2 mb-2">

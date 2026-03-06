@@ -294,7 +294,27 @@ export default function ParticipantEvents() {
 
                                 <div className="flex flex-col gap-3 mb-6" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
                                     <div className="flex items-center gap-2"><MapPin size={12} color="var(--accent)" /> {event.location}</div>
-                                    <div className="flex items-center gap-2"><CalendarDays size={12} color="var(--accent)" /> {new Date(event.start_time).toLocaleDateString()}</div>
+                                    <div className="flex items-center gap-2">
+                                        <CalendarDays size={12} color="var(--accent)" />
+                                        <span>NODE_ACTIVATION: {event.event_date ? new Date(event.event_date).toLocaleDateString() : 'TBD'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock size={12} color="var(--accent)" />
+                                        <span>REG_WINDOW: {new Date(event.start_time).toLocaleDateString()} - {new Date(event.end_time).toLocaleDateString()}</span>
+                                    </div>
+                                    {event.status === 'upcoming' && (
+                                        <div style={{ marginTop: '4px', color: 'var(--status-warn)', fontWeight: 700 }}>
+                                            {(() => {
+                                                const now = new Date()
+                                                const start = new Date(event.start_time)
+                                                const end = new Date(event.end_time)
+                                                if (now < start) return `DEPLOYMENT_PENDING: Opens in ${Math.ceil((start - now) / (1000 * 60 * 60 * 24))} days`
+                                                if (now > end) return 'REGISTRATION_CLOSED'
+                                                const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
+                                                return `SCAN_WINDOW_ACTIVE: ${daysLeft} Days Left for Registration`
+                                            })()}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Load Factor Gauge */}
@@ -320,7 +340,18 @@ export default function ParticipantEvents() {
                                         SECTOR_FULL
                                     </button>
                                 ) : (
-                                    <button onClick={() => handleRegister(event)} className="btn btn-primary w-full">
+                                    <button
+                                        onClick={() => {
+                                            const now = new Date()
+                                            const start = new Date(event.start_time)
+                                            const end = new Date(event.end_time)
+                                            if (now < start) return alert('DEPLOYMENT_NOT_ACTIVE: Registration window has not opened yet.')
+                                            if (now > end) return alert('ACCESS_TERMINATED: Registration window is closed.')
+                                            handleRegister(event)
+                                        }}
+                                        className="btn btn-primary w-full"
+                                        disabled={new Date() < new Date(event.start_time) || new Date() > new Date(event.end_time)}
+                                    >
                                         INITIALIZE ACCESS <ArrowRight size={14} />
                                     </button>
                                 )}
