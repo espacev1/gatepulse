@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '../../contexts/AuthContext'
 import { QrCode, Mail, Download, Share2, ShieldCheck, User, Building2, Hash, AlertTriangle } from 'lucide-react'
+import ProfileCompletionModal from '../../components/ProfileCompletionModal'
 
 export default function MyQR() {
     const { user } = useAuth()
+    const [profileModal, setProfileModal] = useState(false)
 
     const isProfileComplete = user?.dept && user?.reg_no && user?.face_url && user?.id_barcode_url
 
@@ -17,8 +19,17 @@ export default function MyQR() {
                 <div className="card-glass text-center" style={{ padding: 'var(--space-12)' }}>
                     <AlertTriangle size={48} color="var(--status-warn)" className="mx-auto mb-6" />
                     <h2 className="page-title">Identity Provisioning Incomplete</h2>
-                    <p className="page-subtitle mb-8">Your digital entry credential cannot be generated until your profile is fully provisioned with academic and biometric data. Please contact the security administrator for manual reconciliation.</p>
+                    <p className="page-subtitle mb-8">Your digital entry credential cannot be generated until your profile is fully provisioned with academic and biometric data.</p>
+                    <button onClick={() => setProfileModal(true)} className="btn btn-primary">
+                        Complete Identity Setup
+                    </button>
                 </div>
+                <ProfileCompletionModal
+                    isOpen={profileModal}
+                    onClose={() => setProfileModal(false)}
+                    user={user}
+                    onComplete={() => window.location.reload()}
+                />
             </div>
         )
     }

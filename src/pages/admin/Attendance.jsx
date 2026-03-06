@@ -1,23 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
     Users, Calendar, ClipboardCheck, Activity, Search,
-    UserPlus, Shield, Clock, BarChart3, ChevronRight, Play, X, MapPin, CheckCircle2, AlertCircle
+    UserPlus, Shield, Clock, BarChart3, ChevronRight
 } from 'lucide-react'
-import { db } from '../../lib/firebase'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    onSnapshot,
-    addDoc,
-    deleteDoc,
-    doc,
-    getDoc,
-    orderBy,
-    serverTimestamp
-} from 'firebase/firestore'
 
 export default function AdminAttendance() {
     const { user } = useAuth()
@@ -27,107 +14,65 @@ export default function AdminAttendance() {
     const [sessions, setSessions] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [selectedSession, setSelectedSession] = useState(null)
-    const [attendanceRecords, setAttendanceRecords] = useState([])
-    const [loadingIntel, setLoadingIntel] = useState(false)
 
     useEffect(() => {
-        const fetchInitialData = async () => {
-            setLoading(true)
-            await Promise.all([
-                fetchEvents(),
-                fetchStaff()
-            ])
-            setLoading(false)
-        }
         fetchInitialData()
 
-        const unsubscribeAssignments = onSnapshot(collection(db, 'staff_assignments'), async (snapshot) => {
-            const data = await Promise.all(snapshot.docs.map(async d => {
-                const assignment = { id: d.id, ...d.data() }
-                const eventSnap = await getDoc(doc(db, 'events', assignment.event_id))
-                const staffSnap = await getDoc(doc(db, 'profiles', assignment.staff_id))
-                return {
-                    ...assignment,
-                    event: eventSnap.exists() ? { id: eventSnap.id, ...eventSnap.data() } : null,
-                    staff: staffSnap.exists() ? { id: staffSnap.id, ...staffSnap.data() } : null
-                }
-            }))
-            setAssignments(data)
-        })
+        const channel = supabase
+            .channel('admin-attendance-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_assignments' }, () => fetchAssignments())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => fetchSessions())
+            .subscribe()
 
-        const qSessions = query(collection(db, 'attendance_sessions'), orderBy('activated_at', 'desc'))
-        const unsubscribeSessions = onSnapshot(qSessions, async (snapshot) => {
-            const data = await Promise.all(snapshot.docs.map(async d => {
-                const session = { id: d.id, ...d.data() }
-                const eventSnap = await getDoc(doc(db, 'events', session.event_id))
-                return {
-                    ...session,
-                    event: eventSnap.exists() ? { id: eventSnap.id, ...eventSnap.data() } : null
-                }
-            }))
-            setSessions(data)
-        })
-
-        return () => {
-            unsubscribeAssignments()
-            unsubscribeSessions()
-        }
+        return () => { supabase.removeChannel(channel) }
     }, [])
 
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([
+            fetchEvents(),
+            fetchStaff(),
+            fetchAssignments(),
+            fetchSessions()
+        ])
+        setLoading(false)
+    }
+
     const fetchEvents = async () => {
-        const q = query(collection(db, 'events'), orderBy('created_at', 'desc'))
-        const snapshot = await getDocs(q)
-        setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+        const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+        if (data) setEvents(data)
     }
 
     const fetchStaff = async () => {
-        const q = query(collection(db, 'profiles'), where('role', '==', 'staff'))
-        const snapshot = await getDocs(q)
-        setStaff(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+        const { data } = await supabase.from('profiles').select('*').eq('role', 'staff')
+        if (data) setStaff(data)
+    }
+
+    const fetchAssignments = async () => {
+        const { data } = await supabase
+            .from('staff_assignments')
+            .select('*, event:events(*), staff:profiles(*)')
+        if (data) setAssignments(data)
+    }
+
+    const fetchSessions = async () => {
+        const { data } = await supabase
+            .from('attendance_sessions')
+            .select('*, event:events(*)')
+            .order('activated_at', { ascending: false })
+        if (data) setSessions(data)
     }
 
     const assignStaff = async (eventId, staffId) => {
-        try {
-            await addDoc(collection(db, 'staff_assignments'), {
-                event_id: eventId,
-                staff_id: staffId,
-                assigned_at: serverTimestamp()
-            })
-        } catch (err) {
-            alert('Assignment failed: ' + err.message)
-        }
+        const { error } = await supabase.from('staff_assignments').insert([{ event_id: eventId, staff_id: staffId }])
+        if (error) alert('Assignment failed: ' + error.message)
+        else fetchAssignments()
     }
 
     const removeAssignment = async (id) => {
-        try {
-            await deleteDoc(doc(db, 'staff_assignments', id))
-        } catch (err) {
-            alert('De-assignment failed: ' + err.message)
-        }
-    }
-
-    const fetchIntel = async (session) => {
-        setSelectedSession(session)
-        setLoadingIntel(true)
-
-        try {
-            const q = query(collection(db, 'attendance_records'), where('session_id', '==', session.id))
-            const snapshot = await getDocs(q)
-            const records = await Promise.all(snapshot.docs.map(async d => {
-                const record = { id: d.id, ...d.data() }
-                const profileSnap = await getDoc(doc(db, 'profiles', record.user_id || record.participant_id))
-                return {
-                    ...record,
-                    profile: profileSnap.exists() ? profileSnap.data() : null
-                }
-            }))
-            setAttendanceRecords(records)
-        } catch (err) {
-            console.error("Error fetching intel:", err)
-        } finally {
-            setLoadingIntel(false)
-        }
+        const { error } = await supabase.from('staff_assignments').delete().eq('id', id)
+        if (error) alert('De-assignment failed: ' + error.message)
+        else fetchAssignments()
     }
 
     return (
@@ -169,7 +114,7 @@ export default function AdminAttendance() {
                 <div className="card">
                     <div className="panel-header">Session Deployment Control</div>
                     <div className="flex flex-col gap-4">
-                        <p className="text-xs text-dim">Deploy an attendance protocol to a sector.</p>
+                        <p className="text-xs text-dim">Deploy an attendance protocol to a sector. Assigned staff will then be able to activate the live verification scanner.</p>
                         <select id="openEventSelect" className="form-select text-xs">
                             <option value="">Select Target Sector...</option>
                             {events.map(e => (
@@ -181,16 +126,17 @@ export default function AdminAttendance() {
                                 const eventId = document.getElementById('openEventSelect').value;
                                 if (!eventId) return alert('Select a sector first.');
 
-                                try {
-                                    await addDoc(collection(db, 'attendance_sessions'), {
-                                        event_id: eventId,
-                                        status: 'opened',
-                                        activated_at: serverTimestamp(),
-                                        activated_by: user?.uid
-                                    })
-                                    alert('Attendance protocol deployed to sector.')
-                                } catch (err) {
-                                    alert('Deployment failed: ' + err.message)
+                                const { error } = await supabase.from('attendance_sessions').insert([{
+                                    event_id: eventId,
+                                    status: 'opened',
+                                    activated_at: new Date().toISOString(),
+                                    activated_by: user.id
+                                }]);
+
+                                if (error) alert('Deployment failed: ' + error.message);
+                                else {
+                                    alert('Attendance protocol deployed to sector.');
+                                    fetchSessions();
                                 }
                             }}
                             className="btn btn-primary btn-sm w-full"
@@ -239,16 +185,14 @@ export default function AdminAttendance() {
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <div className="flex justify-end gap-2">
-                                                    {session && (
-                                                        <button onClick={() => fetchIntel(session)} className="btn btn-secondary btn-xs">Intel</button>
-                                                    )}
-                                                    <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke</button>
-                                                </div>
+                                                <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke Access</button>
                                             </td>
                                         </tr>
                                     )
                                 })}
+                                {assignments.length === 0 && (
+                                    <tr><td colSpan="4" className="text-center py-8 text-dim">No operational staff deployed to sectors.</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -287,119 +231,23 @@ export default function AdminAttendance() {
                         <tbody>
                             {sessions.map(s => (
                                 <tr key={s.id}>
-                                    <td className="font-mono text-xs">{s.activated_at?.toDate ? s.activated_at.toDate().toLocaleString() : ''}</td>
+                                    <td className="font-mono text-xs">{new Date(s.activated_at).toLocaleString()}</td>
                                     <td className="font-bold">{s.event?.name}</td>
                                     <td>
                                         <span className={`badge ${s.status === 'active' ? 'badge-success' : 'badge-primary'}`}>
                                             {s.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        <button onClick={() => fetchIntel(s)} className="btn-icon">
-                                            <BarChart3 size={14} />
-                                        </button>
-                                    </td>
+                                    <td className="text-xs text-dim">ID: {s.id.slice(0, 8)}</td>
                                 </tr>
                             ))}
+                            {sessions.length === 0 && (
+                                <tr><td colSpan="4" className="text-center py-8 text-dim">No attendance forensic data available.</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            {selectedSession && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '900px', border: '1px solid var(--accent)' }}>
-                        <div className="modal-header">
-                            <div className="flex items-center gap-2">
-                                <Activity size={18} color="var(--accent)" />
-                                <h2 className="modal-title">GLOBAL_INTEL: {selectedSession.event?.name}</h2>
-                            </div>
-                            <button onClick={() => setSelectedSession(null)} className="btn-icon"><X size={20} /></button>
-                        </div>
-                        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                            <div className="grid grid-cols-4 gap-4 mb-6">
-                                <div className="stat-card">
-                                    <div className="stat-card-label">PROTOCOL_STATUS</div>
-                                    <div className="stat-card-value">{selectedSession.status.toUpperCase()}</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-card-label">VERIFIED_ENTITIES</div>
-                                    <div className="stat-card-value">{attendanceRecords.length}</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-card-label">SECTOR_LOCATION</div>
-                                    <div className="stat-card-value text-xs">{selectedSession.event?.location}</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-card-label">ACTIVATION_TIMESTAMP</div>
-                                    <div className="stat-card-value text-xs font-mono">{selectedSession.activated_at?.toDate ? selectedSession.activated_at.toDate().toLocaleTimeString() : ''}</div>
-                                </div>
-                            </div>
-
-                            {loadingIntel ? (
-                                <div className="flex justify-center py-12"><Activity className="animate-spin" /></div>
-                            ) : attendanceRecords.length === 0 ? (
-                                <div className="text-center py-12 text-dim font-mono text-xs">NO_VERIFICATION_SIGNALS_DETECTED</div>
-                            ) : (
-                                <div className="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Entity Profile</th>
-                                                <th>Biometric Uplink (ID/Face)</th>
-                                                <th>Verification Time</th>
-                                                <th style={{ textAlign: 'right' }}>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {attendanceRecords.map(record => (
-                                                <tr key={record.id}>
-                                                    <td>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded bg-accent-glow flex items-center justify-center font-bold text-accent">
-                                                                {record.profile?.full_name?.charAt(0)}
-                                                            </div>
-                                                            <div>
-                                                                <div className="font-bold">{record.profile?.full_name}</div>
-                                                                <div className="text-xs text-dim font-mono">{record.profile?.reg_no}</div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ minWidth: '180px' }}>
-                                                        <div className="flex gap-2">
-                                                            {record.id_capture_url && (
-                                                                <a href={record.id_capture_url} target="_blank" rel="noreferrer" className="relative group">
-                                                                    <img src={record.id_capture_url} alt="ID" className="w-12 h-8 object-cover rounded border border-white/10 hover:border-accent transition-colors" />
-                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded"><Users size={12} /></div>
-                                                                </a>
-                                                            )}
-                                                            {record.face_capture_url && (
-                                                                <a href={record.face_capture_url} target="_blank" rel="noreferrer" className="relative group">
-                                                                    <img src={record.face_capture_url} alt="Face" className="w-12 h-8 object-cover rounded border border-white/10 hover:border-accent transition-colors" />
-                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded"><Shield size={12} /></div>
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="font-mono text-xs">
-                                                        {record.verified_at?.toDate ? record.verified_at.toDate().toLocaleTimeString() : ''}
-                                                    </td>
-                                                    <td style={{ textAlign: 'right' }}>
-                                                        <span className="badge badge-success text-xs">VERIFIED</span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                        <div className="modal-footer">
-                            <button onClick={() => setSelectedSession(null)} className="btn btn-secondary">ABORT_INTEL</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

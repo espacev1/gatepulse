@@ -8,18 +8,7 @@ import {
     ResponsiveContainer, PieChart as RePieChart, Pie, Cell,
     LineChart, Line, AreaChart, Area
 } from 'recharts'
-import { db } from '../../lib/firebase'
-import {
-    collection,
-    query,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    limit,
-    doc,
-    getDoc,
-    getCountFromServer
-} from 'firebase/firestore'
+import { supabase } from '../../lib/supabase'
 
 const COLORS = ['#00D4FF', '#7B61FF', '#00BFA5', '#FF4DA6', '#FFB300']
 
@@ -38,96 +27,89 @@ export default function AdminAnalytics() {
         }
     })
 
-    const fetchAnalyticsData = async () => {
-        try {
-            // 1. Fetch Overall Metrics
-            const scansCountSnap = await getCountFromServer(collection(db, 'attendance_logs'))
-            const validatedCountSnap = await getCountFromServer(query(collection(db, 'tickets'), query(where('is_validated', '==', true))))
-            // Wait, query usage above is wrong syntax for firestore v9+ nested query. 
-            // Correct: query(collection(db, 'tickets'), where('is_validated', '==', true))
-
-            const ticketsCountSnap = await getCountFromServer(collection(db, 'tickets'))
-            const eventsSnap = await getDocs(collection(db, 'events'))
-
-            const qLogs = query(collection(db, 'attendance_logs'), orderBy('timestamp', 'desc'), limit(50))
-            const logsSnap = await getDocs(qLogs)
-
-            const totalTickets = ticketsCountSnap.data().count || 0
-            const validatedCount = validatedCountSnap.data().count || 0
-            const attendanceRate = totalTickets > 0 ? Math.round((validatedCount / totalTickets) * 100) : 0
-            const noShowRate = 100 - attendanceRate
-
-            // 2. Process Temporal Distribution
-            const hourlyGroups = {}
-            const now = new Date()
-            for (let i = 0; i < 12; i++) {
-                const d = new Date(now)
-                d.setHours(d.getHours() - i)
-                const label = `${d.getHours().toString().padStart(2, '0')}:00`
-                hourlyGroups[label] = 0
-            }
-
-            const processedLogs = await Promise.all(logsSnap.docs.map(async d => {
-                const log = { id: d.id, ...d.data() }
-                if (log.timestamp?.toDate) {
-                    const date = log.timestamp.toDate()
-                    const label = `${date.getHours().toString().padStart(2, '0')}:00`
-                    if (hourlyGroups[label] !== undefined) {
-                        hourlyGroups[label]++
-                    }
-                }
-
-                // Join data for registry
-                let profile = null
-                let ticketType = 'N/A'
-                if (log.ticket_id) {
-                    const tSnap = await getDoc(doc(db, 'tickets', log.ticket_id))
-                    if (tSnap.exists()) {
-                        const tData = tSnap.data()
-                        ticketType = tData.ticket_type
-                        const pSnap = await getDoc(doc(db, 'participants', tData.participant_id))
-                        if (pSnap.exists()) {
-                            const profSnap = await getDoc(doc(db, 'profiles', pSnap.data().user_id))
-                            profile = profSnap.exists() ? profSnap.data() : null
-                        }
-                    }
-                }
-                return { ...log, profile, ticket_type: ticketType }
-            }))
-
-            const temporalData = Object.entries(hourlyGroups)
-                .map(([name, attendees]) => ({ name, attendees }))
-                .reverse()
-
-            setAnalyticsData({
-                temporalData,
-                distributionData: eventsSnap.docs.map(doc => ({ name: doc.data().name, value: doc.data().registered_count || 0 })),
-                recentLogs: processedLogs.slice(0, 8),
-                metrics: {
-                    avgAttendance: `${attendanceRate}%`,
-                    totalScans: scansCountSnap.data().count || 0,
-                    noShowRate: `${noShowRate}%`,
-                    uptime: '100%'
-                }
-            })
-        } catch (err) {
-            console.error("Analytics fetch error:", err)
-        }
-    }
-
     useEffect(() => {
         fetchAnalyticsData()
 
-        const unsubLogs = onSnapshot(collection(db, 'attendance_logs'), fetchAnalyticsData)
-        const unsubTickets = onSnapshot(collection(db, 'tickets'), fetchAnalyticsData)
-        const unsubEvents = onSnapshot(collection(db, 'events'), fetchAnalyticsData)
+        const subscription = supabase
+            .channel('analytics-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                fetchAnalyticsData()
+            })
+            .subscribe()
 
         return () => {
-            unsubLogs()
-            unsubTickets()
-            unsubEvents()
+            supabase.removeChannel(subscription)
         }
     }, [])
+
+    const fetchAnalyticsData = async () => {
+        // 1. Fetch Overall Metrics
+        const [scansRes, validatedRes, ticketsRes, eventsRes, logsRes] = await Promise.all([
+            supabase.from('attendance_logs').select('*', { count: 'exact', head: true }),
+            supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true),
+            supabase.from('tickets').select('*', { count: 'exact', head: true }),
+            supabase.from('events').select('name, registered_count'),
+            supabase.from('attendance_logs').select(`
+                timestamp,
+                event_id,
+                verification_status,
+                tickets (
+                    ticket_type,
+                    participants (
+                        profiles (*)
+                    )
+                )
+            `).order('timestamp', { ascending: false }).limit(50)
+        ])
+
+        if (scansRes.error) console.error('Scans fetch error:', scansRes.error)
+        if (logsRes.error) console.error('Recent logs fetch error:', logsRes.error)
+
+        const totalTickets = ticketsRes.count || 0
+        const validatedCount = validatedRes.count || 0
+        const attendanceRate = totalTickets > 0 ? Math.round((validatedCount / totalTickets) * 100) : 0
+        const noShowRate = 100 - attendanceRate
+
+        // 2. Process Temporal Distribution (Actual data from logs)
+        const hourlyGroups = {}
+        const now = new Date()
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(now)
+            d.setHours(d.getHours() - i)
+            const label = `${d.getHours().toString().padStart(2, '0')}:00`
+            hourlyGroups[label] = 0
+        }
+
+        logsRes.data?.forEach(log => {
+            const date = new Date(log.timestamp)
+            const label = `${date.getHours().toString().padStart(2, '0')}:00`
+            if (hourlyGroups[label] !== undefined) {
+                hourlyGroups[label]++
+            }
+        })
+
+        const temporalData = Object.entries(hourlyGroups)
+            .map(([name, attendees]) => ({ name, attendees }))
+            .reverse()
+
+        setAnalyticsData({
+            temporalData,
+            distributionData: eventsRes.data?.map(e => ({ name: e.name, value: e.registered_count || 0 })) || [],
+            recentLogs: logsRes.data?.slice(0, 8) || [],
+            metrics: {
+                avgAttendance: `${attendanceRate}%`,
+                totalScans: scansRes.count || 0,
+                noShowRate: `${noShowRate}%`,
+                uptime: '100%'
+            }
+        })
+    }
 
     const statsCards = [
         { label: 'Avg Attendance', value: analyticsData.metrics.avgAttendance, trend: 'LIVE', icon: Users, color: 'var(--accent)' },
@@ -254,12 +236,15 @@ export default function AdminAnalytics() {
                                     <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">SECURE REGISTRY EMPTY - NO ACCESS LOGS DETECTED</td></tr>
                                 )}
                                 {analyticsData.recentLogs.map((log, i) => {
+                                    const profile = log.tickets?.participants?.profiles;
+                                    const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
                                     const isSuccess = log.verification_status === 'success';
+
                                     return (
                                         <tr key={i}>
-                                            <td className="font-mono" style={{ fontSize: '11px' }}>{log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : ''}</td>
-                                            <td><span className={`badge ${log.ticket_type ? 'badge-info' : 'badge-secondary'}`}>{log.ticket_type?.toUpperCase() || 'AD-HOC'}</span></td>
-                                            <td style={{ fontWeight: 600 }}>{log.profile?.full_name || 'UNK_ENTITY'}</td>
+                                            <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
+                                            <td><span className={`badge ${log.tickets?.ticket_type ? 'badge-info' : 'badge-secondary'}`}>{log.tickets?.ticket_type?.toUpperCase() || 'AD-HOC'}</span></td>
+                                            <td style={{ fontWeight: 600 }}>{safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY')}</td>
                                             <td className="font-mono" style={{ color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
                                                 {log.verification_status?.toUpperCase() || 'UNKNOWN'}
                                             </td>

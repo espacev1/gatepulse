@@ -5,17 +5,7 @@ import {
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useAuth } from '../../contexts/AuthContext'
-import { db } from '../../lib/firebase'
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    limit,
-    getCountFromServer
-} from 'firebase/firestore'
+import { supabase } from '../../lib/supabase'
 
 export default function AdminDashboard() {
     const { user } = useAuth()
@@ -28,80 +18,68 @@ export default function AdminDashboard() {
         activeCheckins: 0,
         loadFactor: 0,
         securityAlerts: 0,
-        totalUsers: 0,
-        pendingApprovals: 0
+        totalUsers: 0
     })
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                // 1. Fetch Events & Admins
-                const qEvents = query(collection(db, 'events'))
-                const eventsSnap = await getDocs(qEvents)
-                const eventsData = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                setEvents(eventsData)
-
-                const qAdmins = query(collection(db, 'profiles'), where('role', '==', 'admin'))
-                const adminsSnap = await getDocs(qAdmins)
-                setAdmins(adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
-
-                // 2. Counts
-                const ticketsCountSnap = await getCountFromServer(collection(db, 'tickets'))
-                const validatedCountSnap = await getCountFromServer(query(collection(db, 'tickets'), where('is_validated', '==', true)))
-                const pendingCountSnap = await getCountFromServer(query(collection(db, 'participants'), where('registration_status', '==', 'pending')))
-                const usersCountSnap = await getCountFromServer(collection(db, 'profiles'))
-
-                const totalCapacity = eventsData.reduce((acc, e) => acc + (e.max_capacity || 0), 0) || 1
-                const loadFactor = Math.round((validatedCountSnap.data().count / totalCapacity) * 100)
-
-                setMetrics({
-                    totalTickets: ticketsCountSnap.data().count,
-                    activeCheckins: validatedCountSnap.data().count,
-                    loadFactor: loadFactor,
-                    securityAlerts: 0,
-                    pendingApprovals: pendingCountSnap.data().count,
-                    totalUsers: usersCountSnap.data().count
-                })
-
-                // 3. Process Traffic Data
-                const qLogs = query(collection(db, 'attendance_logs'), orderBy('timestamp', 'asc'))
-                const logsSnap = await getDocs(qLogs)
-                const groups = {}
-                logsSnap.docs.forEach(d => {
-                    const log = d.data()
-                    if (log.timestamp?.toDate) {
-                        const date = log.timestamp.toDate()
-                        const label = `${date.getHours().toString().padStart(2, '0')}:00`
-                        groups[label] = (groups[label] || 0) + 1
-                    }
-                })
-                const chartData = Object.entries(groups).map(([name, attendees]) => ({
-                    name,
-                    attendees,
-                    registrations: Math.round(attendees * 1.2) // Estimate
-                })).slice(-10)
-                setTrafficData(chartData)
-
-            } catch (err) {
-                console.error("Dashboard fetch error:", err)
-            }
-        }
-
         fetchDashboardData()
 
-        // Realtime listeners
-        const unsubLogs = onSnapshot(collection(db, 'attendance_logs'), fetchDashboardData)
-        const unsubTickets = onSnapshot(collection(db, 'tickets'), fetchDashboardData)
-        const unsubEvents = onSnapshot(collection(db, 'events'), fetchDashboardData)
-        const unsubProfiles = onSnapshot(collection(db, 'profiles'), fetchDashboardData)
+        const channel = supabase
+            .channel('dashboard-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchDashboardData())
+            .subscribe()
 
         return () => {
-            unsubLogs()
-            unsubTickets()
-            unsubEvents()
-            unsubProfiles()
+            supabase.removeChannel(channel)
         }
     }, [])
+
+    const fetchDashboardData = async () => {
+        // 1. Fetch Events & Admins
+        const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes, pendingRes, usersRes] = await Promise.all([
+            supabase.from('events').select('*'),
+            supabase.from('tickets').select('*', { count: 'exact', head: true }),
+            supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('is_validated', true),
+            supabase.from('profiles').select('*').eq('role', 'admin'),
+            supabase.from('attendance_logs').select('timestamp').order('timestamp', { ascending: true }),
+            supabase.from('participants').select('*', { count: 'exact', head: true }).eq('registration_status', 'pending'),
+            supabase.from('profiles').select('*', { count: 'exact', head: true })
+        ])
+
+        if (eventsRes.data) setEvents(eventsRes.data)
+        if (adminsRes.data) setAdmins(adminsRes.data)
+
+        const totalCapacity = eventsRes.data?.reduce((acc, e) => acc + (e.max_capacity || 0), 0) || 1
+        const loadFactor = Math.round(((checkinsRes.count || 0) / totalCapacity) * 100)
+
+        setMetrics({
+            totalTickets: ticketsRes.count || 0,
+            activeCheckins: checkinsRes.count || 0,
+            loadFactor: loadFactor,
+            securityAlerts: 0,
+            pendingApprovals: pendingRes.count || 0,
+            totalUsers: usersRes.count || 0
+        })
+
+        // 2. Process Traffic Data (Group logs by time)
+        if (logsRes.data) {
+            const groups = {}
+            logsRes.data.forEach(log => {
+                const date = new Date(log.timestamp)
+                const label = `${date.getHours().toString().padStart(2, '0')}:00`
+                groups[label] = (groups[label] || 0) + 1
+            })
+            const chartData = Object.entries(groups).map(([name, attendees]) => ({
+                name,
+                attendees,
+                registrations: Math.round(attendees * 1.2) // Estimate
+            })).slice(-10)
+            setTrafficData(chartData)
+        }
+    }
 
     const MetricBar = ({ icon: Icon, label, value, trend, color = 'var(--accent)' }) => (
         <div className="stat-card">
@@ -135,6 +113,9 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="page-title">Operations Command</h1>
                     <p className="page-subtitle">Real-time event security and orchestration oversight.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button className="btn btn-primary" onClick={fetchDashboardData}><Activity size={14} /> Sync System</button>
                 </div>
             </div>
 
@@ -315,7 +296,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {user?.role === 'admin' && (
+                {user?.is_super_admin && (
                     <div className="card">
                         <div className="panel-header">System Overview</div>
                         <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)', marginBottom: 'var(--space-4)' }}>Quick system status and access.</p>
@@ -328,7 +309,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div>
                                         <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>{admin.full_name}</div>
-                                        <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email} {admin.id === user.uid ? '(YOU)' : ''}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{admin.email} {admin.id === user.id ? '(YOU)' : ''}</div>
                                     </div>
                                 </div>
                             ))}

@@ -1,18 +1,7 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList, ShieldAlert, XCircle } from 'lucide-react'
-import { db } from '../../lib/firebase'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import {
-    collection,
-    query,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    limit,
-    doc,
-    getDoc,
-    where
-} from 'firebase/firestore'
 
 export default function StaffCheckIns() {
     const { user: staffUser } = useAuth()
@@ -22,48 +11,83 @@ export default function StaffCheckIns() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const fetchEvents = async () => {
-            const snapshot = await getDocs(collection(db, 'events'))
-            setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+        fetchInitialData()
+
+        const subscription = supabase
+            .channel('staff-checkins-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, (payload) => {
+                console.log('REALTIME_EVENT_DETECTED:', payload)
+                fetchLogs()
+            })
+            .subscribe((status) => {
+                console.log('REALTIME_SUBSCRIPTION_STATUS:', status)
+            })
+
+        return () => {
+            supabase.removeChannel(subscription)
         }
-        fetchEvents()
+    }, [])
 
-        const q = query(collection(db, 'attendance_logs'), orderBy('timestamp', 'desc'), limit(100))
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            const data = await Promise.all(snapshot.docs.map(async d => {
-                const log = { id: d.id, ...d.data() }
-                let fullName = 'ANON_ENTITY'
-                let ticketType = 'N/A'
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await fetchEvents()
+        await fetchLogs()
+        setLoading(false)
+    }
 
-                if (log.ticket_id) {
-                    const ticketSnap = await getDoc(doc(db, 'tickets', log.ticket_id))
-                    if (ticketSnap.exists()) {
-                        const ticketData = ticketSnap.data()
-                        ticketType = ticketData.ticket_type || 'CORE'
-                        const participantSnap = await getDoc(doc(db, 'participants', ticketData.participant_id))
-                        if (participantSnap.exists()) {
-                            const profileSnap = await getDoc(doc(db, 'profiles', participantSnap.data().user_id))
-                            if (profileSnap.exists()) {
-                                fullName = profileSnap.data().full_name
-                            }
-                        }
-                    }
-                } else if (log.verification_status === 'invalid') {
-                    fullName = 'UNK_ENTITY'
-                }
+    const fetchEvents = async () => {
+        const { data, error } = await supabase.from('events').select('id, name')
+        if (error) console.error('Events fetch error:', error)
+        if (data) setEvents(data)
+    }
+
+    const fetchLogs = async () => {
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .select(`
+                id,
+                ticket_id,
+                event_id,
+                timestamp,
+                verification_status,
+                tickets (
+                    ticket_type,
+                    participants (
+                        profiles (*)
+                    )
+                )
+            `)
+            .order('timestamp', { ascending: false })
+            .limit(100)
+
+        if (error) {
+            console.error('CRITICAL_LOGS_FETCH_ERROR:', error)
+            return
+        }
+
+        console.log('RAW_LOGS_DATA_RECEIVED:', data?.length || 0, 'items')
+        if (data && data.length > 0) {
+            console.log('SAMPLE_LOG_ITEM:', data[0])
+        }
+
+        if (data) {
+            setLogs(data.map(log => {
+                const profile = log.tickets?.participants?.profiles;
+                const safeName = Array.isArray(profile) ? profile[0]?.full_name : profile?.full_name;
+                const eventObj = events.find(e => e.id === log.event_id);
 
                 return {
-                    ...log,
-                    full_name: fullName,
-                    ticket_type: ticketType
+                    id: log.id,
+                    ticket_id: log.ticket_id || 'N/A',
+                    timestamp: log.timestamp,
+                    event_name: eventObj?.name || 'Unknown Sector',
+                    event_id: log.event_id,
+                    full_name: safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY'),
+                    verification_status: log.verification_status || 'invalid'
                 }
             }))
-            setLogs(data)
-            setLoading(false)
-        })
-
-        return () => unsubscribe()
-    }, [])
+        }
+    }
 
     const filtered = filterEvent === 'all' ? logs : logs.filter(l => l.event_id === filterEvent)
 
@@ -78,15 +102,14 @@ export default function StaffCheckIns() {
                     <h1 className="page-title">Check-in Registry</h1>
                     <p className="page-subtitle">Real-time audit log of all credential validation attempts.</p>
                 </div>
+                {/* Security Diagnostics Banner */}
                 <div className="card-glass" style={{ padding: '8px 16px', border: '1px solid var(--border-accent)', background: 'rgba(231,170,81,0.05)' }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.05em' }}>
-                        {events.find(e => e.id === filterEvent)?.name?.toUpperCase() || 'ALL_SECTORS'}
-                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.05em' }}>{events.find(e => e.id === filterEvent)?.name.substring(0, 20) || 'ALL_SECTORS'}...</div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <Activity size={14} color="var(--accent)" />
                             <span className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RLS_STATUS:</span>
-                            <span className="badge badge-primary">STAFF</span>
+                            <span className="badge badge-primary">{staffUser?.role?.toUpperCase() || 'UNKNOWN'}</span>
                         </div>
                         <div className="flex items-center gap-2" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
                             <ClipboardList size={14} color="var(--text-dim)" />
@@ -97,6 +120,7 @@ export default function StaffCheckIns() {
                 </div>
             </div>
 
+            {/* Stats HUD */}
             <div className="grid-4 mb-6">
                 <div className="stat-card">
                     <div className="stat-card-icon" style={{ background: 'var(--status-ok-bg)' }}>
@@ -136,6 +160,7 @@ export default function StaffCheckIns() {
                 </div>
             </div>
 
+            {/* Filter HUD */}
             <div className="card mb-6" style={{ padding: 'var(--space-4)' }}>
                 <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 280 }}>
                     <option value="all">LOG_DOMAIN: ALL_SECTORS</option>
@@ -143,6 +168,7 @@ export default function StaffCheckIns() {
                 </select>
             </div>
 
+            {/* Logs Table */}
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div className="table-container">
                     <table>
@@ -156,31 +182,38 @@ export default function StaffCheckIns() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((log, i) => {
-                                const eventObj = events.find(e => e.id === log.event_id)
-                                return (
-                                    <tr key={log.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.05}s both` }}>
-                                        <td>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded bg-elevated border border-color flex items-center justify-center text-accent font-bold text-xs">
-                                                    {log.full_name?.charAt(0) || '?'}
-                                                </div>
-                                                <span className="font-semibold text-sm">{log.full_name}</span>
+                            {filtered.map((log, i) => (
+                                <tr key={log.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.05}s both` }}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                                            <div style={{
+                                                width: 32, height: 32, borderRadius: 'var(--radius-lg)',
+                                                background: 'var(--bg-elevated)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                color: 'var(--accent)', fontSize: 'var(--font-xs)', fontWeight: 800,
+                                                border: '1px solid var(--border-color)'
+                                            }}>
+                                                {log.full_name?.charAt(0) || '?'}
                                             </div>
-                                        </td>
-                                        <td className="text-accent text-xs font-bold">{eventObj?.name?.toUpperCase() || 'UNKNOWN'}</td>
-                                        <td className="font-mono text-[10px] text-dim opacity-70">{log.ticket_id?.slice(-8) || 'N/A'}</td>
-                                        <td className="text-dim text-xs">
-                                            {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : ''}
-                                        </td>
-                                        <td>
-                                            <span className={`badge ${log.verification_status === 'success' ? 'badge-success' : 'badge-warning'}`}>
-                                                {log.verification_status === 'success' ? 'VERIFIED' : 'FLAGGED'}
+                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                {log.full_name}
                                             </span>
-                                        </td>
-                                    </tr>
-                                )
-                            })}
+                                        </div>
+                                    </td>
+                                    <td style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 700 }}>
+                                        {log.event_name.toUpperCase()}
+                                    </td>
+                                    <td className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>{log.ticket_id}</td>
+                                    <td style={{ color: 'var(--text-dim)', fontSize: 'var(--font-xs)' }}>
+                                        {new Date(log.timestamp).toLocaleString()}
+                                    </td>
+                                    <td>
+                                        <span className={`badge ${log.verification_status === 'success' ? 'badge-success' : 'badge-warning'}`}>
+                                            {log.verification_status === 'success' ? 'VERIFIED' : 'FLAGGED'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
