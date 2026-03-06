@@ -23,6 +23,7 @@ export default function StaffScanner() {
     const [validatedTickets, setValidatedTickets] = useState(new Set())
     const [toast, setToast] = useState(null)
     const [staffLocation, setStaffLocation] = useState(null)
+    const [gpsStatus, setGpsStatus] = useState('offline') // 'offline', 'acquiring', 'live', 'error'
     const html5QrRef = useRef(null)
     const locationIntervalRef = useRef(null)
 
@@ -74,9 +75,11 @@ export default function StaffScanner() {
         }
 
         // Request persistent high-accuracy tracking
+        setGpsStatus('acquiring');
         const watchId = navigator.geolocation.watchPosition(async (pos) => {
             const { latitude: lat, longitude: lng } = pos.coords;
             setStaffLocation({ lat, lng });
+            setGpsStatus('live');
 
             // Broadcast coordinates to session
             const { error } = await supabase
@@ -88,6 +91,7 @@ export default function StaffScanner() {
             if (error) console.error('SESSION_SYNC_ERROR:', error);
         }, (err) => {
             console.error('Location tracking failed', err);
+            setGpsStatus('error');
             alert('PROXIMITY_LOCK: GPS signal lost or denied. Please ensure location services are enabled to maintain sector status.');
         }, {
             enableHighAccuracy: true,
@@ -103,6 +107,7 @@ export default function StaffScanner() {
             navigator.geolocation.clearWatch(locationIntervalRef.current);
             locationIntervalRef.current = null;
         }
+        setGpsStatus('offline');
     }
 
     const handleEventSelect = (event) => {
@@ -378,16 +383,41 @@ export default function StaffScanner() {
                         </p>
                     </div>
                 </div>
-                {dashView === 'scanner' && (
-                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                        <button onClick={() => { setDashView('scanner'); setMode('camera'); setScanResult(null) }} className={`btn ${mode === 'camera' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
-                            <Camera size={14} /> SENSOR
-                        </button>
-                        <button onClick={() => { stopCamera(); setDashView('scanner'); setMode('manual'); setScanResult(null) }} className={`btn ${mode === 'manual' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
-                            <Keyboard size={14} /> MANUAL
-                        </button>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6 mr-4">
+                        {selectedEvent && (
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'rgba(0,0,0,0.4)', padding: '8px 16px',
+                                borderRadius: '16px', border: '1px solid var(--accent)',
+                                boxShadow: gpsStatus === 'live' ? '0 0 15px rgba(231,170,81,0.1)' : 'none'
+                            }}>
+                                <div style={{
+                                    width: 10, height: 10, borderRadius: '50%',
+                                    background: gpsStatus === 'live' ? 'var(--status-ok)' : gpsStatus === 'acquiring' ? 'var(--accent)' : 'var(--status-critical)',
+                                    boxShadow: gpsStatus === 'live' ? '0 0 10px var(--status-ok)' : 'none'
+                                }} className={gpsStatus === 'acquiring' ? 'animate-pulse' : ''} />
+                                <span style={{ fontSize: '11px', fontWeight: 900, color: '#fff', letterSpacing: '0.1em' }}>
+                                    GPS_STATUS: {gpsStatus.toUpperCase()}
+                                </span>
+                            </div>
+                        )}
+                        <div className="badge badge-primary" style={{ padding: '8px 16px', borderRadius: '16px' }}>
+                            STAFF_NODE: {staffUser?.email}
+                        </div>
                     </div>
-                )}
+
+                    {dashView === 'scanner' && (
+                        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            <button onClick={() => { setDashView('scanner'); setMode('camera'); setScanResult(null) }} className={`btn ${mode === 'camera' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
+                                <Camera size={14} /> SENSOR
+                            </button>
+                            <button onClick={() => { stopCamera(); setDashView('scanner'); setMode('manual'); setScanResult(null) }} className={`btn ${mode === 'manual' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
+                                <Keyboard size={14} /> MANUAL
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {dashView === 'events' && (

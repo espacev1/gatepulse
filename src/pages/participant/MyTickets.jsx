@@ -10,6 +10,7 @@ export default function MyTickets() {
     const [loading, setLoading] = useState(true)
     const [revealMap, setRevealMap] = useState({})
     const [activeSessions, setActiveSessions] = useState([])
+    const [attendanceRecords, setAttendanceRecords] = useState([])
     const [verifyingTicket, setVerifyingTicket] = useState(null)
     const [showCamera, setShowCamera] = useState(false)
     const [captureStep, setCaptureStep] = useState('face') // 'face', 'id', or 'match'
@@ -30,6 +31,9 @@ export default function MyTickets() {
             .channel('attendance-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => {
                 fetchActiveSessions()
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance_records' }, () => {
+                fetchAttendanceRecords()
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tickets' }, () => {
                 fetchMyTickets()
@@ -83,7 +87,7 @@ export default function MyTickets() {
 
     const fetchInitialData = async () => {
         setLoading(true)
-        await Promise.all([fetchMyTickets(), fetchActiveSessions()])
+        await Promise.all([fetchMyTickets(), fetchActiveSessions(), fetchAttendanceRecords()])
         setLoading(false)
     }
 
@@ -109,6 +113,15 @@ export default function MyTickets() {
             .select('*')
             .in('status', ['opened', 'active'])
         if (data) setActiveSessions(data)
+    }
+
+    const fetchAttendanceRecords = async () => {
+        if (!user) return
+        const { data } = await supabase
+            .from('attendance_records')
+            .select('*')
+            .eq('participant_id', user.id)
+        if (data) setAttendanceRecords(data)
     }
 
     useEffect(() => {
@@ -329,43 +342,49 @@ export default function MyTickets() {
 
                                 {/* QR Token HUD or ATTENDANCE HUD */}
                                 <div style={{ padding: '32px', position: 'relative' }}>
-                                    {activeSession && !ticket.is_validated ? (
-                                        <div className="flex flex-col items-center gap-6" style={{ minHeight: '228px', justifyContent: 'center' }}>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--accent)', marginBottom: '8px' }}>LIVE_AUTH</div>
-                                                <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Verification protocol is currently active for this sector.</p>
-                                            </div>
-                                            <button onClick={() => startVerification(ticket)} className="btn btn-primary w-full py-4" style={{ gap: '12px', fontSize: '14px', borderRadius: '16px' }}>
-                                                <Zap size={20} fill="currentColor" /> PROCEED TO VERIFY
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div style={{
-                                                background: '#fff', padding: '24px', borderRadius: '24px',
-                                                display: 'flex', justifyContent: 'center', position: 'relative',
-                                                transition: 'all 0.3s ease',
-                                                filter: isRevealed ? 'none' : 'blur(15px) grayscale(100%)',
-                                                transform: isRevealed ? 'scale(1)' : 'scale(0.95)',
-                                                opacity: isRevealed ? 1 : 0.3
-                                            }}>
-                                                <QRCodeSVG value={ticket.qr_token} size={180} level="H" bgColor="white" fgColor="#060E1A" />
-                                            </div>
-
-                                            {!isRevealed && (
-                                                <div style={{
-                                                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
-                                                    zIndex: 2, cursor: 'pointer'
-                                                }} onClick={() => toggleReveal(ticket.id)}>
-                                                    <div style={{ padding: '12px', background: 'var(--accent)', borderRadius: '50%', color: '#000', boxShadow: '0 0 20px var(--accent)' }}>
-                                                        <Lock size={20} />
+                                    {(() => {
+                                        const hasAttendance = attendanceRecords.some(r => r.session_id === activeSession?.id);
+                                        if (activeSession && !hasAttendance) {
+                                            return (
+                                                <div className="flex flex-col items-center gap-6" style={{ minHeight: '228px', justifyContent: 'center' }}>
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--accent)', marginBottom: '8px' }}>LIVE_AUTH</div>
+                                                        <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Verification protocol is currently active for this sector.</p>
                                                     </div>
-                                                    <span style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 800, letterSpacing: '0.1em' }}>TAP TO REVEAL KEY</span>
+                                                    <button onClick={() => startVerification(ticket)} className="btn btn-primary w-full py-4" style={{ gap: '12px', fontSize: '14px', borderRadius: '16px' }}>
+                                                        <Zap size={20} fill="currentColor" /> PROCEED TO VERIFY
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </>
-                                    )}
+                                            );
+                                        }
+                                        return (
+                                            <>
+                                                <div style={{
+                                                    background: '#fff', padding: '24px', borderRadius: '24px',
+                                                    display: 'flex', justifyContent: 'center', position: 'relative',
+                                                    transition: 'all 0.3s ease',
+                                                    filter: isRevealed ? 'none' : 'blur(15px) grayscale(100%)',
+                                                    transform: isRevealed ? 'scale(1)' : 'scale(0.95)',
+                                                    opacity: isRevealed ? 1 : 0.3
+                                                }}>
+                                                    <QRCodeSVG value={ticket.qr_token} size={180} level="H" bgColor="white" fgColor="#060E1A" />
+                                                </div>
+
+                                                {!isRevealed && (
+                                                    <div style={{
+                                                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+                                                        zIndex: 2, cursor: 'pointer'
+                                                    }} onClick={() => toggleReveal(ticket.id)}>
+                                                        <div style={{ padding: '12px', background: 'var(--accent)', borderRadius: '50%', color: '#000', boxShadow: '0 0 20px var(--accent)' }}>
+                                                            <Lock size={20} />
+                                                        </div>
+                                                        <span style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 800, letterSpacing: '0.1em' }}>TAP TO REVEAL KEY</span>
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Token Meta Hud */}
