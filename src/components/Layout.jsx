@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import GlowGrid from './GlowGrid'
 import {
     LayoutDashboard, CalendarDays, Users, BarChart3, ScanLine,
     ClipboardCheck, Ticket, CalendarSearch, LogOut, Menu, X,
@@ -37,6 +38,7 @@ export default function Layout() {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-deepest)' }}>
+            <GlowGrid />
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div onClick={() => setMobileOpen(false)} className="mobile-overlay"

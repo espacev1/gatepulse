@@ -2,23 +2,24 @@
 
 /* --- CSS Custom Properties --- */
 :root {
-  /* Primary Dark Blue Palette */
-  --bg-deepest: #060E1A;
-  --bg-deep: #0A1A2F;
-  --bg-mid: #0F2D4D;
-  --bg-panel: #0D2240;
-  --bg-card: #112A45;
-  --bg-card-hover: #153254;
-  --bg-elevated: #1A3A5C;
-  --bg-input: #0C1E38;
+  /* Primary Golden Noir Palette */
+  --bg-deepest: #000000;
+  --bg-deep: #050505;
+  --bg-mid: #0a0a0a;
+  --bg-panel: #080808;
+  --bg-card: #0c0c0c;
+  --bg-card-hover: #121212;
+  --bg-elevated: #151515;
+  --bg-input: #0a0a0a;
 
-  /* Electric Blue / Cyan Accent (Refined for Logo) */
-  --accent: #00D1FF;
-  --accent-bright: #33EBFF;
-  --accent-dim: #00A3CC;
-  --accent-glow: rgba(0, 209, 255, 0.15);
-  --accent-glow-strong: rgba(0, 209, 255, 0.3);
-  --accent-gradient: linear-gradient(135deg, #00D1FF 0%, #008CCB 100%);
+  /* Golden Gradients & Accents */
+  --accent: #e7aa51;
+  --accent-bright: #ffe499;
+  --accent-dim: #ac7031;
+  --accent-glow: rgba(231, 170, 81, 0.15);
+  --accent-glow-strong: rgba(231, 170, 81, 0.3);
+  --accent-gradient: linear-gradient(180deg, #e7aa51 0%, #ffe499 25%, #8d5a1b 50%, #e7aa51 75%, #ac7031 100%);
+  --golden-noir: linear-gradient(180deg, #e7aa51, #ffe499, #8d5a1b, #e7aa51, #ac7031);
 
   /* Secondary - Magenta / Teal */
   --secondary: #7B61FF;
@@ -58,7 +59,7 @@
   --gradient-hero: linear-gradient(145deg, #060E1A 0%, #0A1A2F 30%, #0F2D4D 60%, #0A1A2F 100%);
 
   /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-family: 'Times New Roman', Times, serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --font-xs: 0.6875rem;
   --font-sm: 0.8125rem;
@@ -84,26 +85,26 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
-  /* Borders */
+  /* Borders & Shadows (Golden) */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
   --radius-2xl: 14px;
   --radius-full: 9999px;
-  --border: 1px solid rgba(0, 212, 255, 0.08);
-  --border-color: rgba(0, 212, 255, 0.08);
-  --border-hover: rgba(0, 212, 255, 0.18);
-  --border-accent: rgba(0, 212, 255, 0.25);
+  --border: 1px solid rgba(231, 170, 81, 0.12);
+  --border-color: rgba(231, 170, 81, 0.12);
+  --border-hover: rgba(231, 170, 81, 0.25);
+  --border-accent: rgba(231, 170, 81, 0.35);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.12);
-  --shadow-glow-strong: 0 0 30px rgba(0, 212, 255, 0.2);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 212, 255, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.85);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.9);
+  --shadow-glow: 0 0 20px rgba(231, 170, 81, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(231, 170, 81, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(231, 170, 81, 0.1);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -135,12 +136,26 @@ html {
 body {
   font-family: var(--font-family);
   font-size: var(--font-base);
-  color: var(--text-secondary);
+  color: #E5E5E5;
   background: var(--bg-deepest);
   line-height: 1.55;
   min-height: 100vh;
   overflow-x: hidden;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+}
+
+/* Global Golden Gradient Text for Headings */
+h1,
+h2,
+h3,
+.page-title,
+.modal-title,
+.logo-text {
+  background: var(--golden-noir);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
 }
 
 a {
