@@ -16,6 +16,7 @@ export default function ParticipantEvents() {
     const [pendingEvent, setPendingEvent] = useState(null)
     const [teamName, setTeamName] = useState('')
     const [teamMembers, setTeamMembers] = useState(['']) // Array of emails or reg_nos
+    const [activeSessions, setActiveSessions] = useState([])
 
     useEffect(() => {
         fetchInitialData()
@@ -24,6 +25,9 @@ export default function ParticipantEvents() {
             .channel('participant-events-live')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
                 fetchEvents()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => {
+                fetchActiveSessions()
             })
             .subscribe()
 
@@ -34,7 +38,7 @@ export default function ParticipantEvents() {
 
     const fetchInitialData = async () => {
         setLoading(true)
-        await Promise.all([fetchEvents(), fetchMyRegistrations()])
+        await Promise.all([fetchEvents(), fetchMyRegistrations(), fetchActiveSessions()])
         setLoading(false)
     }
 
@@ -55,6 +59,14 @@ export default function ParticipantEvents() {
         if (data) {
             setRegisteredEvents(new Set(data.map(r => r.event_id)))
         }
+    }
+
+    const fetchActiveSessions = async () => {
+        const { data } = await supabase
+            .from('attendance_sessions')
+            .select('event_id, status')
+            .neq('status', 'ended')
+        if (data) setActiveSessions(data)
     }
 
     const handleRegister = async (event) => {
@@ -277,6 +289,11 @@ export default function ParticipantEvents() {
                                         <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>SECTOR_{event.id.slice(-4)}</span>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
+                                        {activeSessions.find(s => s.event_id === event.id) && (
+                                            <span className="badge badge-success animate-pulse" style={{ fontSize: '9px', boxShadow: '0 0 10px var(--status-ok)' }}>
+                                                LIVE_CHECKIN
+                                            </span>
+                                        )}
                                         <span className={`badge ${ss.badge}`} style={{ fontSize: '9px' }}>{event.status}</span>
                                         <span className={`badge ${event.is_free ? 'badge-info' : 'badge-warning'}`} style={{ fontSize: '9px' }}>
                                             {event.is_free ? 'FREE_ACCESS' : `CREDIT: $${event.price}`}

@@ -59,7 +59,7 @@ export default function MyTickets() {
         const { data } = await supabase
             .from('attendance_sessions')
             .select('*')
-            .eq('status', 'active')
+            .in('status', ['opened', 'active'])
         if (data) setActiveSessions(data)
     }
 
@@ -252,7 +252,7 @@ export default function MyTickets() {
 
                                 {/* QR Token HUD or ATTENDANCE HUD */}
                                 <div style={{ padding: '32px', position: 'relative' }}>
-                                    {activeSession ? (
+                                    {activeSession && !ticket.is_validated ? (
                                         <div className="flex flex-col items-center gap-6" style={{ minHeight: '228px', justifyContent: 'center' }}>
                                             <div style={{ textAlign: 'center' }}>
                                                 <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--accent)', marginBottom: '8px' }}>LIVE_AUTH</div>
