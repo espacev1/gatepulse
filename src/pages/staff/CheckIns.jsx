@@ -102,7 +102,8 @@ export default function StaffCheckIns() {
                     <p className="page-subtitle">Real-time audit log of all credential validation attempts.</p>
                 </div>
                 {/* Security Diagnostics Banner */}
-                <div className="card-glass" style={{ padding: '8px 16px', border: '1px solid var(--border-accent)', background: 'rgba(0,212,255,0.05)' }}>
+                <div className="card-glass" style={{ padding: '8px 16px', border: '1px solid var(--border-accent)', background: 'rgba(231,170,81,0.05)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.05em' }}>{events.find(e => e.id === filterEvent)?.name.substring(0, 20) || 'ALL_SECTORS'}...</div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <Activity size={14} color="var(--accent)" />

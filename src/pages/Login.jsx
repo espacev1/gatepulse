@@ -50,14 +50,16 @@ export default function Login() {
         }}>
             {/* Background Decor */}
             <div style={{
-                position: 'absolute', inset: 0, opacity: 0.05,
-                backgroundImage: 'linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
+                position: 'absolute', inset: 0, opacity: 0.03, zIndex: 0, pointerEvents: 'none',
+                backgroundImage: 'linear-gradient(rgba(231,170,81,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(231,170,81,0.5) 1px, transparent 1px)',
+                backgroundSize: '40px 40px'
             }} />
+
             <div style={{
-                position: 'absolute', width: '150%', height: '150%',
-                background: 'radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 60%)',
-                top: '-25%', left: '-25%',
+                position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: '600px', height: '600px',
+                background: 'radial-gradient(circle, rgba(231,170,81,0.05) 0%, transparent 60%)',
+                zIndex: 0, pointerEvents: 'none'
             }} />
 
             <div className="card-glass" style={{
@@ -67,7 +69,7 @@ export default function Login() {
                 position: 'relative',
                 zIndex: 1,
                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                border: '1px solid rgba(0, 212, 255, 0.1)'
+                border: '1px solid rgba(231, 170, 81, 0.1)'
             }}>
                 {/* Header */}
                 <div className="text-center mb-10">
@@ -79,7 +81,7 @@ export default function Login() {
                     }}>
                         <img
                             src="/logo_refined.png"
-                            alt="GatePulse Logo"
+                            alt="E-MEDIA Logo"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
                     </div>
@@ -102,7 +104,7 @@ export default function Login() {
                                 type="email"
                                 className="form-input"
                                 style={{ paddingLeft: '40px' }}
-                                placeholder="operator@gatepulse.io"
+                                placeholder="operator@emedia.io"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

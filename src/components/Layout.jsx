@@ -70,14 +70,14 @@ export default function Layout() {
                     }}>
                         <img
                             src="/logo_refined.png"
-                            alt="GatePulse Logo"
+                            alt="E-MEDIA Logo"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
                     </div>
                     {sidebarOpen && (
                         <div style={{ animation: 'fadeIn 0.2s ease' }}>
                             <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                                GATE PULSE
+                                E-MEDIA
                             </div>
                             <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -1 }}>
                                 Unified Security
@@ -133,16 +133,16 @@ export default function Layout() {
                         style={{
                             display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
                             padding: '8px 10px', borderRadius: 'var(--radius-lg)',
-                            background: 'rgba(0,212,255,0.03)', border: '1px solid var(--border-color)',
+                            background: 'rgba(231,170,81,0.03)', border: '1px solid var(--border-color)',
                             cursor: 'pointer',
                             transition: 'all var(--transition-base)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(0,212,255,0.08)'
+                            e.currentTarget.style.background = 'rgba(231,170,81,0.08)'
                             e.currentTarget.style.borderColor = 'var(--accent)'
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(0,212,255,0.03)'
+                            e.currentTarget.style.background = 'rgba(231,170,81,0.03)'
                             e.currentTarget.style.borderColor = 'var(--border-color)'
                         }}
                     >

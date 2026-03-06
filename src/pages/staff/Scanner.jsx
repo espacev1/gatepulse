@@ -409,7 +409,8 @@ export default function StaffScanner() {
                     <div>
                         {selectedParticipant && (
                             <div className="card mb-4" style={{
-                                background: 'rgba(0,212,255,0.05)',
+                                background: 'rgba(231,170,81,0.05)',
+                                color: 'var(--text-primary)',
                                 border: '1px solid var(--accent)',
                                 padding: 'var(--space-3) var(--space-4)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'

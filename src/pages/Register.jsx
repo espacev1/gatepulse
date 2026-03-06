@@ -73,8 +73,14 @@ export default function Register() {
             {/* Background Decor */}
             <div style={{
                 position: 'absolute', inset: 0, opacity: 0.05,
-                backgroundImage: 'linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px)',
+                backgroundImage: 'linear-gradient(rgba(231,170,81,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(231,170,81,0.5) 1px, transparent 1px)',
                 backgroundSize: '40px 40px',
+            }} />
+            <div style={{
+                position: 'absolute', width: '150%', height: '150%',
+                background: 'radial-gradient(circle, rgba(231,170,81,0.05) 0%, transparent 60%)',
+                top: '-25%', left: '-25%', // Adjust position to center the radial gradient
+                zIndex: 0, // Ensure it's behind the card
             }} />
 
             <div className="card-glass shadow-2xl" style={{
@@ -83,7 +89,7 @@ export default function Register() {
                 padding: 'var(--space-8)',
                 position: 'relative',
                 zIndex: 1,
-                border: '1px solid rgba(0, 212, 255, 0.1)'
+                border: '1px solid rgba(231, 170, 81, 0.1)' // Changed border color to golden
             }}>
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -95,7 +101,7 @@ export default function Register() {
                     }}>
                         <img
                             src="/logo_refined.png"
-                            alt="GatePulse Logo"
+                            alt="E-MEDIA Logo"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
                     </div>

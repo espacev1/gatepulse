@@ -214,8 +214,8 @@ export default function AdminUsers() {
                                     width: '100%', textAlign: 'left',
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                     padding: '10px 10px', borderRadius: 'var(--radius-md)',
-                                    background: escalatingUserData.role === roleKey ? 'rgba(0,212,255,0.08)' : 'transparent',
-                                    border: escalatingUserData.role === roleKey ? '1px solid var(--border-accent)' : '1px solid transparent',
+                                    background: escalatingUserData.role === roleKey ? 'rgba(231,170,81,0.08)' : 'transparent',
+                                    border: escalatingUserData.role === roleKey ? '1px solid var(--accent)' : '1px solid var(--border-color)',
                                     color: escalatingUserData.role === roleKey ? 'var(--accent)' : 'var(--text-secondary)',
                                     cursor: escalatingUserData.role === roleKey ? 'default' : 'pointer',
                                     fontSize: '13px', fontWeight: 500,
@@ -224,7 +224,7 @@ export default function AdminUsers() {
                                     opacity: escalatingUserData.role === roleKey ? 0.5 : 1,
                                     marginBottom: '2px'
                                 }}
-                                onMouseOver={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'rgba(0,212,255,0.06)' }}
+                                onMouseOver={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'rgba(231,170,81,0.06)' }}
                                 onMouseOut={(e) => { if (escalatingUserData.role !== roleKey) e.currentTarget.style.background = 'transparent' }}
                             >
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
