@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, Activity, Zap, DollarSign } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import ProfileCompletionModal from '../../components/ProfileCompletionModal'
 
 export default function ParticipantEvents() {
     const { user } = useAuth()
@@ -11,7 +10,6 @@ export default function ParticipantEvents() {
     const [registeredEvents, setRegisteredEvents] = useState(new Set())
     const [showSuccess, setShowSuccess] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [profileModal, setProfileModal] = useState(false)
     const [teamModal, setTeamModal] = useState(false)
     const [pendingEvent, setPendingEvent] = useState(null)
     const [teamName, setTeamName] = useState('')
@@ -68,17 +66,7 @@ export default function ParticipantEvents() {
             }
         }
 
-        // 2. Profile Completion Check
-        // Team events don't require face/barcode as per requirements
-        const isSolo = event.participation_type !== 'team'
-        const isProfileComplete = user.dept && user.reg_no && (!isSolo || (user.face_url && user.id_barcode_url))
-
-        if (!isProfileComplete) {
-            setPendingEvent(event)
-            setProfileModal(true)
-            return
-        }
-
+        // 2. Execution logic
         if (event.participation_type === 'team') {
             setPendingEvent(event)
             setTeamModal(true)
@@ -184,11 +172,7 @@ export default function ParticipantEvents() {
     }
 
     const handleProfileComplete = () => {
-        // Since useAuth user state might not update instantly, we can't easily auto-register
-        // but we can alert the user to try again
-        alert("Identity Provisioned. You may now initialize access.")
-        // Optionally reload or re-fetch profile if AuthContext supports it
-        window.location.reload()
+        // Obsolete handles are removed
     }
 
     const filtered = events.filter(e => {
@@ -330,12 +314,7 @@ export default function ParticipantEvents() {
                 })}
             </div>
 
-            <ProfileCompletionModal
-                isOpen={profileModal}
-                onClose={() => setProfileModal(false)}
-                user={user}
-                onComplete={handleProfileComplete}
-            />
+            {/* Profile modal removed as registration is now unified */}
 
             {teamModal && (
                 <div className="modal-overlay">
