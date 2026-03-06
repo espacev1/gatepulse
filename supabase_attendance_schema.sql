@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.staff_assignments (
 CREATE TABLE IF NOT EXISTS public.attendance_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
-    status TEXT CHECK (status IN ('active', 'ended')) DEFAULT 'active',
+    status TEXT CHECK (status IN ('opened', 'active', 'ended')) DEFAULT 'opened',
     activated_at TIMESTAMPTZ DEFAULT now(),
     ended_at TIMESTAMPTZ,
     activated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL

@@ -8,8 +8,7 @@ import { useAuth } from '../../contexts/AuthContext'
 
 export default function StaffAttendance() {
     const { user: staffUser } = useAuth()
-    const [assignedEvents, setAssignedEvents] = useState([])
-    const [activeSessions, setActiveSessions] = useState([])
+    const [availableSessions, setAvailableSessions] = useState([])
     const [historicalSessions, setHistoricalSessions] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -36,25 +35,22 @@ export default function StaffAttendance() {
         // 1. Fetch Assigned Events
         const { data: assignments } = await supabase
             .from('staff_assignments')
-            .select('*, event:events(*)')
+            .select('event_id')
             .eq('staff_id', staffUser.id)
 
-        const events = assignments?.map(a => a.event) || []
-        setAssignedEvents(events)
+        const eventIds = assignments?.map(a => a.event_id) || []
 
-        if (events.length > 0) {
-            const eventIds = events.map(e => e.id)
-
-            // 2. Fetch Active Sessions for these events
-            const { data: active } = await supabase
+        if (eventIds.length > 0) {
+            // 2. Fetch Sessions for these events that are NOT ended
+            const { data: current } = await supabase
                 .from('attendance_sessions')
                 .select('*, event:events(*)')
                 .in('event_id', eventIds)
-                .eq('status', 'active')
+                .neq('status', 'ended')
 
-            setActiveSessions(active || [])
+            setAvailableSessions(current || [])
 
-            // 3. Fetch Historical Reports for these events (Last 10)
+            // 3. Fetch Historical Reports
             const { data: history } = await supabase
                 .from('attendance_sessions')
                 .select('*, event:events(*)')
@@ -69,15 +65,13 @@ export default function StaffAttendance() {
         setLoading(false)
     }
 
-    const startSession = async (eventId) => {
-        const { error } = await supabase.from('attendance_sessions').insert([{
-            event_id: eventId,
-            status: 'active',
-            activated_at: new Date().toISOString(),
-            activated_by: staffUser.id
-        }])
+    const activateProtocol = async (sessionId) => {
+        const { error } = await supabase
+            .from('attendance_sessions')
+            .update({ status: 'active' })
+            .eq('id', sessionId)
 
-        if (error) alert('Critical: Session activation failure. ' + error.message)
+        if (error) alert('Critical: Protocol activation failure. ' + error.message)
         else fetchStaffData()
     }
 
@@ -99,7 +93,7 @@ export default function StaffAttendance() {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Operational Attendance</h1>
-                    <p className="page-subtitle">Manage live attendance sessions for your assigned sectors.</p>
+                    <p className="page-subtitle">Activate protocols deployed by Admin and manage live verification.</p>
                 </div>
             </div>
 
@@ -107,33 +101,35 @@ export default function StaffAttendance() {
                 <div>
                     <div className="panel-header" style={{ marginBottom: 'var(--space-4)' }}>Assigned Operational Sectors</div>
                     <div className="flex flex-col gap-4">
-                        {assignedEvents.length === 0 && !loading && (
+                        {availableSessions.length === 0 && !loading && (
                             <div className="card text-center py-12">
                                 <Shield size={48} className="mx-auto mb-4 opacity-10" />
-                                <p className="text-dim">No sectors assigned for current deployment.</p>
+                                <p className="text-dim">No deployed attendance protocols detected for your sectors.</p>
+                                <p className="text-xs text-dim mt-2">Wait for Administrator to "Open Attendance" for your deployment.</p>
                             </div>
                         )}
-                        {assignedEvents.map(event => {
-                            const active = activeSessions.find(s => s.event_id === event.id)
+                        {availableSessions.map(session => {
+                            const isActive = session.status === 'active'
+                            const isOpened = session.status === 'opened'
                             return (
-                                <div key={event.id} className="card flex justify-between items-center" style={{ borderLeft: active ? '4px solid var(--status-ok)' : '4px solid var(--border-color)' }}>
+                                <div key={session.id} className="card flex justify-between items-center" style={{ borderLeft: isActive ? '4px solid var(--status-ok)' : '4px solid var(--status-warn)' }}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            {active && <div className="live-dot" />}
-                                            <h3 style={{ fontWeight: 800, fontSize: 'var(--font-lg)' }}>{event.name.toUpperCase()}</h3>
+                                            {isActive && <div className="live-dot" />}
+                                            <h3 style={{ fontWeight: 800, fontSize: 'var(--font-lg)' }}>{session.event?.name.toUpperCase()}</h3>
                                         </div>
-                                        <p className="text-xs text-dim"><Info size={12} className="inline mr-1" />{event.location}</p>
+                                        <p className="text-xs text-dim"><Info size={12} className="inline mr-1" />{session.event?.location} | PROTOCOL: {session.status.toUpperCase()}</p>
                                     </div>
                                     <div>
-                                        {active ? (
-                                            <button onClick={() => endSession(active.id)} className="btn btn-danger btn-sm">
+                                        {isActive ? (
+                                            <button onClick={() => endSession(session.id)} className="btn btn-danger btn-sm">
                                                 <Square size={14} /> END SESSION
                                             </button>
-                                        ) : (
-                                            <button onClick={() => startSession(event.id)} className="btn btn-primary btn-sm">
-                                                <Play size={14} /> ACTIVATE
+                                        ) : isOpened ? (
+                                            <button onClick={() => activateProtocol(session.id)} className="btn btn-primary btn-sm">
+                                                <Play size={14} /> ACTIVATE PROTOCOL
                                             </button>
-                                        )}
+                                        ) : null}
                                     </div>
                                 </div>
                             )

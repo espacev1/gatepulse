@@ -112,39 +112,38 @@ export default function AdminAttendance() {
                 </div>
 
                 <div className="card">
-                    <div className="panel-header">Manual Identity Validation</div>
-                    <form onSubmit={async (e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.target);
-                        const eventId = formData.get('eventId');
-                        const participantEmail = formData.get('email');
-
-                        // Find participant by email
-                        const { data: prof } = await supabase.from('profiles').select('id').eq('email', participantEmail).single();
-                        if (!prof) return alert('Identity not found in database.');
-
-                        // Find active session
-                        const session = sessions.find(s => s.event_id === eventId && s.status === 'active');
-                        if (!session) return alert('No active session for this sector.');
-
-                        const { error } = await supabase.from('attendance_records').insert([{
-                            session_id: session.id,
-                            participant_id: prof.id,
-                            verified_at: new Date().toISOString(),
-                            face_capture_url: 'MANUAL_ADMIN_BYPASS',
-                            id_capture_url: 'MANUAL_ADMIN_BYPASS'
-                        }]);
-
-                        if (error) alert('Bypass failed: ' + error.message);
-                        else alert('Identity successfully validated via Admin Bypass.');
-                    }} className="flex flex-col gap-3">
-                        <select name="eventId" className="form-select text-xs" required>
-                            <option value="">Select Sector...</option>
-                            {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                    <div className="panel-header">Session Deployment Control</div>
+                    <div className="flex flex-col gap-4">
+                        <p className="text-xs text-dim">Deploy an attendance protocol to a sector. Assigned staff will then be able to activate the live verification scanner.</p>
+                        <select id="openEventSelect" className="form-select text-xs">
+                            <option value="">Select Target Sector...</option>
+                            {events.map(e => (
+                                <option key={e.id} value={e.id}>{e.name} ({e.location})</option>
+                            ))}
                         </select>
-                        <input name="email" className="form-input text-xs" placeholder="Participant Email" required />
-                        <button type="submit" className="btn btn-primary btn-sm w-full">VALIDATE IDENTITY</button>
-                    </form>
+                        <button
+                            onClick={async () => {
+                                const eventId = document.getElementById('openEventSelect').value;
+                                if (!eventId) return alert('Select a sector first.');
+
+                                const { error } = await supabase.from('attendance_sessions').insert([{
+                                    event_id: eventId,
+                                    status: 'opened',
+                                    activated_at: new Date().toISOString(),
+                                    activated_by: user.id
+                                }]);
+
+                                if (error) alert('Deployment failed: ' + error.message);
+                                else {
+                                    alert('Attendance protocol deployed to sector.');
+                                    fetchSessions();
+                                }
+                            }}
+                            className="btn btn-primary btn-sm w-full"
+                        >
+                            <Play size={14} /> OPEN ATTENDANCE
+                        </button>
+                    </div>
                 </div>
 
                 <div className="card col-span-2">
@@ -155,13 +154,13 @@ export default function AdminAttendance() {
                                 <tr>
                                     <th>Sector / Event</th>
                                     <th>Assigned Staff</th>
-                                    <th>Status</th>
+                                    <th>Protocol Status</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {assignments.map(a => {
-                                    const activeSession = sessions.find(s => s.event_id === a.event_id && s.status === 'active')
+                                    const session = sessions.find(s => s.event_id === a.event_id && s.status !== 'ended')
                                     return (
                                         <tr key={a.id}>
                                             <td>
@@ -177,14 +176,16 @@ export default function AdminAttendance() {
                                                 </div>
                                             </td>
                                             <td>
-                                                {activeSession ? (
-                                                    <span className="badge badge-success animate-pulse">LIVE SESSION</span>
+                                                {session?.status === 'active' ? (
+                                                    <span className="badge badge-success animate-pulse">LIVE VERIFICATION</span>
+                                                ) : session?.status === 'opened' ? (
+                                                    <span className="badge badge-warning">PROTOCOL OPENED</span>
                                                 ) : (
                                                     <span className="badge badge-secondary">STANDBY</span>
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke</button>
+                                                <button onClick={() => removeAssignment(a.id)} className="btn btn-secondary btn-xs text-critical">Revoke Access</button>
                                             </td>
                                         </tr>
                                     )
