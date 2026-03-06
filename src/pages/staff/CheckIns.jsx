@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList, ShieldAlert } from 'lucide-react'
+import { CheckCircle2, Clock, Users, Activity, BarChart3, Filter, ClipboardList, ShieldAlert, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -91,8 +91,9 @@ export default function StaffCheckIns() {
 
     const filtered = filterEvent === 'all' ? logs : logs.filter(l => l.event_id === filterEvent)
 
-    const successCount = filtered.length // Assuming all logs in attendance_logs are successful validations
-    const duplicateCount = 0 // In a real scenario, we might have a separate table or flag for failed attempts
+    const successCount = filtered.filter(l => l.verification_status === 'success').length
+    const duplicateCount = filtered.filter(l => l.verification_status === 'duplicate').length
+    const invalidCount = filtered.filter(l => l.verification_status === 'invalid').length
 
     return (
         <div className="page-container">
@@ -120,7 +121,7 @@ export default function StaffCheckIns() {
             </div>
 
             {/* Stats HUD */}
-            <div className="grid-3 mb-6">
+            <div className="grid-4 mb-6">
                 <div className="stat-card">
                     <div className="stat-card-icon" style={{ background: 'var(--status-ok-bg)' }}>
                         <CheckCircle2 size={20} color="var(--status-ok)" />
@@ -132,11 +133,20 @@ export default function StaffCheckIns() {
                 </div>
                 <div className="stat-card">
                     <div className="stat-card-icon" style={{ background: 'var(--status-warn-bg)' }}>
-                        <CheckCircle2 size={20} color="var(--status-warn)" />
+                        <ShieldAlert size={20} color="var(--status-warn)" />
                     </div>
                     <div>
                         <div className="stat-card-value font-mono">{duplicateCount}</div>
-                        <div className="stat-card-label">System Flagged</div>
+                        <div className="stat-card-label">Duplicates</div>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-card-icon" style={{ background: 'var(--status-critical-bg)' }}>
+                        <XCircle size={20} color="var(--status-critical)" />
+                    </div>
+                    <div>
+                        <div className="stat-card-value font-mono">{invalidCount}</div>
+                        <div className="stat-card-label">Invalid Keys</div>
                     </div>
                 </div>
                 <div className="stat-card">

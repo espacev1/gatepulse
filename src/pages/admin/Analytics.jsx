@@ -32,7 +32,13 @@ export default function AdminAnalytics() {
 
         const subscription = supabase
             .channel('analytics-live')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance_logs' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
                 fetchAnalyticsData()
             })
             .subscribe()

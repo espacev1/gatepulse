@@ -146,6 +146,27 @@ export default function StaffScanner() {
         }
     }
 
+    // Real-time listener for ticket validations from other devices
+    useEffect(() => {
+        const ticketSubscription = supabase
+            .channel('tickets-realtime')
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'tickets',
+                filter: 'is_validated=eq.true'
+            }, (payload) => {
+                if (payload.new && payload.new.qr_token) {
+                    setValidatedTickets(prev => new Set([...prev, payload.new.qr_token]));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(ticketSubscription);
+        }
+    }, []);
+
     const handleScan = async (code) => {
         setScanResult(null);
 
