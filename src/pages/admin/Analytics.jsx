@@ -175,7 +175,7 @@ export default function AdminAnalytics() {
                     <div style={{ height: 400, marginTop: 'var(--space-6)' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={analyticsData.temporalData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(231,170,81,0.05)" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,40,40,0.05)" vertical={false} />
                                 <XAxis dataKey="name" stroke="var(--text-dim)" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="var(--text-dim)" fontSize={10} tickLine={false} axisLine={false} />
                                 <Tooltip

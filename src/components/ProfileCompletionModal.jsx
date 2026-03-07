@@ -214,7 +214,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                                     border: idBarcode ? '1px solid var(--accent)' : '1px solid var(--border-color)',
                                     borderRadius: '4px',
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    position: 'relative', background: idBarcode ? 'rgba(231,170,81,0.05)' : 'transparent',
+                                    position: 'relative', background: idBarcode ? 'rgba(255,40,40,0.05)' : 'transparent',
                                     overflow: 'hidden'
                                 }}>
                                     {idBarcode ? (
@@ -233,7 +233,7 @@ export default function ProfileCompletionModal({ isOpen, onClose, user, onComple
                                     border: facePic || isCameraActive ? '1px solid var(--accent)' : '1px solid var(--border-color)',
                                     borderRadius: 'var(--radius-lg)',
                                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                    position: 'relative', background: facePic || isCameraActive ? 'rgba(231,170,81,0.05)' : 'transparent',
+                                    position: 'relative', background: facePic || isCameraActive ? 'rgba(255,40,40,0.05)' : 'transparent',
                                     overflow: 'hidden'
                                 }}>
                                     {isCameraActive ? (

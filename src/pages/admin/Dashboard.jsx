@@ -200,7 +200,7 @@ export default function AdminDashboard() {
                                             <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(231,170,81,0.05)" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,40,40,0.05)" vertical={false} />
                                     <XAxis dataKey="name" stroke="var(--text-dim)" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="var(--text-dim)" fontSize={10} tickLine={false} axisLine={false} />
                                     <Tooltip
@@ -303,7 +303,7 @@ export default function AdminDashboard() {
 
                         <div className="flex flex-col gap-3">
                             {admins.map(admin => (
-                                <div key={admin.id} className="flex items-center gap-3 p-3" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                <div key={admin.id} className="flex items-center gap-3 p-3" style={{ background: 'rgba(255,40,40,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--secondary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--secondary)' }}>
                                         <Shield size={16} color="var(--secondary)" />
                                     </div>

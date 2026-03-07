@@ -328,7 +328,7 @@ export default function MyTickets() {
                                         background: 'var(--accent-glow)', margin: '0 auto 16px',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         border: '1px solid var(--accent)',
-                                        boxShadow: 'inset 0 0 20px rgba(231,170,81,0.2)'
+                                        boxShadow: 'inset 0 0 20px rgba(255,40,40,0.2)'
                                     }}>
                                         <ShieldCheck size={40} color="var(--accent)" />
                                     </div>

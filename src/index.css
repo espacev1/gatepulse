@@ -12,29 +12,31 @@
   --bg-elevated: #151515;
   --bg-input: #0a0a0a;
 
-  /* Golden Gradients & Accents */
-  --accent: #e7aa51;
-  --accent-bright: #ffe499;
-  --accent-dim: #ac7031;
-  --accent-glow: rgba(231, 170, 81, 0.15);
-  --accent-glow-strong: rgba(231, 170, 81, 0.3);
-  --accent-gradient: linear-gradient(180deg, #e7aa51 0%, #ffe499 25%, #8d5a1b 50%, #e7aa51 75%, #ac7031 100%);
-  --golden-noir: linear-gradient(180deg, #e7aa51, #ffe499, #8d5a1b, #e7aa51, #ac7031);
+  /* Red / White Palette Gradients & Accents */
+  --accent: #ff2828;
+  --accent-bright: #ff4d4d;
+  --accent-dim: #cc0000;
+  --accent-glow: rgba(255, 40, 40, 0.15);
+  --accent-glow-strong: rgba(255, 40, 40, 0.3);
+  --accent-gradient: linear-gradient(180deg, #ff2828 0%, #ff4d4d 25%, #cc0000 50%, #ff2828 75%, #990000 100%);
+  --golden-noir: linear-gradient(180deg, #ff2828, #ff4d4d, #cc0000, #ff2828, #990000);
 
-  /* Secondary - Noir & Earth Tones */
-  --secondary: #8d5a1b;
-  --secondary-dim: #704513;
-  --secondary-glow: rgba(141, 90, 27, 0.1);
-  --teal: #ac7031;
-  --teal-glow: rgba(172, 112, 49, 0.1);
-  --magenta: #e7aa51;
-  --magenta-glow: rgba(231, 170, 81, 0.1);
+  /* Secondary - Red & White Tones */
+  --secondary: #cc0000;
+  --secondary-dim: #990000;
+  --secondary-glow: rgba(204, 0, 0, 0.1);
+  --teal: #ff2828;
+  /* Re-purposed teal to red for consistency */
+  --teal-glow: rgba(255, 40, 40, 0.1);
+  --magenta: #ff2828;
+  /* Re-purposed magenta to red */
+  --magenta-glow: rgba(255, 40, 40, 0.1);
 
-  /* Text Colors (Golden) */
-  --text-primary: #cea455;
-  --text-secondary: rgba(206, 164, 85, 0.9);
-  --text-muted: rgba(206, 164, 85, 0.65);
-  --text-dim: rgba(206, 164, 85, 0.4);
+  /* Text Colors (White) */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-dim: rgba(255, 255, 255, 0.4);
 
   /* Status Indicators */
   --status-ok: #00E676;
@@ -46,16 +48,16 @@
   --status-critical: #FF3D3D;
   --status-critical-bg: rgba(255, 61, 61, 0.1);
   --status-critical-border: rgba(255, 61, 61, 0.25);
-  --status-info: #e7aa51;
-  --status-info-bg: rgba(231, 170, 81, 0.1);
-  --status-info-border: rgba(231, 170, 81, 0.2);
+  --status-info: #ff2828;
+  --status-info-bg: rgba(255, 40, 40, 0.1);
+  --status-info-border: rgba(255, 40, 40, 0.2);
 
-  /* Gradients (Noir/Gold) */
+  /* Gradients (Red/Black) */
   --gradient-bg: linear-gradient(145deg, #000000 0%, #050505 60%, #000000 100%);
   --gradient-card: linear-gradient(160deg, #0c0c0c 0%, #050505 100%);
   --gradient-panel: linear-gradient(180deg, #080808 0%, #000000 100%);
-  --gradient-accent-line: linear-gradient(90deg, #e7aa51 0%, #8d5a1b 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(231, 170, 81, 0.04) 0%, rgba(231, 170, 81, 0.01) 100%);
+  --gradient-accent-line: linear-gradient(90deg, #ff2828 0%, #cc0000 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 40, 40, 0.04) 0%, rgba(255, 40, 40, 0.01) 100%);
   --gradient-hero: linear-gradient(145deg, #000000 0%, #050505 30%, #0a0a0a 60%, #000000 100%);
 
   /* Typography */
@@ -85,26 +87,26 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
-  /* Borders & Shadows (Golden) */
+  /* Borders & Shadows (Red) */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
   --radius-2xl: 14px;
   --radius-full: 9999px;
-  --border: 1px solid rgba(231, 170, 81, 0.12);
-  --border-color: rgba(231, 170, 81, 0.12);
-  --border-hover: rgba(231, 170, 81, 0.25);
-  --border-accent: rgba(231, 170, 81, 0.35);
+  --border: 1px solid rgba(255, 40, 40, 0.12);
+  --border-color: rgba(255, 40, 40, 0.12);
+  --border-hover: rgba(255, 40, 40, 0.25);
+  --border-accent: rgba(255, 40, 40, 0.35);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.8);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.85);
   --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.9);
-  --shadow-glow: 0 0 20px rgba(231, 170, 81, 0.08);
-  --shadow-glow-strong: 0 0 30px rgba(231, 170, 81, 0.15);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(231, 170, 81, 0.1);
+  --shadow-glow: 0 0 20px rgba(255, 40, 40, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(255, 40, 40, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 40, 40, 0.1);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -136,7 +138,7 @@ html {
 body {
   font-family: var(--font-family);
   font-size: var(--font-base);
-  color: #cea455;
+  color: #ffffff;
   background: var(--bg-deepest);
   line-height: 1.55;
   min-height: 100vh;
@@ -144,7 +146,7 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Global Golden Gradient Text for Headings */
+/* Global Red/White Gradient Text for Headings */
 h1,
 h2,
 h3,
@@ -270,7 +272,7 @@ img {
 }
 
 .btn-ghost:hover {
-  background: rgba(231, 170, 81, 0.05);
+  background: rgba(255, 40, 40, 0.05);
   color: var(--text-primary);
   border-color: var(--border-color);
 }
@@ -710,7 +712,7 @@ tr:hover td {
 /* --- Progress Bars (Gauge Style) --- */
 .progress-bar-track {
   height: 4px;
-  background: rgba(231, 170, 81, 0.08);
+  background: rgba(255, 40, 40, 0.08);
   border-radius: var(--radius-full);
   overflow: hidden;
 }

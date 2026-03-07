@@ -29,21 +29,8 @@ export default function Landing() {
                 borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <div style={{
-                        width: 34, height: 34,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                        <img
-                            src="/logo_ecell.jpg"
-                            alt="E-MEDIA Logo"
-                            style={{
-                                height: 32,
-                                objectFit: 'contain'
-                            }}
-                        />
-                    </div>
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                        E-MEDIA
+                        Gate Pulse
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
@@ -64,7 +51,7 @@ export default function Landing() {
                 {/* Grid pattern overlay */}
                 <div style={{
                     position: 'absolute', inset: 0, opacity: 0.04, zIndex: 0,
-                    backgroundImage: 'linear-gradient(rgba(231,170,81,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(231,170,81,0.5) 1px, transparent 1px)',
+                    backgroundImage: 'linear-gradient(rgba(255,40,40,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,40,40,0.5) 1px, transparent 1px)',
                     backgroundSize: '40px 40px'
                 }} />
 
@@ -72,21 +59,21 @@ export default function Landing() {
                 <div style={{
                     position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)',
                     width: '600px', height: '600px',
-                    background: 'radial-gradient(circle, rgba(231,170,81,0.08) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(255,40,40,0.08) 0%, transparent 70%)',
                     zIndex: 0, pointerEvents: 'none'
                 }} />
                 <div style={{
                     position: 'absolute', width: 400, height: 400,
-                    background: 'radial-gradient(circle, rgba(123,97,255,0.06) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(204,0,0,0.06) 0%, transparent 70%)',
                     borderRadius: '50%', bottom: '-5%', left: '-5%',
                     animation: 'float 9s ease-in-out infinite reverse',
                 }} />
 
                 <div style={{ maxWidth: 780, position: 'relative', zIndex: 1 }}>
                     <div className="badge" style={{
-                        background: 'rgba(231,170,81,0.1)',
+                        background: 'rgba(255,40,40,0.1)',
                         color: 'var(--accent)',
-                        border: '1px solid rgba(231,170,81,0.15)',
+                        border: '1px solid rgba(255,40,40,0.15)',
                         marginBottom: 'var(--space-6)',
                         padding: '4px 16px',
                         fontSize: 'var(--font-xs)', fontWeight: 700,
@@ -112,7 +99,7 @@ export default function Landing() {
                         fontSize: 'var(--font-xl)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)',
                         maxWidth: 600, margin: '0 auto var(--space-8)', lineHeight: 1.6
                     }}>
-                        From registration to post-event analytics — E-MEDIA provides enterprise-grade
+                        From registration to post-event analytics — Gate Pulse provides enterprise-grade
                         security and operational clarity for next-generation event management.
                     </p>
 
@@ -192,7 +179,7 @@ export default function Landing() {
             {/* How It Works */}
             <section style={{
                 padding: 'var(--space-20) var(--space-8)',
-                background: 'linear-gradient(180deg, transparent 0%, rgba(231,170,81,0.02) 50%, transparent 100%)',
+                background: 'linear-gradient(180deg, transparent 0%, rgba(255,40,40,0.02) 50%, transparent 100%)',
                 position: 'relative'
             }}>
                 <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -209,7 +196,7 @@ export default function Landing() {
                         {/* Vertical line */}
                         <div style={{
                             position: 'absolute', left: 28, top: 32, bottom: 32, width: 1,
-                            background: 'linear-gradient(180deg, var(--accent), rgba(231,170,81,0.1))',
+                            background: 'linear-gradient(180deg, var(--accent), rgba(255,40,40,0.1))',
                         }} />
                         {steps.map((step, i) => (
                             <div key={i} style={{
@@ -280,15 +267,10 @@ export default function Landing() {
                 letterSpacing: '0.03em',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-                    <img
-                        src="/logo_refined.png"
-                        alt="E-MEDIA Logo"
-                        style={{ height: 24, objectFit: 'contain' }}
-                    />
-                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>E-MEDIA</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Gate Pulse</span>
                 </div>
                 <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
-                    © 2026 E-MEDIA — Secure Event Intelligence Platform
+                    © 2026 Gate Pulse — Secure Event Intelligence Platform
                 </div>
             </footer>
         </div>

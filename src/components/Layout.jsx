@@ -66,21 +66,10 @@ export default function Layout() {
                     display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
                     minHeight: 'var(--navbar-height)',
                 }}>
-                    <div style={{
-                        width: 40, height: 40,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                    }}>
-                        <img
-                            src="/logo_ecell.jpg"
-                            alt="E-MEDIA Logo"
-                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                    </div>
                     {sidebarOpen && (
                         <div style={{ animation: 'fadeIn 0.2s ease' }}>
                             <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                                E-MEDIA
+                                Gate Pulse
                             </div>
                             <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -1 }}>
                                 AN E-CELL INITIATIVE
@@ -136,16 +125,16 @@ export default function Layout() {
                         style={{
                             display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
                             padding: '8px 10px', borderRadius: 'var(--radius-lg)',
-                            background: 'rgba(231,170,81,0.03)', border: '1px solid var(--border-color)',
+                            background: 'rgba(255,40,40,0.03)', border: '1px solid var(--border-color)',
                             cursor: 'pointer',
                             transition: 'all var(--transition-base)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(231,170,81,0.08)'
+                            e.currentTarget.style.background = 'rgba(255,40,40,0.08)'
                             e.currentTarget.style.borderColor = 'var(--accent)'
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(231,170,81,0.03)'
+                            e.currentTarget.style.background = 'rgba(255,40,40,0.03)'
                             e.currentTarget.style.borderColor = 'var(--border-color)'
                         }}
                     >

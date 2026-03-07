@@ -51,14 +51,14 @@ export default function Login() {
             {/* Background Decor */}
             <div style={{
                 position: 'absolute', inset: 0, opacity: 0.03, zIndex: 0, pointerEvents: 'none',
-                backgroundImage: 'linear-gradient(rgba(231,170,81,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(231,170,81,0.5) 1px, transparent 1px)',
+                backgroundImage: 'linear-gradient(rgba(255,40,40,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,40,40,0.5) 1px, transparent 1px)',
                 backgroundSize: '40px 40px'
             }} />
 
             <div style={{
                 position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)',
                 width: '600px', height: '600px',
-                background: 'radial-gradient(circle, rgba(231,170,81,0.05) 0%, transparent 60%)',
+                background: 'radial-gradient(circle, rgba(255,40,40,0.05) 0%, transparent 60%)',
                 zIndex: 0, pointerEvents: 'none'
             }} />
 
@@ -69,22 +69,10 @@ export default function Login() {
                 position: 'relative',
                 zIndex: 1,
                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                border: '1px solid rgba(231, 170, 81, 0.1)'
+                border: '1px solid rgba(255, 40, 40, 0.1)'
             }}>
                 {/* Header */}
                 <div className="text-center mb-10">
-                    <div style={{
-                        width: 60, height: 60,
-                        display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto var(--space-4)',
-                    }}>
-                        <img
-                            src="/logo_ecell.jpg"
-                            alt="E-MEDIA Logo"
-                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                    </div>
                     <h1 className="page-title" style={{ marginBottom: 4 }}>Access Console</h1>
                     <p className="page-subtitle">Security Authentication Gateway</p>
                 </div>
@@ -104,7 +92,7 @@ export default function Login() {
                                 type="email"
                                 className="form-input"
                                 style={{ paddingLeft: '40px' }}
-                                placeholder="operator@emedia.io"
+                                placeholder="operator@gatepulse.io"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

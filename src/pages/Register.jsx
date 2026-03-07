@@ -168,9 +168,8 @@ export default function Register() {
             minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--gradient-hero)', padding: 'var(--space-6)', position: 'relative'
         }}>
-            <div className="card-glass shadow-2xl" style={{ width: '100%', maxWidth: '480px', padding: 'var(--space-8)', zIndex: 1, border: '1px solid rgba(231, 170, 81, 0.1)' }}>
+            <div className="card-glass shadow-2xl" style={{ width: '100%', maxWidth: '480px', padding: 'var(--space-8)', zIndex: 1, border: '1px solid rgba(255, 40, 40, 0.1)' }}>
                 <div className="text-center mb-8">
-                    <img src="/logo_ecell.jpg" alt="Logo" style={{ width: 60, height: 60, margin: '0 auto 16px' }} />
                     <h1 className="page-title" style={{ fontSize: '24px' }}>Identity Provisioning</h1>
                     <p className="page-subtitle">Security Step {step} of 3</p>
                 </div>

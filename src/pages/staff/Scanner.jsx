@@ -423,7 +423,7 @@ export default function StaffScanner() {
                                 display: 'flex', alignItems: 'center', gap: '8px',
                                 background: 'rgba(0,0,0,0.4)', padding: '8px 16px',
                                 borderRadius: '16px', border: '1px solid var(--accent)',
-                                boxShadow: gpsStatus === 'live' ? '0 0 15px rgba(231,170,81,0.1)' : 'none'
+                                boxShadow: gpsStatus === 'live' ? '0 0 15px rgba(255,40,40,0.1)' : 'none'
                             }}>
                                 <div style={{
                                     width: 10, height: 10, borderRadius: '50%',
@@ -539,7 +539,7 @@ export default function StaffScanner() {
                     <div>
                         {selectedParticipant && (
                             <div className="card mb-4" style={{
-                                background: 'rgba(231,170,81,0.05)',
+                                background: 'rgba(255,40,40,0.05)',
                                 color: 'var(--text-primary)',
                                 border: '1px solid var(--accent)',
                                 padding: 'var(--space-3) var(--space-4)',
