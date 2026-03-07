@@ -1,4 +1,4 @@
-// Mock data for Gate Pulse demo mode
+// Mock data for E-MEDIA demo mode
 export const mockUsers = [];
 export const mockEvents = [];
 export const mockParticipants = [];

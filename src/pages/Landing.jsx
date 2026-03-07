@@ -30,7 +30,7 @@ export default function Landing() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                        Gate Pulse
+                        E-MEDIA
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
@@ -99,7 +99,7 @@ export default function Landing() {
                         fontSize: 'var(--font-xl)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)',
                         maxWidth: 600, margin: '0 auto var(--space-8)', lineHeight: 1.6
                     }}>
-                        From registration to post-event analytics — Gate Pulse provides enterprise-grade
+                        From registration to post-event analytics — E-MEDIA provides enterprise-grade
                         security and operational clarity for next-generation event management.
                     </p>
 
@@ -267,10 +267,10 @@ export default function Landing() {
                 letterSpacing: '0.03em',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Gate Pulse</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>E-MEDIA</span>
                 </div>
                 <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
-                    © 2026 Gate Pulse — Secure Event Intelligence Platform
+                    © 2026 E-MEDIA — Secure Event Intelligence Platform
                 </div>
             </footer>
         </div>

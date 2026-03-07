@@ -69,7 +69,7 @@ export default function Layout() {
                     {sidebarOpen && (
                         <div style={{ animation: 'fadeIn 0.2s ease' }}>
                             <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                                Gate Pulse
+                                E-MEDIA
                             </div>
                         </div>
                     )}
