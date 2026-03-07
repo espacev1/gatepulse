@@ -12,25 +12,23 @@
   --bg-elevated: #151515;
   --bg-input: #0a0a0a;
 
-  /* Red / White Palette Gradients & Accents */
-  --accent: #ff2828;
-  --accent-bright: #ff4d4d;
-  --accent-dim: #cc0000;
-  --accent-glow: rgba(255, 40, 40, 0.15);
-  --accent-glow-strong: rgba(255, 40, 40, 0.3);
-  --accent-gradient: linear-gradient(180deg, #ff2828 0%, #ff4d4d 25%, #cc0000 50%, #ff2828 75%, #990000 100%);
-  --golden-noir: linear-gradient(180deg, #ff2828, #ff4d4d, #cc0000, #ff2828, #990000);
+  /* Golden Noir Palette Gradients & Accents */
+  --accent: #e7aa51;
+  --accent-bright: #ffe499;
+  --accent-dim: #8d5a1b;
+  --accent-glow: rgba(231, 170, 81, 0.15);
+  --accent-glow-strong: rgba(231, 170, 81, 0.3);
+  --accent-gradient: linear-gradient(180deg, #e7aa51 0%, #ffe499 25%, #8d5a1b 50%, #e7aa51 75%, #ac7031 100%);
+  --golden-noir: linear-gradient(180deg, #e7aa51, #ffe499, #8d5a1b, #e7aa51, #ac7031);
 
-  /* Secondary - Red & White Tones */
-  --secondary: #cc0000;
-  --secondary-dim: #990000;
-  --secondary-glow: rgba(204, 0, 0, 0.1);
-  --teal: #ff2828;
-  /* Re-purposed teal to red for consistency */
-  --teal-glow: rgba(255, 40, 40, 0.1);
-  --magenta: #ff2828;
-  /* Re-purposed magenta to red */
-  --magenta-glow: rgba(255, 40, 40, 0.1);
+  /* Secondary - Earth & Teal Tones */
+  --secondary: #cea455;
+  --secondary-dim: #a8813c;
+  --secondary-glow: rgba(206, 164, 85, 0.1);
+  --teal: #00BFA5;
+  --teal-glow: rgba(0, 191, 165, 0.1);
+  --magenta: #FF4DA6;
+  --magenta-glow: rgba(255, 77, 166, 0.1);
 
   /* Text Colors (White) */
   --text-primary: #ffffff;
@@ -52,12 +50,12 @@
   --status-info-bg: rgba(255, 40, 40, 0.1);
   --status-info-border: rgba(255, 40, 40, 0.2);
 
-  /* Gradients (Red/Black) */
+  /* Gradients (Gold/Black) */
   --gradient-bg: linear-gradient(145deg, #000000 0%, #050505 60%, #000000 100%);
   --gradient-card: linear-gradient(160deg, #0c0c0c 0%, #050505 100%);
   --gradient-panel: linear-gradient(180deg, #080808 0%, #000000 100%);
-  --gradient-accent-line: linear-gradient(90deg, #ff2828 0%, #cc0000 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 40, 40, 0.04) 0%, rgba(255, 40, 40, 0.01) 100%);
+  --gradient-accent-line: linear-gradient(90deg, #e7aa51 0%, #ac7031 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(231, 170, 81, 0.04) 0%, rgba(231, 170, 81, 0.01) 100%);
   --gradient-hero: linear-gradient(145deg, #000000 0%, #050505 30%, #0a0a0a 60%, #000000 100%);
 
   /* Typography */
@@ -87,26 +85,26 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
-  /* Borders & Shadows (Red) */
+  /* Borders & Shadows (Gold) */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
   --radius-2xl: 14px;
   --radius-full: 9999px;
-  --border: 1px solid rgba(255, 40, 40, 0.12);
-  --border-color: rgba(255, 40, 40, 0.12);
-  --border-hover: rgba(255, 40, 40, 0.25);
-  --border-accent: rgba(255, 40, 40, 0.35);
+  --border: 1px solid rgba(231, 170, 81, 0.12);
+  --border-color: rgba(231, 170, 81, 0.12);
+  --border-hover: rgba(231, 170, 81, 0.25);
+  --border-accent: rgba(231, 170, 81, 0.35);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.8);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.85);
   --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.9);
-  --shadow-glow: 0 0 20px rgba(255, 40, 40, 0.08);
-  --shadow-glow-strong: 0 0 30px rgba(255, 40, 40, 0.15);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 40, 40, 0.1);
+  --shadow-glow: 0 0 20px rgba(231, 170, 81, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(231, 170, 81, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(231, 170, 81, 0.1);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -146,7 +144,7 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Global Red/White Gradient Text for Headings */
+/* Global Gold Gradient Text for Headings */
 h1,
 h2,
 h3,
@@ -272,7 +270,7 @@ img {
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 40, 40, 0.05);
+  background: rgba(231, 170, 81, 0.05);
   color: var(--text-primary);
   border-color: var(--border-color);
 }
@@ -712,7 +710,7 @@ tr:hover td {
 /* --- Progress Bars (Gauge Style) --- */
 .progress-bar-track {
   height: 4px;
-  background: rgba(255, 40, 40, 0.08);
+  background: rgba(231, 170, 81, 0.08);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
