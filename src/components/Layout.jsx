@@ -71,9 +71,6 @@ export default function Layout() {
                             <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                                 Gate Pulse
                             </div>
-                            <div style={{ fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -1 }}>
-                                AN E-CELL INITIATIVE
-                            </div>
                         </div>
                     )}
                 </div>
