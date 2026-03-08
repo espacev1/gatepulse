@@ -66,13 +66,32 @@ export default function StaffAttendance() {
     }
 
     const activateProtocol = async (sessionId) => {
-        const { error } = await supabase
-            .from('attendance_sessions')
-            .update({ status: 'active' })
-            .eq('id', sessionId)
+        if (!navigator.geolocation) {
+            alert('GPS is not available on this device.')
+            return
+        }
 
-        if (error) alert('Critical: Protocol activation failure. ' + error.message)
-        else fetchStaffData()
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords
+                const { error } = await supabase
+                    .from('attendance_sessions')
+                    .update({
+                        status: 'active',
+                        staff_lat: latitude,
+                        staff_lng: longitude,
+                        activated_at: new Date().toISOString()
+                    })
+                    .eq('id', sessionId)
+
+                if (error) alert('Critical: Protocol activation failure. ' + error.message)
+                else fetchStaffData()
+            },
+            () => {
+                alert('Location access is MANDATORY to activate the protocol. Please allow location access.')
+            },
+            { enableHighAccuracy: true }
+        )
     }
 
     const endSession = async (sessionId) => {
