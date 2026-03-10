@@ -15,9 +15,8 @@ export default function Loader({ message = "PLEASE WAIT...", fullScreen = false 
                 src={logo}
                 alt="VIT-PULSE Logo"
                 style={{
-                    width: '80px',
+                    width: '120px',
                     height: 'auto',
-                    mixBlendMode: 'multiply',
                     animation: 'pulse 1.5s ease-in-out infinite'
                 }}
             />

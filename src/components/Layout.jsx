@@ -68,8 +68,8 @@ export default function Layout() {
                 }}>
                     {sidebarOpen && (
                         <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img src="/logo_refined.png" alt="Logo" style={{ height: '24px', mixBlendMode: 'multiply' }} />
-                            <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                            <img src="/logo_refined.png" alt="Logo" style={{ height: '32px' }} />
+                            <div style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                                 VIT-PULSE
                             </div>
                         </div>

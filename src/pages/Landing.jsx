@@ -29,8 +29,8 @@ export default function Landing() {
                 borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <img src="/logo_refined.png" alt="Logo" style={{ height: '32px', mixBlendMode: 'multiply' }} />
-                    <span style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                    <img src="/logo_refined.png" alt="Logo" style={{ height: '40px' }} />
+                    <span style={{ fontWeight: 800, fontSize: 'var(--font-xl)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                         VIT-PULSE
                     </span>
                 </div>
