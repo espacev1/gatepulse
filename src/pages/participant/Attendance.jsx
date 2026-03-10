@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ShieldCheck, MapPin, Camera, Zap, X, Activity, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import Loader from '../../components/Loader'
 
 export default function ParticipantAttendance() {
     const { user } = useAuth()
@@ -210,7 +211,7 @@ export default function ParticipantAttendance() {
     if (loading) {
         return (
             <div className="page-container">
-                <div className="flex items-center justify-center h-64 text-dim font-mono">LOADING ATTENDANCE DATA...</div>
+                <Loader message="LOADING ATTENDANCE DATA..." />
             </div>
         )
     }

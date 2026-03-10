@@ -1,15 +1,12 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import Loader from './Loader'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading, isAuthenticated } = useAuth()
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-                <div className="animate-pulse" style={{ color: 'var(--primary-400)', fontSize: 'var(--font-xl)' }}>Loading...</div>
-            </div>
-        )
+        return <Loader fullScreen message="AUTHORIZING..." />
     }
 
     if (!isAuthenticated) return <Navigate to="/login" replace />

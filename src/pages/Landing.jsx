@@ -29,8 +29,9 @@ export default function Landing() {
                 borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <img src="/logo_refined.png" alt="Logo" style={{ height: '32px', mixBlendMode: 'multiply' }} />
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                        E-MEDIA
+                        VIT-PULSE
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
@@ -99,7 +100,7 @@ export default function Landing() {
                         fontSize: 'var(--font-xl)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)',
                         maxWidth: 600, margin: '0 auto var(--space-8)', lineHeight: 1.6
                     }}>
-                        From registration to post-event analytics — E-MEDIA provides enterprise-grade
+                        From registration to post-event analytics — VIT-PULSE provides enterprise-grade
                         security and operational clarity for next-generation event management.
                     </p>
 
@@ -267,10 +268,10 @@ export default function Landing() {
                 letterSpacing: '0.03em',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>E-MEDIA</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>VIT-PULSE</span>
                 </div>
                 <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
-                    © 2026 E-MEDIA — Secure Event Intelligence Platform
+                    © 2026 VIT-PULSE — Secure Event Intelligence Platform
                 </div>
             </footer>
         </div>

@@ -3,6 +3,7 @@ import { MapPin, Clock, Users, CalendarDays, CheckCircle2, ArrowRight, Search, A
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import ProfileCompletionModal from '../../components/ProfileCompletionModal'
+import Loader from '../../components/Loader'
 
 export default function ParticipantEvents() {
     const { user } = useAuth()
@@ -264,7 +265,11 @@ export default function ParticipantEvents() {
 
             {/* Events Grid */}
             <div className="grid-3" style={{ gap: 'var(--space-6)' }}>
-                {loading && <div className="col-span-3 text-center py-20 text-dim">Scanning for available sectors...</div>}
+                {loading && (
+                    <div className="col-span-3 py-20">
+                        <Loader message="Scanning for available sectors..." />
+                    </div>
+                )}
                 {!loading && filtered.length === 0 && (
                     <div className="col-span-3 text-center py-20 text-dim">No operational sectors detected in this coordinate range.</div>
                 )}

@@ -67,9 +67,10 @@ export default function Layout() {
                     minHeight: 'var(--navbar-height)',
                 }}>
                     {sidebarOpen && (
-                        <div style={{ animation: 'fadeIn 0.2s ease' }}>
+                        <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <img src="/logo_refined.png" alt="Logo" style={{ height: '24px', mixBlendMode: 'multiply' }} />
                             <div style={{ fontWeight: 800, fontSize: 'var(--font-base)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                                E-MEDIA
+                                VIT-PULSE
                             </div>
                         </div>
                     )}

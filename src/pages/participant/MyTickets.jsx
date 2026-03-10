@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Download, Shield, ShieldCheck, MapPin, CalendarDays, Clock, Lock, Zap, Info, Eye, EyeOff, X, Activity } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import Loader from '../../components/Loader'
 
 export default function MyTickets() {
     const { user } = useAuth()
@@ -264,9 +265,7 @@ export default function MyTickets() {
     if (loading) {
         return (
             <div className="page-container">
-                <div className="flex items-center justify-center h-64 text-dim font-mono">
-                    PROBING SECURE SECTORS...
-                </div>
+                <Loader message="PROBING SECURE SECTORS..." />
             </div>
         )
     }
