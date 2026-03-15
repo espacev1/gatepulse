@@ -19,13 +19,13 @@ const steps = [
 
 export default function Landing() {
     return (
-        <div style={{ background: 'var(--bg-deepest)', minHeight: '100vh' }}>
+        <div style={{ background: 'transparent', minHeight: '100vh' }}>
             {/* Navbar */}
             <nav style={{
                 position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
                 padding: '12px var(--space-8)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'rgba(6,14,26,0.85)', backdropFilter: 'blur(16px)',
+                background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(16px)',
                 borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -46,29 +46,9 @@ export default function Landing() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 textAlign: 'center',
                 padding: 'var(--space-20) var(--space-8)',
-                background: 'var(--gradient-hero)',
+                background: 'transparent',
                 position: 'relative', overflow: 'hidden',
             }}>
-                {/* Grid pattern overlay */}
-                <div style={{
-                    position: 'absolute', inset: 0, opacity: 0.04, zIndex: 0,
-                    backgroundImage: 'linear-gradient(rgba(255,40,40,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,40,40,0.5) 1px, transparent 1px)',
-                    backgroundSize: '40px 40px'
-                }} />
-
-                {/* Ambient Center Glow */}
-                <div style={{
-                    position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: '600px', height: '600px',
-                    background: 'radial-gradient(circle, rgba(255,40,40,0.08) 0%, transparent 70%)',
-                    zIndex: 0, pointerEvents: 'none'
-                }} />
-                <div style={{
-                    position: 'absolute', width: 400, height: 400,
-                    background: 'radial-gradient(circle, rgba(204,0,0,0.06) 0%, transparent 70%)',
-                    borderRadius: '50%', bottom: '-5%', left: '-5%',
-                    animation: 'float 9s ease-in-out infinite reverse',
-                }} />
 
                 <div style={{ maxWidth: 780, position: 'relative', zIndex: 1 }}>
                     <div className="badge" style={{

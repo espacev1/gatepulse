@@ -43,24 +43,11 @@ export default function Login() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'var(--gradient-hero)',
+            background: 'transparent',
             padding: 'var(--space-6)',
             position: 'relative',
             overflow: 'hidden'
         }}>
-            {/* Background Decor */}
-            <div style={{
-                position: 'absolute', inset: 0, opacity: 0.03, zIndex: 0, pointerEvents: 'none',
-                backgroundImage: 'linear-gradient(rgba(255,40,40,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,40,40,0.5) 1px, transparent 1px)',
-                backgroundSize: '40px 40px'
-            }} />
-
-            <div style={{
-                position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)',
-                width: '600px', height: '600px',
-                background: 'radial-gradient(circle, rgba(255,40,40,0.05) 0%, transparent 60%)',
-                zIndex: 0, pointerEvents: 'none'
-            }} />
 
             <div className="card-glass" style={{
                 width: '100%',

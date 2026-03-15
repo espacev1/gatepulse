@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import AccessModal from './components/AccessModal'
+import MagicRings from './components/MagicRings'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -110,7 +111,34 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <MagicRings
+          color="#ffffff"
+          colorTwo="#444444"
+          ringCount={10}
+          speed={1}
+          attenuation={5}
+          lineThickness={3}
+          baseRadius={0.25}
+          radiusStep={0.08}
+          scaleRate={0.15}
+          opacity={1}
+          blur={0}
+          noiseAmount={0.05}
+          rotation={0}
+          ringGap={1.2}
+          fadeIn={0.7}
+          fadeOut={0.5}
+          followMouse={true}
+          mouseInfluence={0.1}
+          hoverScale={1.1}
+          parallax={0.02}
+          clickBurst={true}
+        />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <AppRoutes />
+      </div>
     </AuthProvider>
   )
 }
