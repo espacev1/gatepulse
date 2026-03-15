@@ -315,8 +315,9 @@ img {
   transition: all var(--transition-base);
   box-shadow: var(--shadow-card);
   position: relative;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  will-change: transform;
 }
 
 .card:hover {
@@ -537,8 +538,9 @@ tr:hover td {
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  will-change: transform;
 }
 
 .stat-card::after {
