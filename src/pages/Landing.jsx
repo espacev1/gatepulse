@@ -25,8 +25,8 @@ export default function Landing() {
                 position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
                 padding: '12px var(--space-8)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(16px)',
-                borderBottom: '1px solid var(--border-color)',
+                background: 'transparent',
+                borderBottom: 'none',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                     <img src="/logo_refined.png" alt="Logo" style={{ height: '40px' }} />
