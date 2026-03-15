@@ -6,7 +6,8 @@ import { useAuth } from '../contexts/AuthContext'
 import {
     Shield, Mail, Lock, User, ArrowRight, ArrowLeft,
     Activity, AlertCircle, Building2, Layers, Hash,
-    Camera, RefreshCw, CheckCircle2
+    Camera, RefreshCw, CheckCircle2,
+    Eye, EyeOff
 } from 'lucide-react'
 
 export default function Register() {
@@ -25,6 +26,10 @@ export default function Register() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [isCameraActive, setIsCameraActive] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+    const DEPARTMENTS = ['AIML', 'AIDS', 'IT', 'CSE', 'ECE', 'EEE', 'ME', 'CE', 'CSBS']
 
     const { register } = useAuth()
     const navigate = useNavigate()
@@ -194,14 +199,44 @@ export default function Register() {
                             <label className="form-label">Secure Key</label>
                             <div className="relative">
                                 <Lock size={16} className="absolute left-3 top-3 text-dim" />
-                                <input type="password" name="password" className="form-input pl-10" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    name="password" 
+                                    className="form-input pl-10 pr-10" 
+                                    placeholder="••••••••" 
+                                    value={formData.password} 
+                                    onChange={handleChange} 
+                                    required 
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-dim hover:text-accent"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
                             </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Confirm Key</label>
                             <div className="relative">
                                 <Lock size={16} className="absolute left-3 top-3 text-dim" />
-                                <input type="password" name="confirmPassword" className="form-input pl-10" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required />
+                                <input 
+                                    type={showConfirmPassword ? "text" : "password"} 
+                                    name="confirmPassword" 
+                                    className="form-input pl-10 pr-10" 
+                                    placeholder="••••••••" 
+                                    value={formData.confirmPassword} 
+                                    onChange={handleChange} 
+                                    required 
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-3 text-dim hover:text-accent"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
                             </div>
                         </div>
                         <button onClick={() => validateStep1() && setStep(2)} className="btn btn-primary btn-lg w-full mt-4">
@@ -224,7 +259,18 @@ export default function Register() {
                             <label className="form-label">Department</label>
                             <div className="relative">
                                 <Building2 size={16} className="absolute left-3 top-3 text-accent" />
-                                <input type="text" name="dept" className="form-input pl-10" placeholder="e.g. Computer Science" value={formData.dept} onChange={handleChange} required />
+                                <select 
+                                    name="dept" 
+                                    className="form-select pl-10" 
+                                    value={formData.dept} 
+                                    onChange={handleChange} 
+                                    required
+                                >
+                                    <option value="">Select Department</option>
+                                    {DEPARTMENTS.map(d => (
+                                        <option key={d} value={d}>{d}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

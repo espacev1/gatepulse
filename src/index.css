@@ -10,7 +10,7 @@
   --bg-card: #080808;
   --bg-card-hover: #111111;
   --bg-elevated: #151515;
-  --bg-input: #0a0a0a;
+  --bg-input: rgba(255, 255, 255, 0.05);
 
   /* Palette Gradients & Accents (Monochrome) */
   --accent: #ffffff;
