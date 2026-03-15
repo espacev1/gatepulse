@@ -39,6 +39,12 @@ const heroSlides = [
         title: 'DEPLOYMENT\nPIPELINE',
         desc: 'From event creation to post-event analytics — a seamless four-stage process.',
         showSteps: true,
+    },
+    {
+        bg: '/hero4.png',
+        subtitle: 'Campus Intelligence',
+        title: 'VISHNU INSTITUTE\nOF TECHNOLOGY',
+        desc: 'Integrated security and attendance solutions for modern academic environments.',
         ctaFinal: true,
     },
 ]
