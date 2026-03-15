@@ -27,7 +27,7 @@ const heroSlides = [
         cta: true,
     },
     {
-        bg: '/hero2.png',
+        bg: '/hero2.jpg',
         subtitle: 'Built for Scale',
         title: 'SYSTEM\nCAPABILITIES',
         desc: 'Purpose-built for high-security event management with real-time threat detection.',

@@ -115,25 +115,25 @@ export default function App() {
         <MagicRings
           color="#ffffff"
           colorTwo="#444444"
-          ringCount={10}
-          speed={1}
+          ringCount={5}
+          speed={0.8}
           attenuation={5}
-          lineThickness={3}
+          lineThickness={1.5}
           baseRadius={0.25}
           radiusStep={0.08}
           scaleRate={0.15}
-          opacity={1}
+          opacity={0.8}
           blur={0}
           noiseAmount={0.05}
           rotation={0}
           ringGap={1.2}
           fadeIn={0.7}
           fadeOut={0.5}
-          followMouse={true}
-          mouseInfluence={0.1}
-          hoverScale={1.1}
-          parallax={0.02}
-          clickBurst={true}
+          followMouse={false}
+          mouseInfluence={0}
+          hoverScale={1}
+          parallax={0}
+          clickBurst={false}
         />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>

@@ -1057,6 +1057,7 @@ tr:hover td {
   scroll-behavior: smooth;
   position: relative;
   -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
 }
 
 /* Fixed navbar */
@@ -1170,8 +1171,9 @@ tr:hover td {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .hero-overlay {
