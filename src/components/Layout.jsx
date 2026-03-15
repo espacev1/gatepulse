@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import GlowGrid from './GlowGrid'
+import MagicRings from './MagicRings'
 import {
     LayoutDashboard, CalendarDays, Users, BarChart3, ScanLine,
     ClipboardCheck, Ticket, CalendarSearch, LogOut, Menu, X,
@@ -41,7 +41,31 @@ export default function Layout() {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-deepest)' }}>
-            <GlowGrid />
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+                <MagicRings
+                    color="#ffffff"
+                    colorTwo="#000000"
+                    ringCount={6}
+                    speed={1}
+                    attenuation={10}
+                    lineThickness={2}
+                    baseRadius={0.35}
+                    radiusStep={0.1}
+                    scaleRate={0.1}
+                    opacity={1}
+                    blur={0}
+                    noiseAmount={0.1}
+                    rotation={0}
+                    ringGap={1.5}
+                    fadeIn={0.7}
+                    fadeOut={0.5}
+                    followMouse={false}
+                    mouseInfluence={0.2}
+                    hoverScale={1.2}
+                    parallax={0.05}
+                    clickBurst={false}
+                />
+            </div>
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div onClick={() => setMobileOpen(false)} className="mobile-overlay"
