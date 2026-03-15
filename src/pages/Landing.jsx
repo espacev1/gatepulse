@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Shield, Ticket, BarChart3, ScanLine, Lock, Users, ArrowRight, CheckCircle2, Activity, Zap, Eye } from 'lucide-react'
 
@@ -18,6 +19,18 @@ const steps = [
 ]
 
 export default function Landing() {
+    // Parallax scroll tracking
+    const [scrollY, setScrollY] = useState(0);
+    
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrollY(window.scrollY);
+            document.documentElement.style.setProperty('--scroll-y', `${window.scrollY}px`);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
         <div style={{ background: 'transparent', minHeight: '100vh' }}>
             {/* Navbar */}
@@ -40,7 +53,7 @@ export default function Landing() {
             </nav>
 
             {/* Hero */}
-            <section style={{
+            <section className="parallax-hero" style={{
                 minHeight: '100vh',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 textAlign: 'center',
@@ -49,7 +62,7 @@ export default function Landing() {
                 position: 'relative', overflow: 'hidden',
             }}>
 
-                <div style={{ maxWidth: 780, position: 'relative', zIndex: 1 }}>
+                <div className="parallax-content" style={{ maxWidth: 780, position: 'relative', zIndex: 1 }}>
                     <div className="badge" style={{
                         background: 'rgba(255,40,40,0.1)',
                         color: 'var(--accent)',
@@ -257,10 +270,27 @@ export default function Landing() {
     )
 }
 
-// Add responsive styles
+// Add responsive and parallax styles
 const styles = `
 .landing-nav {
     padding: 12px var(--space-8);
+}
+
+.parallax-hero {
+    transform: translateY(calc(var(--scroll-y) * 0.15));
+}
+
+.parallax-content {
+    transform: translateY(calc(var(--scroll-y) * -0.05));
+    transition: transform 0.1s linear;
+}
+
+.card {
+    transition: transform 0.3s ease-out, border-color 0.25s ease !important;
+}
+
+.card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
 }
 
 @media (max-width: 768px) {
@@ -284,6 +314,12 @@ const styles = `
     /* Hero section adjustments */
     section {
         padding: var(--space-16) var(--space-4) !important;
+    }
+    .parallax-hero {
+        transform: none !important;
+    }
+    .parallax-content {
+        transform: none !important;
     }
     h1 {
         font-size: 2rem !important;

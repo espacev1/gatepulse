@@ -14,7 +14,7 @@ precision highp float;
 
 uniform float uTime, uAttenuation, uLineThickness;
 uniform float uBaseRadius, uRadiusStep, uScaleRate;
-uniform float uOpacity, uNoiseAmount, uRotation, uRingGap;
+uniform float uOpacity, uNoiseAmount, uRotation, uRingGap, uScroll;
 uniform float uFadeIn, uFadeOut;
 uniform float uMouseInfluence, uHoverAmount, uHoverScale, uParallax, uBurst;
 uniform vec2 uResolution, uMouse;
@@ -44,6 +44,7 @@ void main() {
   vec2 p = (gl_FragCoord.xy - 0.5 * uResolution.xy) * px;
   float cr = cos(uRotation), sr = sin(uRotation);
   p = mat2(cr, -sr, sr, cr) * p;
+  p.y += uScroll * 0.0005; // Scroll parallax effect
   p -= uMouse * uMouseInfluence;
   float sc = mix(1.0, uHoverScale, uHoverAmount) + uBurst * 0.3;
   p /= sc;
@@ -145,6 +146,7 @@ export default function MagicRings({
       uHoverScale: { value: 1 },
       uParallax: { value: 0 },
       uBurst: { value: 0 },
+      uScroll: { value: 0 },
     };
 
     const material = new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms, transparent: true });
@@ -177,11 +179,16 @@ export default function MagicRings({
       mouseRef.current[1] = 0;
     };
     const onClick = () => { burstRef.current = 1; };
+    const onScroll = () => {
+      uniforms.uScroll.value = window.scrollY;
+    };
+    onScroll();
 
     mount.addEventListener('mousemove', onMouseMove);
     mount.addEventListener('mouseenter', onMouseEnter);
     mount.addEventListener('mouseleave', onMouseLeave);
     mount.addEventListener('click', onClick);
+    window.addEventListener('scroll', onScroll);
 
     let frameId;
     const animate = (t) => {
@@ -228,6 +235,7 @@ export default function MagicRings({
       mount.removeEventListener('mouseenter', onMouseEnter);
       mount.removeEventListener('mouseleave', onMouseLeave);
       mount.removeEventListener('click', onClick);
+      window.removeEventListener('scroll', onScroll);
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
