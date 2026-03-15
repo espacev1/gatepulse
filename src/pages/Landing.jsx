@@ -20,31 +20,25 @@ const steps = [
 
 const heroSlides = [
     {
-        bg: '/hero1.png',
-        subtitle: 'Into The Unknown',
+        bg: '/hero1.jpg',
+        subtitle: 'Welcome to VIT-PULSE',
         title: 'COMMAND YOUR\nEVENTS',
         desc: 'Enterprise-grade security and operational clarity for next-generation event management.',
         cta: true,
     },
     {
         bg: '/hero2.png',
-        subtitle: 'Explore The Capabilities',
+        subtitle: 'Built for Scale',
         title: 'SYSTEM\nCAPABILITIES',
         desc: 'Purpose-built for high-security event management with real-time threat detection.',
         showFeatures: true,
     },
     {
-        bg: '/hero3.png',
-        subtitle: 'The Operational Flow',
+        bg: '/hero3.jpg',
+        subtitle: 'Secure Your Next Event',
         title: 'DEPLOYMENT\nPIPELINE',
         desc: 'From event creation to post-event analytics — a seamless four-stage process.',
         showSteps: true,
-    },
-    {
-        bg: '/hero4.png',
-        subtitle: 'Take The Leap',
-        title: 'SECURE YOUR\nNEXT EVENT',
-        desc: 'Deploy enterprise-grade event security in minutes. Start now.',
         ctaFinal: true,
     },
 ]
@@ -162,7 +156,7 @@ export default function Landing() {
                         )}
 
                         {slide.ctaFinal && (
-                            <div className="hero-cta-group">
+                            <div className="hero-cta-group" style={{ marginTop: '24px' }}>
                                 <Link to="/register" className="btn btn-primary btn-lg hero-cta-btn hero-cta-glow">
                                     Initialize System <ArrowRight size={16} />
                                 </Link>

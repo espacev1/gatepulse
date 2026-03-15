@@ -1053,9 +1053,10 @@ tr:hover td {
 .landing-root {
   height: 100vh;
   overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   scroll-behavior: smooth;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Fixed navbar */
@@ -1169,6 +1170,7 @@ tr:hover td {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
   overflow: hidden;
 }
 
@@ -1176,10 +1178,10 @@ tr:hover td {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(0,0,0,0.55) 0%,
-    rgba(0,0,0,0.3) 40%,
-    rgba(0,0,0,0.5) 80%,
-    rgba(0,0,0,0.8) 100%
+    rgba(0,0,0,0.6) 0%,
+    rgba(0,0,0,0.45) 40%,
+    rgba(0,0,0,0.55) 80%,
+    rgba(0,0,0,0.85) 100%
   );
   z-index: 1;
 }
