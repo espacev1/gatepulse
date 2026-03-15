@@ -6,7 +6,7 @@
   --bg-deepest: #000000;
   --bg-deep: #0a0a0a;
   --bg-mid: #111111;
-  --bg-panel: #050505;
+  --bg-panel: rgba(0, 0, 0, 0.1);
   --bg-card: #080808;
   --bg-card-hover: #111111;
   --bg-elevated: #151515;
@@ -55,8 +55,8 @@
 
   /* Gradients (Dark) */
   --gradient-bg: transparent;
-  --gradient-card: linear-gradient(145deg, #0a0a0a 0%, #050505 100%);
-  --gradient-panel: #050505;
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
+  --gradient-panel: rgba(0, 0, 0, 0.2);
   --gradient-accent-line: #ffffff;
   --gradient-glass: rgba(0, 0, 0, 0.2);
   --gradient-hero: #000000;
@@ -315,6 +315,8 @@ img {
   transition: all var(--transition-base);
   box-shadow: var(--shadow-card);
   position: relative;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .card:hover {
@@ -534,6 +536,8 @@ tr:hover td {
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .stat-card::after {

@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                                     background: 'conic-gradient(var(--status-ok) 100%, var(--bg-elevated) 0deg)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
-                                    <div style={{ width: '80%', height: '80%', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{ width: '80%', height: '80%', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Shield size={18} color="var(--status-ok)" />
                                     </div>
                                 </div>
@@ -303,7 +303,7 @@ export default function AdminDashboard() {
 
                         <div className="flex flex-col gap-3">
                             {admins.map(admin => (
-                                <div key={admin.id} className="flex items-center gap-3 p-3" style={{ background: 'rgba(255,40,40,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                <div key={admin.id} className="flex items-center gap-3 p-3" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--secondary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--secondary)' }}>
                                         <Shield size={16} color="var(--secondary)" />
                                     </div>

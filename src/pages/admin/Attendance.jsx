@@ -89,7 +89,7 @@ export default function AdminAttendance() {
                     <div className="panel-header">Staff Deployment</div>
                     <div className="flex flex-col gap-4">
                         {events.slice(0, 5).map(event => (
-                            <div key={event.id} className="p-3 border border-color rounded-lg bg-elevated">
+                            <div key={event.id} className="p-3 border border-color rounded-lg bg-transparent">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="font-bold text-sm">{event.name}</span>
                                     <span className="badge badge-secondary text-xs">{event.location}</span>
@@ -169,7 +169,7 @@ export default function AdminAttendance() {
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded bg-accent-glow flex items-center justify-center text-xs font-bold text-accent">
+                                                    <div className="w-6 h-6 rounded bg-transparent border border-accent-glow flex items-center justify-center text-xs font-bold text-accent">
                                                         {a.staff?.full_name?.charAt(0)}
                                                     </div>
                                                     <span>{a.staff?.full_name}</span>
@@ -203,14 +203,14 @@ export default function AdminAttendance() {
                 <div className="panel-header">Global Attendance Intelligence</div>
                 <div className="grid-4 mb-6">
                     <div className="stat-card">
-                        <div className="stat-card-icon bg-status-ok-bg"><ClipboardCheck size={20} color="var(--status-ok)" /></div>
+                        <div className="stat-card-icon" style={{ background: 'rgba(255, 255, 255, 0.05)' }}><ClipboardCheck size={20} color="var(--status-ok)" /></div>
                         <div>
                             <div className="stat-card-value font-mono">{sessions.length}</div>
                             <div className="stat-card-label">Total Sessions</div>
                         </div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-card-icon bg-status-warn-bg"><Activity size={20} color="var(--status-warn)" /></div>
+                        <div className="stat-card-icon" style={{ background: 'rgba(255, 255, 255, 0.05)' }}><Activity size={20} color="var(--status-warn)" /></div>
                         <div>
                             <div className="stat-card-value font-mono">{sessions.filter(s => s.status === 'active').length}</div>
                             <div className="stat-card-label">Active Now</div>

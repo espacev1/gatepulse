@@ -241,7 +241,7 @@ export default function AdminEvents() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
                                     <label className="form-label">Participation Category</label>
-                                    <div className="flex gap-2 p-1 bg-deepest rounded-lg border border-border-color">
+                                    <div className="flex gap-2 p-1 bg-transparent rounded-lg border border-border-color">
                                         <button
                                             onClick={() => setForm({ ...form, participation_type: 'solo' })}
                                             className={`btn btn-sm flex-1 ${form.participation_type === 'solo' ? 'btn-primary' : 'btn-ghost'}`}
@@ -260,7 +260,7 @@ export default function AdminEvents() {
 
                             <div className="form-group">
                                 <label className="form-label">Sector Branch Locking (Departments)</label>
-                                <div className="flex flex-wrap gap-2 p-3 bg-deepest rounded-lg border border-border-color">
+                                <div className="flex flex-wrap gap-2 p-3 bg-transparent rounded-lg border border-border-color">
                                     {DEPARTMENTS.map(dept => (
                                         <button
                                             key={dept}

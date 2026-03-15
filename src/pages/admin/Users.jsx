@@ -123,8 +123,8 @@ export default function AdminUsers() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <div style={{
                                                     width: 36, height: 36, borderRadius: 'var(--radius-lg)',
-                                                    background: u.role === 'admin' ? 'var(--secondary-glow)' : u.role === 'staff' ? 'var(--status-warn-bg)' : 'var(--bg-elevated)',
-                                                    border: `1px solid ${u.role === 'admin' ? 'var(--secondary)' : u.role === 'staff' ? 'var(--status-warn-border)' : 'var(--border-color)'}`,
+                                                    background: 'rgba(255, 255, 255, 0.03)',
+                                                    border: `1px solid ${u.role === 'admin' ? 'rgba(255,255,255,0.2)' : u.role === 'staff' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                 }}>
                                                     {u.role === 'admin' ? <Shield size={16} color="var(--secondary)" /> :
@@ -199,7 +199,9 @@ export default function AdminUsers() {
                         padding: '6px',
                         minWidth: '200px',
                         zIndex: 999,
-                        boxShadow: 'var(--shadow-xl), 0 0 30px rgba(0,0,0,0.5)',
+                        boxShadow: 'var(--shadow-xl)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
                         animation: 'fadeIn 0.15s ease'
                     }}>
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', padding: '6px 10px 4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
