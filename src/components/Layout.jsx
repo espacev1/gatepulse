@@ -50,8 +50,8 @@ export default function Layout() {
             <aside style={{
                 width: sidebarOpen ? 'var(--sidebar-width)' : 'var(--sidebar-collapsed)',
                 minHeight: '100vh',
-                background: 'linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-deep) 100%)',
-                borderRight: '1px solid var(--border-color)',
+                background: 'transparent',
+                borderRight: '1px solid rgba(255, 255, 255, 0.05)',
                 display: 'flex', flexDirection: 'column',
                 transition: 'width var(--transition-base)',
                 position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
@@ -170,16 +170,15 @@ export default function Layout() {
                 marginLeft: sidebarOpen ? 'var(--sidebar-width)' : 'var(--sidebar-collapsed)',
                 transition: 'margin-left var(--transition-base)',
                 minHeight: '100vh',
-                background: 'var(--gradient-bg)',
+                background: 'transparent',
             }}>
                 {/* Top bar */}
                 <header style={{
                     height: 'var(--navbar-height)',
-                    borderBottom: '1px solid var(--border-color)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '0 var(--space-6)',
-                    background: 'rgba(8,8,8,0.85)',
-                    backdropFilter: 'blur(12px)',
+                    background: 'transparent',
                     position: 'sticky', top: 0, zIndex: 30,
                 }}>
                     <button onClick={() => setMobileOpen(!mobileOpen)} className="btn-icon" style={{ display: 'none' }} id="mobile-menu-btn">

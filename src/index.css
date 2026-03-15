@@ -54,7 +54,7 @@
   --status-info-border: rgba(255, 255, 255, 0.15);
 
   /* Gradients (Dark) */
-  --gradient-bg: #000000;
+  --gradient-bg: transparent;
   --gradient-card: linear-gradient(145deg, #0a0a0a 0%, #050505 100%);
   --gradient-panel: #050505;
   --gradient-accent-line: #ffffff;
