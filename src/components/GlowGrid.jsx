@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
 const GlowGrid = () => {
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         const handleMouseMove = (e) => {
-            setMousePos({ x: e.clientX, y: e.clientY });
+            document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -41,7 +41,7 @@ const GlowGrid = () => {
                 style={{
                     position: 'absolute',
                     inset: 0,
-                    background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(231, 170, 81, 0.1), transparent 40%)`,
+                    background: `radial-gradient(600px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(231, 170, 81, 0.1), transparent 40%)`,
                     transition: 'background 0.05s ease'
                 }}
             />
@@ -51,7 +51,7 @@ const GlowGrid = () => {
                 style={{
                     position: 'absolute',
                     inset: 0,
-                    background: `radial-gradient(1200px circle at ${mousePos.x}px ${mousePos.y}px, rgba(231, 170, 81, 0.03), transparent 70%)`,
+                    background: `radial-gradient(1200px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(231, 170, 81, 0.03), transparent 70%)`,
                 }}
             />
         </div>

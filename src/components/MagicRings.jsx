@@ -156,7 +156,7 @@ export default function MagicRings({
     const resize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
-      const dpr = Math.min(window.devicePixelRatio, 2);
+      const dpr = Math.min(window.devicePixelRatio, 1.5);
       renderer.setSize(w, h);
       renderer.setPixelRatio(dpr);
       uniforms.uResolution.value.set(w * dpr, h * dpr);
@@ -179,16 +179,12 @@ export default function MagicRings({
       mouseRef.current[1] = 0;
     };
     const onClick = () => { burstRef.current = 1; };
-    const onScroll = () => {
-      uniforms.uScroll.value = window.scrollY;
-    };
-    onScroll();
 
     mount.addEventListener('mousemove', onMouseMove);
     mount.addEventListener('mouseenter', onMouseEnter);
     mount.addEventListener('mouseleave', onMouseLeave);
     mount.addEventListener('click', onClick);
-    window.addEventListener('scroll', onScroll);
+
 
     let frameId;
     const animate = (t) => {
@@ -201,6 +197,7 @@ export default function MagicRings({
       burstRef.current *= 0.95;
       if (burstRef.current < 0.001) burstRef.current = 0;
 
+      uniforms.uScroll.value = window.scrollY;
       uniforms.uTime.value = t * 0.001 * p.speed;
       uniforms.uAttenuation.value = p.attenuation;
       uniforms.uColor.value.set(p.color);
@@ -235,7 +232,6 @@ export default function MagicRings({
       mount.removeEventListener('mouseenter', onMouseEnter);
       mount.removeEventListener('mouseleave', onMouseLeave);
       mount.removeEventListener('click', onClick);
-      window.removeEventListener('scroll', onScroll);
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
