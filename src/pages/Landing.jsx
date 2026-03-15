@@ -36,7 +36,7 @@ const heroSlides = [
     {
         bg: '/hero3.jpg',
         subtitle: 'Secure Your Next Event',
-        title: 'DEPLOYMENT\nPIPELINE',
+        title: 'AN SOCIETY\nPROVIDED PLATFORM',
         desc: 'From event creation to post-event analytics — a seamless four-stage process.',
         showSteps: true,
     },
