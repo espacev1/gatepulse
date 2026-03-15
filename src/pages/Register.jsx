@@ -317,3 +317,26 @@ export default function Register() {
         </div>
     )
 }
+
+const styles = `
+@media (max-width: 480px) {
+    .card-glass {
+        padding: var(--space-5) !important;
+    }
+    .page-title {
+        font-size: 20px !important;
+    }
+    .grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+    .verification-slot {
+        margin-bottom: var(--space-4);
+    }
+}
+`;
+
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+}

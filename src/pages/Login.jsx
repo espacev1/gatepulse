@@ -116,3 +116,20 @@ export default function Login() {
         </div>
     )
 }
+
+const styles = `
+@media (max-width: 480px) {
+    .card-glass {
+        padding: var(--space-6) !important;
+    }
+    .page-title {
+        font-size: var(--font-xl) !important;
+    }
+}
+`;
+
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+}

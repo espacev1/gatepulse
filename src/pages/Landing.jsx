@@ -21,22 +21,21 @@ export default function Landing() {
     return (
         <div style={{ background: 'transparent', minHeight: '100vh' }}>
             {/* Navbar */}
-            <nav style={{
+            <nav className="landing-nav" style={{
                 position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-                padding: '12px var(--space-8)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 background: 'transparent',
                 borderBottom: 'none',
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <img src="/logo_refined.png" alt="Logo" style={{ height: '40px' }} />
-                    <span style={{ fontWeight: 800, fontSize: 'var(--font-xl)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                <div className="nav-logo-container" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <img src="/logo_refined.png" alt="Logo" className="nav-logo-img" style={{ height: '40px' }} />
+                    <span className="nav-logo-text" style={{ fontWeight: 800, fontSize: 'var(--font-xl)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                         VIT-PULSE
                     </span>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                    <Link to="/login" className="btn btn-ghost">Sign In</Link>
-                    <Link to="/register" className="btn btn-primary">Get Started</Link>
+                <div className="nav-links-container" style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                    <Link to="/login" className="btn btn-ghost nav-btn">Sign In</Link>
+                    <Link to="/register" className="btn btn-primary nav-btn">Get Started</Link>
                 </div>
             </nav>
 
@@ -256,4 +255,55 @@ export default function Landing() {
             </footer>
         </div>
     )
+}
+
+// Add responsive styles
+const styles = `
+.landing-nav {
+    padding: 12px var(--space-8);
+}
+
+@media (max-width: 768px) {
+    .landing-nav {
+        padding: 12px var(--space-4);
+    }
+    .nav-logo-img {
+        height: 32px !important;
+    }
+    .nav-logo-text {
+        font-size: var(--font-lg) !important;
+    }
+    .nav-links-container {
+        gap: var(--space-2) !important;
+    }
+    .nav-btn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Hero section adjustments */
+    section {
+        padding: var(--space-16) var(--space-4) !important;
+    }
+    h1 {
+        font-size: 2rem !important;
+    }
+    p {
+        font-size: var(--font-base) !important;
+        padding: 0 var(--space-2);
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-logo-text {
+        display: none; /* Hide text on very small screens to save space */
+    }
+}
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
 }
