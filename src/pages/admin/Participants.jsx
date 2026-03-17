@@ -1,0 +1,229 @@
+import { useState, useEffect } from 'react'
+import { Search, Filter, CheckCircle2, Shield, Users, Clock, Mail, Globe, Download, ThumbsUp, XCircle } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+
+export default function AdminParticipants() {
+    const [search, setSearch] = useState('')
+    const [filterEvent, setFilterEvent] = useState('all')
+    const [filterStatus, setFilterStatus] = useState('all')
+    const [participants, setParticipants] = useState([])
+    const [events, setEvents] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchInitialData()
+
+        const participantsSub = supabase
+            .channel('participants-registry-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => fetchParticipants())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchParticipants())
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(participantsSub)
+        }
+    }, [])
+
+    const fetchInitialData = async () => {
+        setLoading(true)
+        await Promise.all([fetchParticipants(), fetchEvents()])
+        setLoading(false)
+    }
+
+    const fetchEvents = async () => {
+        const { data } = await supabase.from('events').select('id, name')
+        if (data) setEvents(data)
+    }
+
+    const fetchParticipants = async () => {
+        const { data } = await supabase
+            .from('participants')
+            .select(`
+                id,
+                created_at,
+                event_id,
+                registration_status,
+                user:profiles!inner (full_name, email, dept),
+                event:events (name, participation_type),
+                ticket:tickets (id, is_validated, qr_token),
+                team:teams (name)
+            `)
+            .order('created_at', { ascending: false })
+
+        if (data) {
+            setParticipants(data.map(p => ({
+                id: p.id,
+                created_at: p.created_at,
+                event_id: p.event_id,
+                registration_status: p.registration_status,
+                user: p.user,
+                event: p.event,
+                ticket: p.ticket?.[0] || null,
+                ticket_id: p.ticket?.[0]?.id || 'NO_CREDENTIAL',
+                team_name: p.team?.name || null
+            })))
+        }
+    }
+
+    const handleApprove = async (participant) => {
+        if (!window.confirm(`Approve registration for ${participant.user.full_name}?`)) return
+
+        // 1. Update participant status
+        const { data: updated, error: pError } = await supabase
+            .from('participants')
+            .update({ registration_status: 'confirmed' })
+            .eq('id', participant.id)
+            .select()
+
+        if (pError) return alert('Approval failed: ' + pError.message)
+        if (!updated || updated.length === 0) {
+            return alert('PERMISSION DENIED: Your clearance level is insufficient to approve participants.')
+        }
+
+        // 2. Provision Ticket
+        const qrToken = `GP-${participant.event_id.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+        const { error: tError } = await supabase
+            .from('tickets')
+            .insert([{
+                participant_id: participant.id,
+                event_id: participant.event_id,
+                qr_token: qrToken
+            }])
+
+        if (tError) {
+            alert('Status confirmed, but ticket provision failed: ' + tError.message)
+        }
+
+        fetchParticipants()
+    }
+
+    const filtered = participants.filter(p => {
+        const matchesSearch = p.user.full_name.toLowerCase().includes(search.toLowerCase()) ||
+            p.user.email.toLowerCase().includes(search.toLowerCase()) ||
+            p.ticket_id.toLowerCase().includes(search.toLowerCase())
+
+        const matchesEvent = filterEvent === 'all' || p.event_id === filterEvent
+        const matchesStatus = filterStatus === 'all' ||
+            (filterStatus === 'pending-approval' && p.registration_status === 'pending') ||
+            (filterStatus === 'checked-in' && p.ticket?.is_validated) ||
+            (filterStatus === 'pending-check-in' && p.registration_status === 'confirmed' && !p.ticket?.is_validated)
+
+        return matchesSearch && matchesEvent && matchesStatus
+    })
+
+    return (
+        <div className="page-container">
+            <div className="page-header">
+                <div>
+                    <h1 className="page-title">Entity Registry</h1>
+                    <p className="page-subtitle">Historical and active participant credentials mapping.</p>
+                </div>
+                <div className="badge badge-primary" style={{ padding: 'var(--space-2) var(--space-4)' }}>
+                    {loading ? 'SYNCING...' : `${filtered.length} NODES LOGGED`}
+                </div>
+            </div>
+
+            {/* Filters HUD */}
+            <div className="card mb-6" style={{ padding: 'var(--space-4)' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                    <div className="search-bar">
+                        <Search />
+                        <input placeholder="Filter by Identity/UID..." value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
+                        <option value="all">Sectors: All</option>
+                        {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                    </select>
+                    <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto' }}>
+                        <option value="all">Auth_Status: All</option>
+                        <option value="pending-approval">Security Clearance Required</option>
+                        <option value="pending-check-in">Confirmed Coverage</option>
+                        <option value="checked-in">Authenticated Entry</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Identity Name</th>
+                                <th>Entity Class</th>
+                                <th>Target Sector</th>
+                                <th>Status</th>
+                                <th>Credential</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">SCANNING REGISTRY...</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">NO ENTITIES REGISTERED</td></tr>
+                            ) : filtered.map((p, i) => (
+                                <tr key={p.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                                            <div style={{
+                                                width: 32, height: 32, borderRadius: 'var(--radius-lg)',
+                                                background: 'var(--accent-gradient)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                color: 'var(--bg-deepest)', fontSize: 'var(--font-xs)', fontWeight: 800,
+                                            }}>
+                                                {p.user?.full_name?.charAt(0) || '?'}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{p.user?.full_name || 'Anonymous'}</div>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{p.user?.dept || 'NO_DEPT'}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style={{ color: 'var(--text-dim)', fontSize: '11px' }}>
+                                        <div className="flex items-center gap-1"><Mail size={10} /> {p.user?.email}</div>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: 'var(--font-xs)', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>
+                                                {p.event?.name?.toUpperCase() || 'N/A'}
+                                            </span>
+                                            {p.team_name && (
+                                                <span style={{ fontSize: '10px', color: 'var(--status-warn)', fontWeight: 600 }}>
+                                                    TEAM: {p.team_name.toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {p.registration_status === 'pending' ? (
+                                            <span className="badge badge-warning"><Clock size={10} /> PENDING_APPROVAL</span>
+                                        ) : p.ticket?.is_validated ? (
+                                            <span className="badge badge-success"><CheckCircle2 size={10} /> VERIFIED</span>
+                                        ) : (
+                                            <span className="badge badge-info"><Shield size={10} /> CONFIRMED</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <code className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>
+                                            {p.registration_status === 'pending' ? 'SEC_CLEARANCE_REQUIRED' : p.ticket_id}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        {p.registration_status === 'pending' && (
+                                            <button onClick={() => handleApprove(p)} className="btn btn-primary btn-xs" style={{ padding: '4px 8px', fontSize: '10px' }}>
+                                                <ThumbsUp size={10} /> APPROVE
+                                            </button>
+                                        )}
+                                        {p.registration_status === 'confirmed' && (
+                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>ACT_LOGGED</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+}
