@@ -11,7 +11,7 @@ export default function DepartmentView() {
     const { userProfile } = useAuth()
     const [stats, setStats] = useState([])
     const [loading, setLoading] = useState(true)
-    const [totalEntities, setTotalEntities] = useState(0)
+    const [totalUsers, setTotalUsers] = useState(0)
 
     useEffect(() => {
         fetchDeptStats()
@@ -58,7 +58,7 @@ export default function DepartmentView() {
 
             const finalStats = Object.values(deptMap).sort((a, b) => b.registrations - a.registrations)
             setStats(finalStats)
-            setTotalEntities(finalStats.reduce((acc, curr) => acc + curr.users, 0))
+            setTotalUsers(finalStats.reduce((acc, curr) => acc + curr.users, 0))
         } catch (error) {
             console.error('Dept stats error:', error)
         } finally {
@@ -70,16 +70,16 @@ export default function DepartmentView() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Departmental Intelligence</h1>
-                    <p className="page-subtitle">Granular auditing of entity distribution and registration telemetry.</p>
+                    <h1 className="page-title">Branch Overview</h1>
+                    <p className="page-subtitle">Detailed view of student registrations and participation across departments.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="badge badge-primary">
-                        {loading ? 'SYNCING...' : `${totalEntities} TOTAL_ENTITIES`}
+                        {loading ? 'REFRESHING...' : `${totalUsers} TOTAL USERS`}
                     </div>
                     {userProfile?.dept && userProfile.dept !== 'GLOBAL' && (
                         <div className="badge badge-warning">
-                            <Lock size={10} className="mr-1" /> SECTOR_LOCKED: {userProfile.dept}
+                            <Lock size={10} className="mr-1" /> DEPT LOCKED: {userProfile.dept}
                         </div>
                     )}
                 </div>
@@ -114,20 +114,20 @@ export default function DepartmentView() {
             </div>
 
             <div className="card">
-                <div className="panel-header">Comparative Matrix</div>
+                <div className="panel-header" style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--text-primary)', textTransform: 'uppercase' }}>Branch Comparison</div>
                 <div className="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Department Branch</th>
-                                <th>User Entities (Profiles)</th>
-                                <th>Operational Registrations</th>
-                                <th>Participation Weight</th>
+                                <th>Total Students</th>
+                                <th>Event Registrations</th>
+                                <th>Participation %</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="4" className="text-center py-12 text-dim font-mono">SCANNING DEPARTMENTS...</td></tr>
+                                <tr><td colSpan="4" className="text-center py-12 text-dim font-mono">LOADING BRANCH DATA...</td></tr>
                             ) : stats.map((s, idx) => (
                                 <tr key={s.dept} style={{ animation: `fadeInRight 0.4s ease ${idx * 0.05}s both` }}>
                                     <td className="font-bold">{s.dept}</td>
