@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, Linkedin, Mail, Phone, Save, X, ArrowUp, ArrowDown, User, Image as ImageIcon, Link as LinkIcon, FileText } from 'lucide-react'
+import { Plus, Trash2, Edit2, Linkedin, Mail, Phone, Save, X, ArrowUp, ArrowDown, User, Image, FileText, Shield } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 export default function TeamManagement() {
@@ -24,15 +24,21 @@ export default function TeamManagement() {
 
     const fetchMembers = async () => {
         setLoading(true)
-        const { data, error } = await supabase
-            .from('team_members')
-            .select('*')
-            .order('display_order', { ascending: true })
-        
-        if (error) {
-            console.error('Error fetching team members:', error)
-        } else {
-            setMembers(data || [])
+        try {
+            const { data, error } = await supabase
+                .from('team_members')
+                .select('*')
+                .order('display_order', { ascending: true })
+            
+            if (error) {
+                console.error('Error fetching team members:', error)
+                setMembers([])
+            } else {
+                setMembers(data || [])
+            }
+        } catch (e) {
+            console.error('Crash in fetchMembers:', e)
+            setMembers([])
         }
         setLoading(false)
     }
@@ -51,7 +57,7 @@ export default function TeamManagement() {
                 email: '',
                 phone: '',
                 description: '',
-                display_order: members.length
+                display_order: (members || []).length
             })
         }
         setIsModalOpen(true)
@@ -61,24 +67,28 @@ export default function TeamManagement() {
         e.preventDefault()
         setLoading(true)
 
-        if (editingMember) {
-            const { error } = await supabase
-                .from('team_members')
-                .update(formData)
-                .eq('id', editingMember.id)
-            
-            if (error) alert('Error updating member: ' + error.message)
-            else setIsModalOpen(false)
-        } else {
-            const { error } = await supabase
-                .from('team_members')
-                .insert([formData])
-            
-            if (error) alert('Error adding member: ' + error.message)
-            else setIsModalOpen(false)
+        try {
+            if (editingMember) {
+                const { error } = await supabase
+                    .from('team_members')
+                    .update(formData)
+                    .eq('id', editingMember.id)
+                
+                if (error) alert('Error updating member: ' + error.message)
+                else setIsModalOpen(false)
+            } else {
+                const { error } = await supabase
+                    .from('team_members')
+                    .insert([formData])
+                
+                if (error) alert('Error adding member: ' + error.message)
+                else setIsModalOpen(false)
+            }
+            fetchMembers()
+        } catch (err) {
+            alert('Save failed: ' + err.message)
         }
-
-        fetchMembers()
+        setLoading(false)
     }
 
     const handleDelete = async (id) => {
@@ -96,6 +106,7 @@ export default function TeamManagement() {
     const swapOrder = async (index1, index2) => {
         const m1 = members[index1]
         const m2 = members[index2]
+        if (!m1 || !m2) return
         
         const { error: err1 } = await supabase
             .from('team_members')
@@ -137,42 +148,21 @@ export default function TeamManagement() {
                         </thead>
                         <tbody>
                             {loading && members.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-12">LOADING TEAM MEMBERS...</td></tr>
-                            ) : members.length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-12">LOADING...</td></tr>
+                            ) : (members || []).length === 0 ? (
                                 <tr><td colSpan="5" className="text-center py-12">NO TEAM MEMBERS ADDED YET</td></tr>
                             ) : members.map((m, i) => (
-                                <tr key={m.id}>
+                                <tr key={m.id || i}>
                                     <td>
                                         <div className="flex flex-col gap-1 items-center">
-                                            <button 
-                                                disabled={i === 0} 
-                                                onClick={() => swapOrder(i, i - 1)}
-                                                className="btn-icon" 
-                                                style={{ opacity: i === 0 ? 0.2 : 1 }}
-                                            >
-                                                <ArrowUp size={14} />
-                                            </button>
-                                            <button 
-                                                disabled={i === members.length - 1} 
-                                                onClick={() => swapOrder(i, i + 1)}
-                                                className="btn-icon"
-                                                style={{ opacity: i === members.length - 1 ? 0.2 : 1 }}
-                                            >
-                                                <ArrowDown size={14} />
-                                            </button>
+                                            <button disabled={i === 0} onClick={() => swapOrder(i, i - 1)} className="btn-icon" style={{ opacity: i === 0 ? 0.2 : 1 }}><ArrowUp size={14} /></button>
+                                            <button disabled={i === members.length - 1} onClick={() => swapOrder(i, i + 1)} className="btn-icon" style={{ opacity: i === members.length - 1 ? 0.2 : 1 }}><ArrowDown size={14} /></button>
                                         </div>
                                     </td>
                                     <td>
                                         <div className="flex items-center gap-3">
-                                            <div style={{
-                                                width: 44, height: 44, borderRadius: 'var(--radius-lg)',
-                                                background: 'var(--bg-mid)', overflow: 'hidden', border: '1px solid var(--border-color)'
-                                            }}>
-                                                {m.image_url ? (
-                                                    <img src={m.image_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center"><User size={20} color="var(--text-dim)" /></div>
-                                                )}
+                                            <div style={{ width: 44, height: 44, borderRadius: '10px', background: 'var(--bg-mid)', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                {m.image_url ? <img src={m.image_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="w-full h-full flex items-center justify-center"><User size={20} color="var(--text-dim)" /></div>}
                                             </div>
                                             <div>
                                                 <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{m.name}</div>
@@ -180,9 +170,7 @@ export default function TeamManagement() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span className="badge badge-primary">{m.designation}</span>
-                                    </td>
+                                    <td><span className="badge badge-primary">{m.designation}</span></td>
                                     <td>
                                         <div className="flex gap-2">
                                             {m.linkedin_url && <Linkedin size={14} color="var(--accent)" />}
@@ -213,44 +201,44 @@ export default function TeamManagement() {
                         <form onSubmit={handleSave} className="modal-body">
                             <div className="grid-2">
                                 <div className="form-group">
-                                    <label className="form-label"><User size={12} /> Full Name</label>
+                                    <label className="form-label">Full Name</label>
                                     <input className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Alex Rivera" />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label"><ShieldCheck size={12} /> Designation</label>
+                                    <label className="form-label">Designation</label>
                                     <input className="form-input" required value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} placeholder="e.g. Lead Architect" />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label"><ImageIcon size={12} /> Image URL</label>
+                                <label className="form-label">Image URL</label>
                                 <input className="form-input" value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} placeholder="https://example.com/photo.jpg" />
                             </div>
 
                             <div className="grid-3">
                                 <div className="form-group">
-                                    <label className="form-label"><Linkedin size={12} /> LinkedIn URL</label>
+                                    <label className="form-label">LinkedIn URL</label>
                                     <input className="form-input" value={formData.linkedin_url} onChange={e => setFormData({...formData, linkedin_url: e.target.value})} placeholder="URL" />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label"><Mail size={12} /> Email</label>
+                                    <label className="form-label">Email</label>
                                     <input className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="example@mail.com" />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label"><Phone size={12} /> Phone</label>
+                                    <label className="form-label">Phone</label>
                                     <input className="form-input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+123..." />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label"><FileText size={12} /> Bio / Description</label>
-                                <textarea className="form-textarea" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="A short description about the team member..." />
+                                <label className="form-label">Bio / Description</label>
+                                <textarea className="form-textarea" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="A short description..." />
                             </div>
 
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                                    <Save size={18} /> {editingMember ? 'Save Changes' : 'Add Member'}
+                                    <Save size={18} /> {editingMember ? 'Save' : 'Add'}
                                 </button>
                             </div>
                         </form>
