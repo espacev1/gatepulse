@@ -136,9 +136,9 @@ export default function Landing() {
                     <nav className="nav-links">
                         <Link to="/register" className="nav-link">GET STARTED</Link>
                         <Link to="/login" className="nav-link">LOGIN</Link>
-                        <Link to="/register" className="nav-link">EXPLORE</Link>
-                        <Link to="/register" className="nav-link">FEATURES</Link>
-                        <Link to="/register" className="nav-link">TEAM</Link>
+                        <button onClick={() => window.scrollTo({ top: window.innerHeight * 1.8, behavior: 'smooth' })} className="nav-link btn-link">EXPLORE</button>
+                        <button onClick={() => window.scrollTo({ top: window.innerHeight * 2.8, behavior: 'smooth' })} className="nav-link btn-link">FEATURES</button>
+                        <button onClick={() => window.scrollTo({ top: window.innerHeight * 4.0, behavior: 'smooth' })} className="nav-link btn-link">TEAM</button>
                     </nav>
                 </header>
 
