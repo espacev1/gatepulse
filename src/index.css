@@ -156,7 +156,7 @@ h3,
 .page-title,
 .modal-title,
 .logo-text {
-  font-family: var(--font-family-serif);
+  font-family: var(--font-family-sans);
   color: var(--text-primary);
   display: inline-block;
 }
