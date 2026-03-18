@@ -593,43 +593,60 @@
 }
 
 .detail-view h3 {
-  font-size: 3rem; /* Slightly reduced for better fit */
+  font-size: 3rem; 
   font-weight: 900;
   margin: 0;
   letter-spacing: -0.02em;
+  opacity: 0;
+  animation: textSlideIn 0.8s var(--ease-premium) 0.1s forwards;
 }
 
 .detail-view h4 {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
-  opacity: 0.9;
-  color: #fff;
+  opacity: 0;
+  animation: textSlideIn 0.8s var(--ease-premium) 0.2s forwards;
 }
 
 .detail-view p {
   font-size: 1.15rem;
   line-height: 1.8;
-  opacity: 0.85;
+  opacity: 0;
   margin-bottom: 2.5rem;
   max-width: 800px;
+  animation: textSlideIn 0.8s var(--ease-premium) 0.3s forwards;
 }
 
 .detail-list {
   list-style: none;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
   margin-bottom: 3rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
 }
 
 .detail-list li {
+  font-size: 1.1rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 1rem;
+  opacity: 0;
+  transform: translateX(10px);
+  animation: textSlideIn 0.6s var(--ease-premium) forwards;
+}
+
+.detail-list li:nth-child(1) { animation-delay: 0.4s; }
+.detail-list li:nth-child(2) { animation-delay: 0.5s; }
+.detail-list li:nth-child(3) { animation-delay: 0.6s; }
+.detail-list li:nth-child(4) { animation-delay: 0.7s; }
+
+.detail-list li::before {
+  content: "→";
+  color: #0084FF;
+  font-weight: 900;
 }
 
 .explore-v2-layer .glass-card {
