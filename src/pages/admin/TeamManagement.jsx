@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, Linkedin, Mail, Phone, Save, X, ArrowUp, ArrowDown, User, Image, FileText, Shield } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Trash2, Edit2, Linkedin, Mail, Phone, Save, X, ArrowUp, ArrowDown, User, Image, FileText, Shield, Upload, Camera } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 export default function TeamManagement() {
@@ -7,6 +7,9 @@ export default function TeamManagement() {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingMember, setEditingMember] = useState(null)
+    const [uploading, setUploading] = useState(false)
+    const fileInputRef = useRef(null)
+
     const [formData, setFormData] = useState({
         name: '',
         designation: '',
@@ -61,6 +64,34 @@ export default function TeamManagement() {
             })
         }
         setIsModalOpen(true)
+    }
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        setUploading(true)
+        try {
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+            const filePath = `team-photos/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('team-assets')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('team-assets')
+                .getPublicUrl(filePath)
+
+            setFormData(prev => ({ ...prev, image_url: publicUrl }))
+        } catch (error) {
+            alert('Upload failed: ' + error.message)
+        } finally {
+            setUploading(false)
+        }
     }
 
     const handleSave = async (e) => {
@@ -199,6 +230,39 @@ export default function TeamManagement() {
                             <button className="btn-icon" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSave} className="modal-body">
+                            <div className="flex justify-center mb-6">
+                                <div 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{ 
+                                        width: 120, height: 120, borderRadius: '20px', 
+                                        background: 'var(--bg-mid)', border: '2px dashed var(--accent)',
+                                        cursor: 'pointer', overflow: 'hidden', position: 'relative'
+                                    }}
+                                    title="Click to upload photo"
+                                >
+                                    {formData.image_url ? (
+                                        <img src={formData.image_url} alt="Member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-dim">
+                                            <Camera size={24} />
+                                            <span style={{ fontSize: '10px', marginTop: '4px' }}>UPLOAD PHOTO</span>
+                                        </div>
+                                    )}
+                                    {uploading && (
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                            <span style={{ fontSize: '10px' }}>...</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    hidden 
+                                    accept="image/*" 
+                                    onChange={handleFileUpload} 
+                                />
+                            </div>
+
                             <div className="grid-2">
                                 <div className="form-group">
                                     <label className="form-label">Full Name</label>
@@ -211,15 +275,11 @@ export default function TeamManagement() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Image URL</label>
-                                <input className="form-input" value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} placeholder="https://example.com/photo.jpg" />
+                                <label className="form-label">LinkedIn URL</label>
+                                <input className="form-input" value={formData.linkedin_url} onChange={e => setFormData({...formData, linkedin_url: e.target.value})} placeholder="https://linkedin.com/in/username" />
                             </div>
 
-                            <div className="grid-3">
-                                <div className="form-group">
-                                    <label className="form-label">LinkedIn URL</label>
-                                    <input className="form-input" value={formData.linkedin_url} onChange={e => setFormData({...formData, linkedin_url: e.target.value})} placeholder="URL" />
-                                </div>
+                            <div className="grid-2">
                                 <div className="form-group">
                                     <label className="form-label">Email</label>
                                     <input className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="example@mail.com" />
@@ -237,8 +297,8 @@ export default function TeamManagement() {
 
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" disabled={loading}>
-                                    <Save size={18} /> {editingMember ? 'Save' : 'Add'}
+                                <button type="submit" className="btn btn-primary" disabled={loading || uploading}>
+                                    <Save size={18} /> {editingMember ? 'Save Changes' : 'Add Member'}
                                 </button>
                             </div>
                         </form>
