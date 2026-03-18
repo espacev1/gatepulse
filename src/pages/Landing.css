@@ -1345,6 +1345,16 @@ h2 {
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  margin-left: -1rem;
+  transition: all 0.3s ease;
+}
+
+.team-modal-text .detail-list li:hover {
+  background: rgba(0, 132, 255, 0.05);
+  transform: translateX(10px);
 }
 
 .team-modal-text .detail-list li::before {
