@@ -389,23 +389,17 @@ export default function Landing() {
                                         <ul className="detail-list">
                                             {selectedMember.linkedin_url && (
                                                 <li onClick={() => window.open(selectedMember.linkedin_url, '_blank')}>
-                                                    <a href={selectedMember.linkedin_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>
-                                                        Connect on LinkedIn
-                                                    </a>
+                                                    <span>Connect on LinkedIn</span>
                                                 </li>
                                             )}
                                             {selectedMember.email && (
                                                 <li onClick={() => window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${selectedMember.email}`, '_blank')}>
-                                                    <a href={`mailto:${selectedMember.email}`} onClick={e => e.stopPropagation()}>
-                                                        Get in touch via Gmail
-                                                    </a>
+                                                    <span>Get in touch via Gmail</span>
                                                 </li>
                                             )}
                                             {selectedMember.phone && (
                                                 <li onClick={() => window.location.href = `tel:${selectedMember.phone}`}>
-                                                    <a href={`tel:${selectedMember.phone}`} onClick={e => e.stopPropagation()}>
-                                                        Contact via Phone
-                                                    </a>
+                                                    <span>Contact via Phone</span>
                                                 </li>
                                             )}
                                         </ul>
