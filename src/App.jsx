@@ -19,6 +19,7 @@ import AdminFaculty from './pages/admin/FacultyVerification'
 import AdminActiveEvents from './pages/admin/ActiveEvents'
 import AdminEventSynopsis from './pages/admin/EventSynopsis'
 import AdminJuryLive from './pages/admin/JuryLive'
+import AdminTeamManagement from './pages/admin/TeamManagement'
 import StaffScanner from './pages/staff/Scanner'
 import StaffCheckIns from './pages/staff/CheckIns'
 import StaffAttendance from './pages/staff/Attendance'
@@ -105,6 +106,7 @@ function AppRoutes() {
           <Route path="/admin/active-events" element={<AdminActiveEvents />} />
           <Route path="/admin/synopsis" element={<AdminEventSynopsis />} />
           <Route path="/admin/department-view" element={<DepartmentView />} />
+          <Route path="/admin/team" element={<AdminTeamManagement />} />
           <Route path="/admin/jury-live" element={<AdminJuryLive />} />
           <Route path="/admin/profile" element={<Profile />} />
         </Route>
