@@ -244,7 +244,7 @@ export default function Landing() {
 
                             <div className="explore-interactive-area">
                                 {/* The Large Intro / Detail Rectangle */}
-                                <div className="explore-detail-box glass-card">
+                                <div className="explore-detail-box glass-card" key={selectedSection?.id || 'intro'}>
                                     {selectedSection ? (
                                         <div className="detail-view">
                                             <div className="detail-header">
@@ -268,11 +268,10 @@ export default function Landing() {
                                 {/* The 5 Square Cards in a 3x2 Grid */}
                                 <div className="explore-cards-container">
                                     {sections
-                                        .filter(section => !selectedSection || section.id !== selectedSection.id)
                                         .map((section, index) => (
                                             <div
                                                 key={section.id}
-                                                className="explore-item-card glass-card"
+                                                className={`explore-item-card glass-card ${selectedSection?.id === section.id ? 'is-hidden-selected' : ''}`}
                                                 style={{ "--i": index }}
                                                 onClick={() => setSelectedSection(section)}
                                             >
