@@ -1,3 +1,4 @@
+@import url('https://fonts.cdnfonts.com/css/norwester');
 /* ===== VIT-PULSE — Operational Intelligence Design System ===== */
 
 /* --- CSS Custom Properties --- */
@@ -64,7 +65,7 @@
   --gradient-hero: linear-gradient(135deg, rgba(0, 132, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
 
   /* Typography */
-  --font-family-display: 'Haettenschweiler', 'Impact', sans-serif;
+  --font-family-display: 'norwester', 'Impact', sans-serif;
   --font-family-sans: 'League Spartan', 'Inter', sans-serif;
   --font-family: var(--font-family-sans);
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
