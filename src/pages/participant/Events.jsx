@@ -80,7 +80,7 @@ export default function ParticipantEvents() {
         if (event.allowed_departments && event.allowed_departments.length > 0) {
             const userDept = user.dept?.toUpperCase()
             if (!event.allowed_departments.includes(userDept)) {
-                return alert(`ACCESS_DENIED: This sector is restricted to ${event.allowed_departments.join(', ')} branches. Your current node affiliation (${userDept || 'NONE'}) is insufficient.`)
+                return alert(`ACCESS_DENIED: This event is restricted to ${event.allowed_departments.join(', ')} branches. Your current department (${userDept || 'NONE'}) is insufficient.`)
             }
         }
 
@@ -204,7 +204,7 @@ export default function ParticipantEvents() {
                 .insert(participantData)
 
             if (finalError) {
-                if (finalError.code === '23505') throw new Error('ONE_OR_MORE_MEMBERS_ALREADY_REGISTERED: A member of your team is already registered for this node.')
+                if (finalError.code === '23505') throw new Error('ALREADY_REGISTERED: A member of your team is already registered for this event.')
                 throw finalError
             }
 
@@ -271,15 +271,15 @@ export default function ParticipantEvents() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Operational Sectors</h1>
-                    <p className="page-subtitle">Available deployment zones and active security events.</p>
+                    <h1 className="page-title">Event Areas</h1>
+                    <p className="page-subtitle">Check out all active campus events and registrations.</p>
                 </div>
             </div>
 
             {/* Search HUD */}
             <div className="search-bar mb-10" style={{ maxWidth: 480 }}>
                 <Search />
-                <input placeholder="Filter sectors by designation or coordinate..." value={search} onChange={e => setSearch(e.target.value)} />
+                <input placeholder="Search events by name or location..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
 
             {/* Notification Toast */}
@@ -309,11 +309,11 @@ export default function ParticipantEvents() {
             <div className="grid-3" style={{ gap: 'var(--space-6)' }}>
                 {loading && (
                     <div className="col-span-3 py-20">
-                        <Loader message="Scanning for available sectors..." />
+                        <Loader message="Scanning for events..." />
                     </div>
                 )}
                 {!loading && filtered.length === 0 && (
-                    <div className="col-span-3 text-center py-20 text-dim">No operational sectors detected in this coordinate range.</div>
+                    <div className="col-span-3 text-center py-20 text-dim">No events found.</div>
                 )}
                 {filtered.map((event, i) => {
                     const isRegistered = registeredEvents.has(event.id)
@@ -332,12 +332,12 @@ export default function ParticipantEvents() {
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-2">
                                         <Zap size={14} color={ss.accent} />
-                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>SECTOR_{event.id.slice(-4)}</span>
+                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>EVENT_{event.id.slice(-4)}</span>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
                                         <span className={`badge ${ss.badge}`} style={{ fontSize: '9px' }}>{event.status}</span>
                                         <span className="badge badge-info" style={{ fontSize: '9px' }}>
-                                            REGISTRATION_LIVE
+                                            OPEN FOR REGISTRATION
                                         </span>
                                     </div>
                                 </div>
@@ -373,7 +373,7 @@ export default function ParticipantEvents() {
                         </div>
                         <div className="modal-body">
                             <div style={{ marginBottom: '2rem' }}>
-                                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>DEPLOYMENT_INTEL</h4>
+                                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>EVENT_DETAILS</h4>
                                 <p style={{ color: 'var(--text-primary)', lineHeight: 1.8 }}>{selectedEvent.description}</p>
                             </div>
 
@@ -401,7 +401,7 @@ export default function ParticipantEvents() {
                                 
                                 {registeredEvents.has(selectedEvent.id) ? (
                                     <div className="badge badge-success w-full py-4 text-center">
-                                        <CheckCircle2 size={16} /> YOU ARE ALREADY REGISTERED FOR THIS NODE
+                                        <CheckCircle2 size={16} /> YOU ARE ALREADY REGISTERED FOR THIS EVENT
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">
@@ -444,7 +444,7 @@ export default function ParticipantEvents() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ border: '2px solid var(--border-accent)' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">TEAM_REGISTRATION</h2>
+                            <h2 className="modal-title">Team Registration</h2>
                             <button onClick={() => setTeamModal(false)} className="btn-icon"><Users size={20} /></button>
                         </div>
                         <div className="modal-body">
@@ -474,19 +474,19 @@ export default function ParticipantEvents() {
                                             onClick={() => setTeamMembers(teamMembers.filter((_, i) => i !== idx))}
                                             className="btn btn-ghost btn-sm"
                                             style={{ color: 'var(--status-critical)' }}
-                                        >DISCONNECT</button>
+                                        >REMOVE</button>
                                     </div>
                                 ))}
                                 <button
                                     onClick={() => setTeamMembers([...teamMembers, ''])}
                                     className="btn btn-secondary btn-xs mt-2"
-                                >ADD_MEMBER_SLOT</button>
+                                >Add New Member</button>
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button onClick={() => setTeamModal(false)} className="btn btn-secondary">ABORT</button>
+                            <button onClick={() => setTeamModal(false)} className="btn btn-secondary">CANCEL</button>
                             <button onClick={handleTeamSubmit} className="btn btn-primary" disabled={loading}>
-                                {loading ? 'DEPLOYING...' : 'COMMIT TEAM REGISTRATION'}
+                                {loading ? 'REGISTERING...' : 'SUBMIT TEAM REGISTRATION'}
                             </button>
                         </div>
                     </div>

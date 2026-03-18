@@ -70,7 +70,7 @@ export default function StaffScanner() {
 
     const startLocationTracking = (eventId) => {
         if (!navigator.geolocation) {
-            alert('CRITICAL_ERROR: GPS hardware not detected. Geolocation is mandatory for sector activation.');
+            alert('ERROR: GPS not detected. Location is required to start attendance.');
             return;
         }
 
@@ -92,7 +92,7 @@ export default function StaffScanner() {
         }, (err) => {
             console.error('Location tracking failed', err);
             setGpsStatus('error');
-            alert('PROXIMITY_LOCK: GPS signal lost or denied. Please ensure location services are enabled to maintain sector status.');
+            alert('LOCATION REQUIRED: GPS signal lost or denied. Please enable location to continue scanning.');
         }, {
             enableHighAccuracy: true,
             maximumAge: 0,
@@ -136,7 +136,7 @@ export default function StaffScanner() {
                 console.error('Session creation error:', error)
                 alert('Failed to open attendance session: ' + error.message)
             } else {
-                alert('✅ Attendance protocol activated for this sector!')
+                alert('✅ Attendance started for this event!')
             }
         } else if (existingSessions[0].status === 'opened') {
             // Activate the existing opened session
@@ -222,11 +222,11 @@ export default function StaffScanner() {
         }])
 
         if (error) {
-            console.error('Telemetric logging failed:', error)
-            showToast(`LOG_SYNC_FAILED: ${error.message}`, 'error')
+            console.error('Log sync failed:', error)
+            showToast(`SAVE_FAILED: ${error.message}`, 'error')
         } else {
-            console.log('Telemetric log committed:', status)
-            showToast(`SYSLOG_COMMITTED: ${status.toUpperCase()}`)
+            console.log('Log saved:', status)
+            showToast(`LOG_SAVED: ${status.toUpperCase()}`)
         }
     }
 
@@ -277,7 +277,7 @@ export default function StaffScanner() {
 
             const result = {
                 status: 'success',
-                message: 'IDENTITY AUTHENTICATED (NO TICKET)',
+                message: 'USER VERIFIED (NO TICKET)',
                 profile: identProfile,
                 type: 'identity',
                 code,
@@ -319,7 +319,7 @@ export default function StaffScanner() {
 
         if (error || !ticket) {
             console.error('Ticket fetch error:', error);
-            const result = { status: 'invalid', message: 'Token not recognized in system or sector mismatch', code, time: new Date() }
+            const result = { status: 'invalid', message: 'Ticket not recognized or wrong event', code, time: new Date() }
             setScanResult(result); setRecentScans(prev => [result, ...prev].slice(0, 8))
             await logScan('invalid', null)
             return
@@ -405,14 +405,14 @@ export default function StaffScanner() {
                     )}
                     <div>
                         <h1 className="page-title">
-                            {dashView === 'events' ? 'Operational Sectors' :
+                            {dashView === 'events' ? 'Event Areas' :
                                 dashView === 'participants' ? selectedEvent?.name :
-                                    'Security Checkpoint'}
+                                    'Entry Scanner'}
                         </h1>
                         <p className="page-subtitle">
-                            {dashView === 'events' ? 'Initialize deployment by selecting an active sector.' :
-                                dashView === 'participants' ? `Reviewing registered entities for ${selectedEvent?.location}.` :
-                                    'Digital credential validation interface.'}
+                            {dashView === 'events' ? 'Select an event area to start scanning.' :
+                                dashView === 'participants' ? `Reviewing participants for ${selectedEvent?.location}.` :
+                                    'Ticket scanning interface.'}
                         </p>
                     </div>
                 </div>
@@ -431,19 +431,19 @@ export default function StaffScanner() {
                                     boxShadow: gpsStatus === 'live' ? '0 0 10px var(--status-ok)' : 'none'
                                 }} className={gpsStatus === 'acquiring' ? 'animate-pulse' : ''} />
                                 <span style={{ fontSize: '11px', fontWeight: 900, color: '#fff', letterSpacing: '0.1em' }}>
-                                    GPS_STATUS: {gpsStatus.toUpperCase()}
+                                    LOCATION: {gpsStatus.toUpperCase()}
                                 </span>
                             </div>
                         )}
                         <div className="badge badge-primary" style={{ padding: '8px 16px', borderRadius: '16px' }}>
-                            STAFF_NODE: {staffUser?.email}
+                            STAFF: {staffUser?.email}
                         </div>
                     </div>
 
                     {dashView === 'scanner' && (
                         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                             <button onClick={() => { setDashView('scanner'); setMode('camera'); setScanResult(null) }} className={`btn ${mode === 'camera' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
-                                <Camera size={14} /> SENSOR
+                                <Camera size={14} /> SCANNER
                             </button>
                             <button onClick={() => { stopCamera(); setDashView('scanner'); setMode('manual'); setScanResult(null) }} className={`btn ${mode === 'manual' ? 'btn-primary' : 'btn-secondary'} btn-sm`}>
                                 <Keyboard size={14} /> MANUAL
@@ -477,7 +477,7 @@ export default function StaffScanner() {
                     ))}
                     {events.length === 0 && !loading && (
                         <div className="card col-span-3 text-center" style={{ padding: 'var(--space-12)' }}>
-                            <p style={{ color: 'var(--text-dim)' }}>No active operational sectors found.</p>
+                            <p style={{ color: 'var(--text-dim)' }}>No active event areas found.</p>
                         </div>
                     )}
                 </div>
@@ -489,7 +489,7 @@ export default function StaffScanner() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Registered Entity</th>
+                                    <th>Participant</th>
                                     <th>Department</th>
                                     <th>Reg No</th>
                                     <th>Status</th>
@@ -511,7 +511,7 @@ export default function StaffScanner() {
                                                     }}>
                                                         {prof?.full_name?.charAt(0) || '?'}
                                                     </div>
-                                                    <div style={{ fontWeight: 600 }}>{prof?.full_name || 'PENDING_PROVISION'}</div>
+                                                    <div style={{ fontWeight: 600 }}>{prof?.full_name || 'NOT REGISTERED'}</div>
                                                 </div>
                                             </td>
                                             <td>{prof?.dept || 'N/A'}</td>
@@ -522,7 +522,7 @@ export default function StaffScanner() {
                                                 </span>
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button className="btn btn-primary btn-xs">VERIFY IDENTITY</button>
+                                                <button className="btn btn-primary btn-xs">CHECK TICKET</button>
                                             </td>
                                         </tr>
                                     );
@@ -548,7 +548,7 @@ export default function StaffScanner() {
                                 <div className="flex items-center gap-3">
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }} className="animate-pulse" />
                                     <div style={{ fontSize: '12px', fontWeight: 700 }}>
-                                        TARGETING: <span style={{ color: 'var(--accent)' }}>{getSafeProfile(selectedParticipant)?.full_name?.toUpperCase() || 'UNSYNCED'}</span>
+                                        SCANNED: <span style={{ color: 'var(--accent)' }}>{getSafeProfile(selectedParticipant)?.full_name?.toUpperCase() || 'UNSYNCED'}</span>
                                     </div>
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 600 }}>
@@ -572,12 +572,12 @@ export default function StaffScanner() {
                                         {!scanning && (
                                             <div className="flex flex-col items-center justify-center" style={{ minHeight: 320, color: 'var(--text-dim)' }}>
                                                 <ScanLine size={48} className="animate-pulse mb-4" />
-                                                <p className="font-mono" style={{ fontSize: '12px' }}>[ STATION_ID: MAIN_GATE_01 ]</p>
+                                                <p className="font-mono" style={{ fontSize: '12px' }}>[ SCANNER ACTIVE ]</p>
                                             </div>
                                         )}
                                     </div>
                                     <button onClick={scanning ? stopCamera : startCamera} className={`btn ${scanning ? 'btn-danger' : 'btn-primary'} w-full mt-4`} style={{ borderRadius: 'var(--radius-md)' }}>
-                                        {scanning ? 'OFFLINE SENSOR' : 'INITIALIZE SENSOR SCAN'}
+                                        {scanning ? 'STOP SCANNER' : 'START SCANNING'}
                                     </button>
                                 </div>
                             ) : (
@@ -592,7 +592,7 @@ export default function StaffScanner() {
                                         value={manualCode}
                                         onChange={e => setManualCode(e.target.value.toUpperCase())}
                                     />
-                                    <button onClick={() => handleScan(manualCode)} className="btn btn-primary w-full">AUTHENTICATE KEY</button>
+                                    <button onClick={() => handleScan(manualCode)} className="btn btn-primary w-full">VERIFY TICKET</button>
                                 </div>
                             )}
                         </div>
@@ -624,7 +624,7 @@ export default function StaffScanner() {
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start mb-2">
                                             <h3 className="page-title" style={{ fontSize: 'var(--font-lg)', color: scanResult.status === 'success' ? 'var(--status-ok)' : 'var(--status-critical)', marginBottom: 0 }}>
-                                                {scanResult.status === 'success' ? 'ACCESS GRANTED' : 'AUTH_FAILURE'}
+                                                {scanResult.status === 'success' ? 'ACCESS GRANTED' : 'INVALID TICKET'}
                                             </h3>
                                             {scanResult.status === 'success' && (
                                                 <span style={{
@@ -643,7 +643,7 @@ export default function StaffScanner() {
                                         {scanResult.profile && (
                                             <div className="grid grid-cols-2 gap-y-2 gap-x-4 mt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
                                                 <div>
-                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>ENTITY NAME</div>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>NAME</div>
                                                     <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700 }}>{scanResult.profile.full_name}</div>
                                                 </div>
                                                 <div>
@@ -667,7 +667,7 @@ export default function StaffScanner() {
                                                             fontSize: '10px', fontWeight: 800, color: 'var(--accent)',
                                                             display: 'flex', alignItems: 'center', gap: '6px'
                                                         }}>
-                                                            <ShieldCheck size={12} /> ZERO-TRUST VERIFIED SECTOR
+                                                            <ShieldCheck size={12} /> SECURE EVENT AREA
                                                         </div>
                                                     </div>
                                                 )}
@@ -679,12 +679,12 @@ export default function StaffScanner() {
                                 {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type !== 'team' && (
                                     <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
                                         <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                                            PHYSICAL VERIFICATION PROTOCOL
+                                            ID CHECK
                                         </div>
                                         <div className="flex gap-4">
                                             {scanResult.profile?.face_url && (
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>BIOMETRIC_FACE_MATCH</div>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>FACE VERIFICATION</div>
                                                     <div style={{ height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                                         <img src={scanResult.profile.face_url} alt="Face" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     </div>
@@ -692,7 +692,7 @@ export default function StaffScanner() {
                                             )}
                                             {scanResult.profile?.id_barcode_url && (
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID_BARCODE_VERIFY</div>
+                                                    <div style={{ fontSize: '9px', color: 'var(--text-dim)', marginBottom: '4px' }}>ID SCAN</div>
                                                     <div style={{ height: '80px', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
                                                         <img src={scanResult.profile.id_barcode_url} alt="Barcode" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                                     </div>
@@ -705,7 +705,7 @@ export default function StaffScanner() {
                                 {scanResult.status === 'success' && scanResult.ticket?.events?.participation_type === 'team' && (
                                     <div className="mt-4 pt-4 p-3" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
                                         <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--status-ok)', marginBottom: '4px' }}>
-                                            GROUP_VALIDATION_PROTOCOL
+                                            TEAM VERIFICATION
                                         </div>
                                         <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)' }}>
                                             Verify with Team Leader: <span style={{ fontWeight: 800 }}>{scanResult.team?.leader?.full_name || 'UNRESOLVED'}</span>

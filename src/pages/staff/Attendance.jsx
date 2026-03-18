@@ -123,8 +123,8 @@ export default function StaffAttendance() {
                         {availableSessions.length === 0 && !loading && (
                             <div className="card text-center py-12">
                                 <Shield size={48} className="mx-auto mb-4 opacity-10" />
-                                <p className="text-dim">No deployed attendance protocols detected for your sectors.</p>
-                                <p className="text-xs text-dim mt-2">Wait for Administrator to "Open Attendance" for your deployment.</p>
+                                <p className="text-dim">No attendance sessions found for your assigned events.</p>
+                                <p className="text-xs text-dim mt-2">Wait for Administrator to "Open Attendance" for your assignment.</p>
                             </div>
                         )}
                         {availableSessions.map(session => {

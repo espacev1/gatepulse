@@ -121,11 +121,11 @@ export default function AdminAnalytics() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Intelligence & Forensic Analytics</h1>
-                    <p className="page-subtitle">Historical data analysis and security metric extraction.</p>
+                    <h1 className="page-title">Event & Attendance Reports</h1>
+                    <p className="page-subtitle">Detailed data analysis and attendance patterns.</p>
                 </div>
                 <button className="btn btn-secondary" onClick={fetchAnalyticsData}>
-                    <Download size={14} /> Refetch Intel
+                    <Download size={14} /> Refresh Data
                 </button>
             </div>
 
@@ -149,7 +149,7 @@ export default function AdminAnalytics() {
             <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0' }}>
                 {[
                     { id: 'traffic', label: 'Access Distribution', icon: Activity },
-                    { id: 'distribution', label: 'Node Allocation', icon: PieChart },
+                    { id: 'distribution', label: 'Event Distribution', icon: PieChart },
                     { id: 'anomalies', label: 'Access Registry', icon: Info }
                 ].map(tab => (
                     <button
@@ -190,10 +190,10 @@ export default function AdminAnalytics() {
 
             {activeTab === 'distribution' && (
                 <div className="card animate-fade-in">
-                    <div className="panel-header">Entity Registration per Node</div>
+                    <div className="panel-header">Registrations per Event</div>
                     <div style={{ height: 400, marginTop: 'var(--space-6)' }}>
                         {analyticsData.distributionData.length === 0 ? (
-                            <div className="flex items-center justify-center h-full text-dim font-mono">NO ACTIVE NODES DETECTED</div>
+                            <div className="flex items-center justify-center h-full text-dim font-mono">NO ACTIVE EVENTS FOUND</div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <RePieChart>
@@ -218,21 +218,21 @@ export default function AdminAnalytics() {
 
             {activeTab === 'anomalies' && (
                 <div className="card animate-fade-in">
-                    <div className="panel-header">Forensic Access Registry (Last 50 Events)</div>
+                    <div className="panel-header">Recent Attendance History (Last 50 Entries)</div>
                     <div className="table-container mt-4">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Timestamp (UTC)</th>
-                                    <th>Entity Class</th>
-                                    <th>Entity Name</th>
-                                    <th>Outcome</th>
-                                    <th>Security Level</th>
+                                    <th>Registration Type</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Verification</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {analyticsData.recentLogs.length === 0 && (
-                                    <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">SECURE REGISTRY EMPTY - NO ACCESS LOGS DETECTED</td></tr>
+                                    <tr><td colSpan="5" className="text-center py-12 text-dim font-mono">NO ATTENDANCE LOGS FOUND</td></tr>
                                 )}
                                 {analyticsData.recentLogs.map((log, i) => {
                                     const profile = log.tickets?.participants?.profiles;
@@ -244,7 +244,7 @@ export default function AdminAnalytics() {
                                         <tr key={i}>
                                             <td className="font-mono" style={{ fontSize: '11px' }}>{new Date(log.timestamp).toLocaleString()}</td>
                                             <td><span className={`badge badge-secondary`}>AD-HOC</span></td>
-                                            <td style={{ fontWeight: 600 }}>{safeName || (log.verification_status === 'invalid' ? 'UNK_ENTITY' : 'ANON_ENTITY')}</td>
+                                            <td style={{ fontWeight: 600 }}>{safeName || (log.verification_status === 'invalid' ? 'UNKNOWN USER' : 'ANON USER')}</td>
                                             <td className="font-mono" style={{ color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)', fontSize: '11px' }}>
                                                 {log.verification_status?.toUpperCase() || 'UNKNOWN'}
                                             </td>
@@ -252,7 +252,7 @@ export default function AdminAnalytics() {
                                                 <div className="flex items-center gap-2">
                                                     <Shield size={10} color={isSuccess ? 'var(--status-ok)' : 'var(--status-critical)'} />
                                                     <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: isSuccess ? 'var(--status-ok)' : 'var(--status-critical)' }}>
-                                                        {isSuccess ? 'AUTHENTICATED' : 'DENIED'}
+                                                        {isSuccess ? 'VERIFIED' : 'DENIED'}
                                                     </span>
                                                 </div>
                                             </td>

@@ -79,14 +79,14 @@ export default function AdminAttendance() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Attendance Command</h1>
-                    <p className="page-subtitle">Assign operational staff to secure sectors and oversee live attendance sessions.</p>
+                    <h1 className="page-title">Attendance Management</h1>
+                    <p className="page-subtitle">Assign staff to event areas and oversee live attendance sessions.</p>
                 </div>
             </div>
 
             <div className="grid-3 mb-8">
                 <div className="card">
-                    <div className="panel-header">Staff Deployment</div>
+                    <div className="panel-header">Staff Assignment</div>
                     <div className="flex flex-col gap-4">
                         {events.slice(0, 5).map(event => (
                             <div key={event.id} className="p-3 border border-color rounded-lg bg-transparent">
@@ -100,7 +100,7 @@ export default function AdminAttendance() {
                                         onChange={(e) => assignStaff(event.id, e.target.value)}
                                         defaultValue=""
                                     >
-                                        <option value="" disabled>Deploy Staff...</option>
+                                        <option value="" disabled>Assign Staff...</option>
                                         {staff.map(s => (
                                             <option key={s.id} value={s.id}>{s.full_name}</option>
                                         ))}
@@ -112,11 +112,11 @@ export default function AdminAttendance() {
                 </div>
 
                 <div className="card">
-                    <div className="panel-header">Session Deployment Control</div>
+                    <div className="panel-header">Attendance Session Control</div>
                     <div className="flex flex-col gap-4">
-                        <p className="text-xs text-dim">Deploy an attendance protocol to a sector. Assigned staff will then be able to activate the live verification scanner.</p>
+                        <p className="text-xs text-dim">Open an attendance session for an event area. Assigned staff will then be able to activate the live verification scanner.</p>
                         <select id="openEventSelect" className="form-select text-xs">
-                            <option value="">Select Target Sector...</option>
+                            <option value="">Select Target Event...</option>
                             {events.map(e => (
                                 <option key={e.id} value={e.id}>{e.name} ({e.location})</option>
                             ))}
@@ -124,7 +124,7 @@ export default function AdminAttendance() {
                         <button
                             onClick={async () => {
                                 const eventId = document.getElementById('openEventSelect').value;
-                                if (!eventId) return alert('Select a sector first.');
+                                if (!eventId) return alert('Select an event first.');
 
                                 const { error } = await supabase.from('attendance_sessions').insert([{
                                     event_id: eventId,
@@ -133,9 +133,9 @@ export default function AdminAttendance() {
                                     activated_by: user.id
                                 }]);
 
-                                if (error) alert('Deployment failed: ' + error.message);
+                                if (error) alert('Assignment failed: ' + error.message);
                                 else {
-                                    alert('Attendance protocol deployed to sector.');
+                                    alert('Attendance session opened for event.');
                                     fetchSessions();
                                 }
                             }}
@@ -152,9 +152,9 @@ export default function AdminAttendance() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Sector / Event</th>
+                                    <th>Event Name</th>
                                     <th>Assigned Staff</th>
-                                    <th>Protocol Status</th>
+                                    <th>Session Status</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
@@ -177,9 +177,9 @@ export default function AdminAttendance() {
                                             </td>
                                             <td>
                                                 {session?.status === 'active' ? (
-                                                    <span className="badge badge-success animate-pulse">LIVE VERIFICATION</span>
+                                                    <span className="badge badge-success animate-pulse">LIVE ATTENDANCE</span>
                                                 ) : session?.status === 'opened' ? (
-                                                    <span className="badge badge-warning">PROTOCOL OPENED</span>
+                                                    <span className="badge badge-warning">SESSION OPENED</span>
                                                 ) : (
                                                     <span className="badge badge-secondary">STANDBY</span>
                                                 )}
@@ -191,7 +191,7 @@ export default function AdminAttendance() {
                                     )
                                 })}
                                 {assignments.length === 0 && (
-                                    <tr><td colSpan="4" className="text-center py-8 text-dim">No operational staff deployed to sectors.</td></tr>
+                                    <tr><td colSpan="4" className="text-center py-8 text-dim">No staff assigned to events yet.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -200,7 +200,7 @@ export default function AdminAttendance() {
             </div>
 
             <div className="card">
-                <div className="panel-header">Global Attendance Intelligence</div>
+                <div className="panel-header">Attendance Overview</div>
                 <div className="grid-4 mb-6">
                     <div className="stat-card">
                         <div className="stat-card-icon" style={{ background: 'rgba(255, 255, 255, 0.05)' }}><ClipboardCheck size={20} color="var(--status-ok)" /></div>
@@ -242,7 +242,7 @@ export default function AdminAttendance() {
                                 </tr>
                             ))}
                             {sessions.length === 0 && (
-                                <tr><td colSpan="4" className="text-center py-8 text-dim">No attendance forensic data available.</td></tr>
+                                <tr><td colSpan="4" className="text-center py-8 text-dim">No attendance records available.</td></tr>
                             )}
                         </tbody>
                     </table>

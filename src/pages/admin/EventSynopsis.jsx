@@ -235,15 +235,15 @@ export default function AdminEventSynopsis() {
             {/* Top Stats Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', background: 'var(--bg-mid)', padding: 'var(--space-4)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)' }}>
                 <div>
-                    <h1 className="page-title" style={{ margin: 0 }}>Operational Sector Synopsis</h1>
-                    <p className="page-subtitle">Deep telemetry and verification audit for all deployed nodes.</p>
+                    <h1 className="page-title" style={{ margin: 0 }}>Event Overview</h1>
+                    <p className="page-subtitle">Detailed attendance and verification for all campus events.</p>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
                     <div className="badge badge-info" style={{ height: 'fit-content' }}>
-                        <Filter size={12} style={{ marginRight: '4px' }} /> {filtered.length} NODES DETECTED
+                        <Filter size={12} style={{ marginRight: '4px' }} /> {filtered.length} EVENTS FOUND
                     </div>
                     <div style={{ fontSize: '10px', color: 'var(--text-dim)', background: 'rgba(0,0,0,0.3)', padding: '4px 8px', borderRadius: '4px', border: '1px border-color dotted' }}>
-                        DEBUG_TELEMETRY: RAW_{events.length} | DISP_{filtered.length}
+                        SYSTEM_DATA: TOTAL_{events.length} | SHOWN_{filtered.length}
                     </div>
                 </div>
             </div>
@@ -256,7 +256,7 @@ export default function AdminEventSynopsis() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', background: 'var(--bg-card)', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
                         <div className="flex items-center gap-2">
                             <Shield size={14} className="text-secondary" />
-                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>SECTOR LOCK</span>
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>DEPARTMENT LOCK</span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             <button
@@ -281,7 +281,7 @@ export default function AdminEventSynopsis() {
                         <div className="search-bar" style={{ maxWidth: '100%', marginTop: '4px' }}>
                             <Search size={14} />
                             <input 
-                                placeholder="Search sectors..." 
+                                placeholder="Search events..." 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)}
                                 style={{ borderRadius: 'var(--radius-md)', padding: '6px 10px 6px 32px', fontSize: '12px' }}
@@ -293,7 +293,7 @@ export default function AdminEventSynopsis() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', background: 'var(--bg-card)', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
                         <div className="flex items-center gap-2">
                             <Activity size={14} className="text-accent" />
-                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>GENRE_FILTER</span>
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>CATEGORY FILTER</span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {['ALL', 'Culturals', 'Innovation', 'Knowledge Transfer', 'Idea Based'].map(genre => (
@@ -312,10 +312,10 @@ export default function AdminEventSynopsis() {
 
                     {/* Scrollable Event List */}
                     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', paddingRight: '8px', maxHeight: '600px' }}>
-                        {loading && <div className="text-center py-8 text-dim">Syncing...</div>}
+                        {loading && <div className="text-center py-8 text-dim">Loading...</div>}
                         {!loading && filtered.length === 0 && (
                             <div style={{ textAlign: 'center', padding: 'var(--space-10)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border-color)', color: 'var(--text-dim)', fontSize: '12px' }}>
-                                NO ASSETS FOUND
+                                NO EVENTS FOUND
                             </div>
                         )}
                         {filtered.map(event => (
@@ -340,7 +340,7 @@ export default function AdminEventSynopsis() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                                     {isGlobalEvent(event) ? (
                                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--status-ok)', display: 'flex', alignItems: 'center', gap: '3px', opacity: 0.8 }}>
-                                            <Globe size={10} /> GLOBAL_ACCESS
+                                            <Globe size={10} /> OPEN_TO_ALL
                                         </div>
                                     ) : (
                                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
@@ -375,14 +375,14 @@ export default function AdminEventSynopsis() {
                     {!selectedEvent ? (
                         <div className="flex flex-col items-center justify-center h-full text-dim">
                             <Activity size={48} className="mb-4 opacity-10" />
-                            <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.1em' }}>SELECT A NODE TO DECRYPT TELEMETRY</p>
+                            <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.1em' }}>SELECT AN EVENT TO VIEW DETAILS</p>
                         </div>
                     ) : (
                         <div className="flex flex-col h-full animate-fadeIn">
                             <div className="panel-header flex justify-between items-start" style={{ marginBottom: 'var(--space-8)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-4)' }}>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span style={{ fontSize: '10px', color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>HEX_ID: {selectedEvent.id.slice(-8).toUpperCase()}</span>
+                                        <span style={{ fontSize: '10px', color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>EVENT_ID: {selectedEvent.id.slice(-8).toUpperCase()}</span>
                                         <span className={`badge ${statusBadge(selectedEvent.status)}`} style={{ fontSize: '9px' }}>{selectedEvent.status}</span>
                                     </div>
                                     <h2 style={{ fontSize: 'var(--font-3xl)', fontWeight: 800, margin: 0 }}>{selectedEvent.name}</h2>
@@ -395,15 +395,15 @@ export default function AdminEventSynopsis() {
 
                             <div className="grid-3 mb-8">
                                 <div style={{ padding: 'var(--space-5)', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)' }}>
-                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>TOTAL_RESERVATIONS</div>
+                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>TOTAL_REGISTRATIONS</div>
                                     <div style={{ fontSize: '28px', fontWeight: 900, fontFamily: 'var(--font-mono)' }}>{selectedEvent.registered_count || 0}</div>
                                 </div>
                                 <div style={{ padding: 'var(--space-5)', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)' }}>
-                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>VERIFIED_ACCESS</div>
+                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>CHECKED_IN</div>
                                     <div style={{ fontSize: '28px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--status-ok)' }}>{selectedEvent.checked_in_count || 0}</div>
                                 </div>
                                 <div style={{ padding: 'var(--space-5)', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)' }}>
-                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>PENDING_LOGS</div>
+                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '4px' }}>NOT_YET_ENTERED</div>
                                     <div style={{ fontSize: '28px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{(selectedEvent.registered_count || 0) - (selectedEvent.checked_in_count || 0)}</div>
                                 </div>
                             </div>
@@ -414,7 +414,7 @@ export default function AdminEventSynopsis() {
                                     <div className="flex justify-between items-center mb-4">
                                         <div className="flex items-center gap-2">
                                             <Activity size={16} className="text-secondary" />
-                                            <h3 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verification Stream</h3>
+                                            <h3 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance Feed</h3>
                                         </div>
                                         <div className="flex gap-2">
                                         <button onClick={() => exportParticipantsCSV(selectedEvent)} className="btn btn-secondary btn-sm flex items-center gap-2">
@@ -432,14 +432,14 @@ export default function AdminEventSynopsis() {
                                         <table style={{ background: 'transparent' }}>
                                             <thead style={{ background: 'var(--bg-elevated)', position: 'sticky', top: 0, zIndex: 1 }}>
                                                 <tr>
-                                                    <th style={{ padding: '12px', fontSize: '10px' }}>IDENTITY</th>
-                                                    <th style={{ padding: '12px', fontSize: '10px' }}>REG_NUM</th>
+                                                    <th style={{ padding: '12px', fontSize: '10px' }}>NAME</th>
+                                                    <th style={{ padding: '12px', fontSize: '10px' }}>REG_NO</th>
                                                     <th style={{ padding: '12px', fontSize: '10px' }}>TIMESTAMP</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {synopsis?.checkins.length === 0 && (
-                                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)', fontSize: '12px' }}>NO_VERIFIED_ENTITIES_IN_STREAM</td></tr>
+                                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)', fontSize: '12px' }}>NO ATTENDEES CHECKED IN YET</td></tr>
                                                 )}
                                                 {synopsis?.checkins.map((c, i) => (
                                                     <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -448,7 +448,7 @@ export default function AdminEventSynopsis() {
                                                         <td style={{ padding: '12px', color: 'var(--text-dim)', fontSize: '11px' }}>{new Date(c.time).toLocaleTimeString()}</td>
                                                     </tr>
                                                 ))}
-                                                {!synopsis && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>DECRYPTING_PACKETS...</td></tr>}
+                                                {!synopsis && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>LOADING DATA...</td></tr>}
                                             </tbody>
                                         </table>
                                     </div>
@@ -468,7 +468,7 @@ export default function AdminEventSynopsis() {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
                                         {synopsis?.operationalStaff.length === 0 && (
                                             <div style={{ padding: '30px', textAlign: 'center', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)', color: 'var(--text-dim)', fontSize: '11px' }}>
-                                                ZERO_STAFF_ASSIGNED
+                                                NO STAFF ASSIGNED
                                             </div>
                                         )}
                                         {synopsis?.operationalStaff.map((staff, i) => (

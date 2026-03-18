@@ -98,17 +98,17 @@ export default function JuryPortal({ view = 'live' }) {
         setSaving(false)
     }
 
-    if (loading) return <div className="page-container">Loading secure evaluation node...</div>
+    if (loading) return <div className="page-container">Loading evaluation portal...</div>
 
     if (!event && !loading) {
         return (
             <div className="page-container flex flex-col items-center justify-center text-center p-20">
                 <AlertCircle size={48} className="text-warn mb-4" />
-                <h1 className="text-2xl font-bold mb-2">SECTOR_NOT_RESOLVED</h1>
-                <p className="text-dim max-w-md">The evaluation node could not be synchronized with a specific event. Please ensure the portal was opened with a valid <code>event_id</code>.</p>
+                <h1 className="text-2xl font-bold mb-2">EVENT NOT FOUND</h1>
+                <p className="text-dim max-w-md">The evaluation portal could not be synced with a specific event. Please ensure the portal was opened with a valid <code>event_id</code>.</p>
                 {user.is_super_admin && (
                     <button onClick={() => window.location.href='/admin/jury'} className="btn btn-primary mt-6">
-                        RETURN TO ORCHESTRATION
+                        RETURN TO JURY MANAGEMENT
                     </button>
                 )}
             </div>
@@ -124,7 +124,7 @@ export default function JuryPortal({ view = 'live' }) {
             <div className="page-container">
                 <div className="page-header">
                     <div>
-                        <h1 className="page-title">Verification Status</h1>
+                        <h1 className="page-title">Scoring Status</h1>
                         <p className="page-subtitle">Progress report for {event?.name}</p>
                     </div>
                 </div>
@@ -132,7 +132,7 @@ export default function JuryPortal({ view = 'live' }) {
                 <div className="grid-3 mb-8">
                     <div className="card">
                         <div className="text-3xl font-bold mb-1">{totalCount}</div>
-                        <div className="text-xs text-dim">TOTAL ENTITIES</div>
+                        <div className="text-xs text-dim">TOTAL PARTICIPANTS</div>
                     </div>
                     <div className="card">
                         <div className="text-3xl font-bold mb-1 text-success">{markedCount}</div>
@@ -160,7 +160,7 @@ export default function JuryPortal({ view = 'live' }) {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Entity Name</th>
+                                    <th>Name</th>
                                     <th>Type</th>
                                     <th>Status</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
@@ -181,7 +181,7 @@ export default function JuryPortal({ view = 'live' }) {
                                         <td style={{ textAlign: 'right' }}>
                                             {!markedIds.has(p.id) && (
                                                 <button onClick={() => window.location.href='/jury/dashboard'} className="btn btn-ghost btn-xs text-accent">
-                                                    Evaluate <ChevronRight size={12} />
+                                                    Score <ChevronRight size={12} />
                                                 </button>
                                             )}
                                         </td>
@@ -199,13 +199,13 @@ export default function JuryPortal({ view = 'live' }) {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Live Verification</h1>
+                    <h1 className="page-title">Judging Portal</h1>
                     <p className="page-subtitle">
-                        Sector: {event?.name} | <span className="text-accent">Node: {juryProfile?.full_name?.replace('JURY: ', '') || 'UNSYNCED'}</span>
+                        Event: {event?.name} | <span className="text-accent">Jury: {juryProfile?.full_name?.replace('JURY: ', '') || 'UNSYNCED'}</span>
                     </p>
                 </div>
                 <div className="badge badge-success">
-                    <Gavel size={14} className="mr-2" /> {user.is_super_admin ? 'SUPER_ADMIN_MODE' : 'SECURE_JURY_AUTH'}
+                    <Gavel size={14} className="mr-2" /> {user.is_super_admin ? 'ADMIN ACCESS' : 'JURY ACCESS'}
                 </div>
             </div>
 
@@ -254,9 +254,9 @@ export default function JuryPortal({ view = 'live' }) {
                     {selectedParticipant ? (
                         <div className="h-full flex flex-col">
                             <div className="panel-header flex justify-between items-center">
-                                <span>MARKING_PROTOCOL: {selectedParticipant.team?.name || selectedParticipant.user?.full_name}</span>
+                                <span>SCORING: {selectedParticipant.team?.name || selectedParticipant.user?.full_name}</span>
                                 {markedIds.has(selectedParticipant.id) && (
-                                    <span className="badge badge-success">ALREADY_MARKED</span>
+                                    <span className="badge badge-success">SCORED</span>
                                 )}
                                 <Trophy size={18} color="var(--secondary)" />
                             </div>
@@ -289,7 +289,7 @@ export default function JuryPortal({ view = 'live' }) {
 
                             <div className="pt-8 border-top border-color">
                                 <div className="flex justify-between items-center mb-6">
-                                    <div className="text-sm font-bold text-dim">AGGREGATED_TOTAL</div>
+                                    <div className="text-sm font-bold text-dim">TOTAL SCORE</div>
                                     <div className="text-4xl font-mono text-secondary">
                                         {Object.values(scores).reduce((a, b) => a + b, 0)}<span className="text-lg opacity-30">/{ (event?.marking_criteria?.length || 4) * 10 }</span>
                                     </div>
@@ -300,15 +300,15 @@ export default function JuryPortal({ view = 'live' }) {
                                     className="btn btn-primary w-full py-4 text-lg font-bold"
                                 >
                                     <Save size={20} className="mr-2" /> 
-                                    {saving ? 'COMMITTING SECURE DATA...' : markedIds.has(selectedParticipant.id) ? 'ALREADY EVALUATED' : 'SUBMIT EVALUATION'}
+                                    {saving ? 'SAVING SCORES...' : markedIds.has(selectedParticipant.id) ? 'ALREADY SCORED' : 'SUBMIT SCORES'}
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-dim text-center p-12">
                             <Gavel size={64} style={{ opacity: 0.1 }} className="mb-6" />
-                            <h3 className="text-xl font-bold mb-2">SCORING_STANDBY</h3>
-                            <p className="text-sm max-w-[300px]">Select a participant from the left wing to initiate evaluation protocol.</p>
+                            <h3 className="text-xl font-bold mb-2">SELECT A PARTICIPANT</h3>
+                            <p className="text-sm max-w-[300px]">Select a participant from the left to start scoring.</p>
                         </div>
                     )}
                 </div>

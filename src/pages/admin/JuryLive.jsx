@@ -86,36 +86,36 @@ export default function AdminJuryLive() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Global Verification Leaderboard</h1>
-                    <p className="page-subtitle">Real-time competitive standings and evaluation telemetry.</p>
+                    <h1 className="page-title">Event Leaderboard</h1>
+                    <p className="page-subtitle">Real-time competitive standings and scoring updates.</p>
                 </div>
-                <div className="badge badge-success animate-pulse">LIVE_SYNC_UPDATING</div>
+                <div className="badge badge-success animate-pulse">LIVE UPDATING</div>
             </div>
 
             <div className="grid-4 mb-8">
                 <div className="stat-card">
                     <div className="w-full">
-                        <div className="stat-card-label">TOTAL_EVALUATED</div>
+                        <div className="stat-card-label">PARTICIPANTS SCORED</div>
                         <div className="stat-card-value">{leaderboard.length}</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="w-full">
-                        <div className="stat-card-label">H_SCORE_THRESHOLD</div>
+                        <div className="stat-card-label">HIGHEST SCORE</div>
                         <div className="stat-card-value text-secondary">{leaderboard[0]?.avgScore || 0}</div>
                     </div>
                 </div>
                 <div className="stat-card" style={{ gridColumn: 'span 2' }}>
                     <div className="w-full flex justify-between items-center">
                         <div>
-                            <div className="stat-card-label">SECTOR_FILTER_NODE</div>
+                            <div className="stat-card-label">EVENT_FILTER</div>
                             <select 
                                 className="form-select mt-2" 
                                 value={selectedEventId} 
                                 onChange={e => setSelectedEventId(e.target.value)}
                                 style={{ background: 'var(--bg-deepest)', border: '1px solid var(--border-color)', width: '250px' }}
                             >
-                                <option value="all">ALL OPERATIONAL SECTORS</option>
+                                <option value="all">ALL EVENTS</option>
                                 {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                             </select>
                         </div>
@@ -127,7 +127,7 @@ export default function AdminJuryLive() {
             <div className="card" style={{ padding: 0 }}>
                 <div className="panel-header" style={{ padding: 'var(--space-6)' }}>
                     <div className="flex justify-between items-center w-full">
-                        <span className="flex items-center gap-2"><Trophy size={18} color="var(--accent)" /> CRYPTOGRAPHIC RANKING</span>
+                        <span className="flex items-center gap-2"><Trophy size={18} color="var(--accent)" /> OFFICIAL RANKINGS</span>
                     </div>
                 </div>
                 <div className="table-container">
@@ -135,18 +135,18 @@ export default function AdminJuryLive() {
                         <thead>
                             <tr>
                                 <th style={{ width: '80px' }}>Rank</th>
-                                <th>Entity Identifier</th>
-                                <th>Registry ID</th>
-                                <th>Sector Node</th>
-                                <th style={{ textAlign: 'right' }}>V-Score (AVG)</th>
+                                <th>Participant</th>
+                                <th>Registration No</th>
+                                <th>Event Area</th>
+                                <th style={{ textAlign: 'right' }}>Score (AVG)</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && (
-                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">SYNCHRONIZING DATA STREAMS...</td></tr>
+                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">LOADING SCORES...</td></tr>
                             )}
                             {!loading && leaderboard.length === 0 && (
-                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">ZERO EVALUATION VECTORS DETECTED</td></tr>
+                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">NO SCORES FOUND</td></tr>
                             )}
                             {leaderboard.map((item, i) => (
                                 <tr key={item.id} style={{ 

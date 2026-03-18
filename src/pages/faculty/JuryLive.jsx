@@ -90,35 +90,35 @@ export default function FacultyJuryLive() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Jury Live Intelligence</h1>
-                    <p className="page-subtitle">Real-time aggregation of evaluation telemetry and competitive standing.</p>
+                    <h1 className="page-title">Jury Live Standings</h1>
+                    <p className="page-subtitle">Real-time aggregation of scoring updates and competitive standing.</p>
                 </div>
             </div>
 
             <div className="grid-4 mb-8">
                 <div className="stat-card">
                     <div className="w-full">
-                        <div className="stat-card-label">NODES_EVALUATED</div>
+                        <div className="stat-card-label">EVENTS_SCORED</div>
                         <div className="stat-card-value">{leaderboard.length}</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="w-full">
-                        <div className="stat-card-label">PEAK_SCORE</div>
+                        <div className="stat-card-label">HIGHEST SCORE</div>
                         <div className="stat-card-value text-secondary">{leaderboard[0]?.avgScore || 0}</div>
                     </div>
                 </div>
                 <div className="stat-card" style={{ gridColumn: 'span 2' }}>
                     <div className="w-full flex justify-between items-center">
                         <div>
-                            <div className="stat-card-label">SECTOR_FILTER</div>
+                            <div className="stat-card-label">EVENT FILTER</div>
                             <select 
                                 className="form-select mt-2" 
                                 value={selectedEventId} 
                                 onChange={e => setSelectedEventId(e.target.value)}
                                 style={{ background: 'var(--bg-deepest)', border: '1px solid var(--border-color)', width: '200px' }}
                             >
-                                <option value="all">ALL SECTORS</option>
+                                <option value="all">ALL EVENTS</option>
                                 {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                             </select>
                         </div>
@@ -130,8 +130,8 @@ export default function FacultyJuryLive() {
             <div className="card" style={{ padding: 0 }}>
                 <div className="panel-header" style={{ padding: 'var(--space-6)' }}>
                     <div className="flex justify-between items-center w-full">
-                        <span className="flex items-center gap-2"><Trophy size={18} color="var(--accent)" /> GLOBAL LEADERBOARD</span>
-                        <div className="badge badge-success animate-pulse">LIVE_SYNC_ACTIVE</div>
+                        <span className="flex items-center gap-2"><Trophy size={18} color="var(--accent)" /> EVENT LEADERBOARD</span>
+                        <div className="badge badge-success animate-pulse">LIVE UPDATES</div>
                     </div>
                 </div>
                 <div className="table-container">
@@ -139,18 +139,18 @@ export default function FacultyJuryLive() {
                         <thead>
                             <tr>
                                 <th style={{ width: '80px' }}>Rank</th>
-                                <th>Entity Node</th>
+                                <th>Participant</th>
                                 <th>Registration ID</th>
-                                <th>Sector Name</th>
-                                <th style={{ textAlign: 'right' }}>V-Score (AVG)</th>
+                                <th>Event Name</th>
+                                <th style={{ textAlign: 'right' }}>Score (AVG)</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && (
-                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">RECALCULATING RANKS...</td></tr>
+                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">UPDATING STANDINGS...</td></tr>
                             )}
                             {!loading && leaderboard.length === 0 && (
-                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">NO EVALUATION DATA DETECTED</td></tr>
+                                <tr><td colSpan="5" className="text-center py-16 text-dim font-mono">NO SCORES FOUND</td></tr>
                             )}
                             {leaderboard.map((item, i) => (
                                 <tr key={item.id} style={{ 
@@ -194,16 +194,16 @@ export default function FacultyJuryLive() {
                 <div className="p-6 bg-accent-glow border border-accent border-opacity-20 rounded-2xl">
                     <div className="flex items-center gap-3 mb-4">
                         <TrendingUp size={24} color="var(--accent)" />
-                        <h3 className="text-lg font-bold">Competitive Density</h3>
+                        <h3 className="text-lg font-bold">Scoring Method</h3>
                     </div>
-                    <p className="text-sm text-dim leading-relaxed">The leaderboard aggregates scores from all assigned juries per sector. Ranks are determined by the mean average of all recorded evaluations to ensure objectivity.</p>
+                    <p className="text-sm text-dim leading-relaxed">The leaderboard aggregates scores from all assigned juries per event. Ranks are determined by the average of all recorded scores to ensure fairness.</p>
                 </div>
                 <div className="p-6 bg-secondary-glow border border-secondary border-opacity-20 rounded-2xl">
                     <div className="flex items-center gap-3 mb-4">
                         <Activity size={24} color="var(--secondary)" />
-                        <h3 className="text-lg font-bold">Verification Delta</h3>
+                        <h3 className="text-lg font-bold">Live Updates</h3>
                     </div>
-                    <p className="text-sm text-dim leading-relaxed">Live synchronization is active. As juries commit marks to the blockchain-synced database, the positions will update automatically with a &lt; 500ms latency.</p>
+                    <p className="text-sm text-dim leading-relaxed">Live synchronization is active. As juries commit scores to the secure database, the positions will update automatically in real-time.</p>
                 </div>
             </div>
         </div>

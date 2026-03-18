@@ -178,13 +178,13 @@ export default function AdminEvents() {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to decommission this node?')) return
+        if (!window.confirm('Are you sure you want to delete this event?')) return
         const { data, error } = await supabase.from('events').delete().eq('id', id).select()
 
         if (error) {
             alert('Error deleting event: ' + error.message)
         } else if (data.length === 0) {
-            alert('PERMISSION DENIED: Your account does not have sufficient clearance to decommission this node. Please contact the high-level administrator.')
+            alert('PERMISSION DENIED: Your account does not have sufficient permission to delete this event. Please contact the system administrator.')
         } else {
             fetchEvents()
         }
@@ -196,12 +196,12 @@ export default function AdminEvents() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Operational Node Management</h1>
-                    <p className="page-subtitle">Configure and monitor event deployments and availability.</p>
+                    <h1 className="page-title">Event Management</h1>
+                    <p className="page-subtitle">Manage all campus events and their registrations.</p>
                 </div>
                 {user?.role === 'admin' && (
                     <button onClick={() => handleOpenModal()} className="btn btn-primary">
-                        <Plus size={16} /> Deploy New Node
+                        <Plus size={16} /> Add New Event
                     </button>
                 )}
             </div>
@@ -211,16 +211,16 @@ export default function AdminEvents() {
                 <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                     <div className="search-bar">
                         <Search />
-                        <input placeholder="Search Active Nodes..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input placeholder="Search Events..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                 </div>
             </div>
 
             {/* Events Grid */}
             <div className="grid-3">
-                {loading && <div className="col-span-3 text-center py-12">Synchronizing with secure database...</div>}
+                {loading && <div className="col-span-3 text-center py-12">Loading event data...</div>}
                 {!loading && filtered.length === 0 && (
-                    <div className="col-span-3 text-center py-12 text-dim">No active nodes detected. Deploy a new node to begin.</div>
+                    <div className="col-span-3 text-center py-12 text-dim">No events found. Add a new event to get started.</div>
                 )}
                 {filtered.map((event, i) => (
                     <div key={event.id} className="card" style={{ animation: `fadeInUp 0.4s ease ${i * 0.05}s both` }}>
@@ -228,7 +228,7 @@ export default function AdminEvents() {
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                     <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
-                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>NODE_{event.id.slice(-4)}</span>
+                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>EVENT_{event.id.slice(-4)}</span>
                                 </div>
                                 <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>{event.name}</h3>
                             </div>
@@ -258,7 +258,7 @@ export default function AdminEvents() {
                         {/* Load Capacity */}
                         <div className="mb-6">
                             <div className="flex justify-between items-center mb-1">
-                                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>LOAD FACTOR</span>
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>REGISTRATION STATUS</span>
                                 <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-primary)' }}>{event.registered_count || 0} / {event.max_capacity}</span>
                             </div>
                             <div className="progress-bar-track">
@@ -267,8 +267,8 @@ export default function AdminEvents() {
                         </div>
 
                         <div className="flex gap-2">
-                            <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
-                            <button onClick={() => fetchEventSynopsis(event)} className="btn btn-primary btn-sm flex-1"><Activity size={12} /> SYNOPSIS</button>
+                            <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> EDIT</button>
+                            <button onClick={() => fetchEventSynopsis(event)} className="btn btn-primary btn-sm flex-1"><Activity size={12} /> OVERVIEW</button>
                             {user?.role === 'admin' && (
                                 <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
                             )}
@@ -282,14 +282,14 @@ export default function AdminEvents() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ border: '2px solid var(--border-accent)', maxWidth: '600px' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">{editingEvent ? 'RECONFIGURE_NODE' : 'PROVISION_NODE'}</h2>
+                            <h2 className="modal-title uppercase">{editingEvent ? 'Edit Event' : 'Add New Event'}</h2>
                             <button onClick={() => setShowModal(false)} className="btn-icon"><X size={20} /></button>
                         </div>
 
                         <div className="modal-body">
                             <div className="form-group">
-                                <label className="form-label">Sector Designation (Name)</label>
-                                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Event Service A" />
+                                <label className="form-label">Event Name</label>
+                                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Enter event name" />
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
@@ -313,13 +313,13 @@ export default function AdminEvents() {
                                     </div>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Max Capacity (Entities)</label>
+                                    <label className="form-label">Max Capacity (Attendees)</label>
                                     <input type="number" className="form-input" value={form.max_capacity} onChange={e => setForm({ ...form, max_capacity: parseInt(e.target.value) })} />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Sector Branch Locking (Departments)</label>
+                                <label className="form-label">Branch Restrictions (Departments)</label>
                                 <div className="flex flex-wrap gap-2 p-3 bg-transparent rounded-lg border border-border-color">
                                     {DEPARTMENTS.map(dept => (
                                         <button
@@ -345,7 +345,7 @@ export default function AdminEvents() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Deployment Local (Location)</label>
+                                    <label className="form-label">Event Venue (Location)</label>
                                     <input className="form-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
                                 </div>
                                 <div className="form-group">
@@ -411,7 +411,7 @@ export default function AdminEvents() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Access Protocol</label>
+                                    <label className="form-label">Entry Type</label>
                                     <div className="flex gap-2 p-1 bg-deepest rounded-lg border border-border-color">
                                         <button
                                             onClick={() => setForm({ ...form, is_free: true })}
@@ -431,7 +431,7 @@ export default function AdminEvents() {
                                 </div>
                                 {!form.is_free && (
                                     <div className="form-group">
-                                        <label className="form-label">Unit Credit (Price $)</label>
+                                        <label className="form-label">Event Fee (Price $)</label>
                                         <div style={{ position: 'relative' }}>
                                             <DollarSign size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)' }} />
                                             <input
@@ -480,14 +480,14 @@ export default function AdminEvents() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Protocol Metadata (Description)</label>
+                                <label className="form-label">Event Description</label>
                                 <textarea className="form-textarea" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                             </div>
                         </div>
 
                         <div className="modal-footer">
-                            <button onClick={() => setShowModal(false)} className="btn btn-secondary">ABORT</button>
-                            <button onClick={handleSave} className="btn btn-primary">COMMIT CHANGES</button>
+                            <button onClick={() => setShowModal(false)} className="btn btn-secondary">CANCEL</button>
+                            <button onClick={handleSave} className="btn btn-primary">SAVE CHANGES</button>
                         </div>
                     </div>
                 </div>
@@ -499,8 +499,8 @@ export default function AdminEvents() {
                     <div className="modal-content" style={{ maxWidth: '800px', border: '1px solid var(--accent)' }}>
                         <div className="modal-header">
                             <div>
-                                <h2 className="modal-title">SECTOR_SYNOPSIS: {synopsisEvent.name}</h2>
-                                <p className="text-[10px] text-dim font-mono">NODE_0x{synopsisEvent.id.slice(-6).toUpperCase()}</p>
+                                <h2 className="modal-title">EVENT OVERVIEW: {synopsisEvent.name}</h2>
+                                <p className="text-[10px] text-dim font-mono">EVENT_ID: {synopsisEvent.id.slice(-6).toUpperCase()}</p>
                             </div>
                             <button onClick={() => setSynopsisEvent(null)} className="btn-icon"><X size={20} /></button>
                         </div>
@@ -522,15 +522,15 @@ export default function AdminEvents() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 'var(--space-6)' }}>
                                 <div>
-                                    <h4 className="text-xs font-bold mb-3 uppercase tracking-widest text-secondary">Verified Entities</h4>
+                                    <h4 className="text-xs font-bold mb-3 uppercase tracking-widest text-secondary">Checked-in Attendees</h4>
                                     <div className="table-container" style={{ maxHeight: '300px' }}>
                                         <table>
                                             <thead>
                                                 <tr><th>Name</th><th>Reg No</th><th>Timestamp</th></tr>
                                             </thead>
                                             <tbody>
-                                                {!synopsisData ? <tr><td colSpan="3" className="text-center py-8 text-dim">DECRYPTING...</td></tr> :
-                                                 synopsisData.checkins.length === 0 ? <tr><td colSpan="3" className="text-center py-8 text-dim">ZERO ENTITIES DETECTED</td></tr> :
+                                                {!synopsisData ? <tr><td colSpan="3" className="text-center py-8 text-dim">LOADING...</td></tr> :
+                                                 synopsisData.checkins.length === 0 ? <tr><td colSpan="3" className="text-center py-8 text-dim">NO ATTENDEES CHECKED IN YET</td></tr> :
                                                  synopsisData.checkins.map((c, i) => (
                                                     <tr key={i}>
                                                         <td className="font-bold text-xs">{c.name}</td>
@@ -543,9 +543,9 @@ export default function AdminEvents() {
                                     </div>
                                 </div>
                                 <div>
-                                    <h4 className="text-xs font-bold mb-3 uppercase tracking-widest text-accent">Deployment Staff</h4>
+                                    <h4 className="text-xs font-bold mb-3 uppercase tracking-widest text-accent">Event Staff</h4>
                                     <div className="flex flex-col gap-2">
-                                        {!synopsisData ? <div className="text-dim text-xs">SCANNING...</div> :
+                                        {!synopsisData ? <div className="text-dim text-xs">LOADING...</div> :
                                          synopsisData.operationalStaff.length === 0 ? <div className="text-dim text-xs">NO STAFF ASSIGNED</div> :
                                          synopsisData.operationalStaff.map((s, i) => (
                                             <div key={i} className="p-2 bg-deepest border border-color rounded-lg flex items-center gap-2">
