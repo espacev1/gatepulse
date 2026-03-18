@@ -21,14 +21,14 @@
   --accent-gradient: linear-gradient(135deg, #0084FF 0%, #00C2FF 100%);
   --golden-noir: #ffffff; /* Keeping this as it was not specified for change */
 
-  /* Secondary - Monochrome (Keeping existing as not specified for change) */
-  --secondary: #aaaaaa;
-  --secondary-dim: #888888;
-  --secondary-glow: rgba(255, 255, 255, 0.05);
-  --teal: #cccccc;
-  --teal-glow: rgba(255, 255, 255, 0.05);
-  --magenta: #dddddd;
-  --magenta-glow: rgba(255, 255, 255, 0.05);
+  /* Secondary - College Logo Colors */
+  --secondary: #ea8b06;
+  --secondary-dim: #b56a00;
+  --secondary-glow: rgba(234, 139, 6, 0.2);
+  --teal: #42ff68;
+  --teal-glow: rgba(66, 255, 104, 0.2);
+  --magenta: #ff4284;
+  --magenta-glow: rgba(255, 66, 132, 0.2);
 
   /* Status Colors */
   --status-ok: #059669;
@@ -55,13 +55,13 @@
   --glass-blur: blur(20px);
   --border-glass: 1px solid rgba(0, 132, 255, 0.15);
 
-  /* Gradients (Dark) - Keeping existing as not specified for change, but some might be overridden by new accent-gradient */
-  --gradient-bg: transparent;
-  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
-  --gradient-panel: rgba(0, 0, 0, 0.2);
-  --gradient-accent-line: #ffffff;
-  --gradient-glass: rgba(0, 0, 0, 0.2);
-  --gradient-hero: #000000;
+  /* Gradients (Colorful Logo Inspired) */
+  --gradient-bg: linear-gradient(135deg, rgba(0, 132, 255, 0.05) 0%, rgba(234, 139, 6, 0.05) 50%, rgba(66, 255, 104, 0.05) 100%);
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  --gradient-panel: rgba(255, 255, 255, 0.5);
+  --gradient-accent-line: linear-gradient(90deg, var(--accent) 0%, var(--teal) 50%, var(--secondary) 100%);
+  --gradient-glass: rgba(255, 255, 255, 0.5);
+  --gradient-hero: linear-gradient(135deg, rgba(0, 132, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
 
   /* Typography */
   --font-family-display: 'Haettenschweiler', 'Impact', sans-serif;
@@ -145,7 +145,8 @@ body {
   font-family: var(--font-family-sans);
   font-size: var(--font-base);
   color: var(--text-primary);
-  background: var(--bg-deepest);
+  background: var(--gradient-bg);
+  background-attachment: fixed;
   line-height: 1.55;
   min-height: 100vh;
   overflow-x: hidden;

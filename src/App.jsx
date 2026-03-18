@@ -171,7 +171,46 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <div className="app-main-container">
+      <div style={{ 
+        position: 'fixed', 
+        inset: 0, 
+        zIndex: 0, 
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0,
+          opacity: showRings ? 0.4 : 0, /* Subtle opacity on light background */
+          transition: 'opacity 2s ease-in-out',
+          transform: showRings ? 'scale(1)' : 'scale(0.8)',
+          mixBlendMode: 'multiply' /* Helps colors pop gently on light backgrounds */
+        }}>
+          <MagicRings
+            color="rgba(234, 139, 6, 0.4)"   /* Vishnu Logo Gold/Orange */
+            colorTwo="rgba(66, 255, 104, 0.4)" /* Vishnu Logo Green */
+            ringCount={3}
+            speed={0.4}
+            attenuation={8}
+            lineThickness={3}
+            baseRadius={0.4}
+            radiusStep={0.2}
+            scaleRate={0.1}
+            opacity={0.6}
+            blur={4}
+            noiseAmount={0.1}
+            rotation={0}
+            ringGap={1.8}
+            fadeIn={0.7}
+            fadeOut={0.5}
+            followMouse={false}
+          />
+        </div>
+      </div>
+      
+      <div className="app-main-container" style={{ position: 'relative', zIndex: 1 }}>
         <AppRoutes />
       </div>
     </AuthProvider>
