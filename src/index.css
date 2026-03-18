@@ -498,8 +498,12 @@ tr:hover td {
 .page-container {
   padding: var(--space-6) var(--space-8);
   max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
   animation: fadeInUp 0.35s ease;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
@@ -508,7 +512,8 @@ tr:hover td {
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
+  width: 100%;
 }
 
 .page-title {

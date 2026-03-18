@@ -372,16 +372,15 @@
   left: 0;
   top: 0;
   width: 60%;
-  /* Fixed width, animate scale instead */
   height: 100%;
   background: #fff;
   color: #000;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-left: 8%;
-  border-top-right-radius: 45% 100%;
-  border-bottom-right-radius: 45% 100%;
+  padding-left: clamp(4rem, 10vw, 12rem);
+  border-top-right-radius: 40% 100%;
+  border-bottom-right-radius: 40% 100%;
   transform-origin: left center;
   transform: scaleX(clamp(0, (1 - var(--scroll-progress) * 1.5), 1));
   transition: transform 0.8s var(--ease-premium), border-radius 0.8s var(--ease-premium);
@@ -412,6 +411,8 @@
 
 /* Content Transitions */
 .hero-content {
+  max-width: 800px;
+  width: 100%;
   transition: transform 0.8s var(--ease-premium), opacity 0.8s var(--ease-premium);
   /* Slide out left as we scroll */
   transform: translateX(calc(var(--scroll-progress) * -100px));
@@ -998,13 +999,11 @@
 
 h1 {
   font-family: 'Haettenschweiler', 'Impact', 'Arial Narrow Bold', sans-serif;
-  font-size: 11.2rem;
+  font-size: clamp(4rem, 12vw, 11rem);
   font-weight: normal;
-  line-height: 0.78;
-  /* Tightened per mockup */
-  margin: 1rem 0 3rem;
-  letter-spacing: -0.02em;
-  /* Tighter letter spacing */
+  line-height: 0.85;
+  margin: 1rem 0 2.5rem;
+  letter-spacing: -0.01em;
   color: #000 !important;
   text-transform: uppercase;
 }
@@ -1043,7 +1042,7 @@ h2 {
 }
 
 .logo-main-image {
-  width: 450px;
+  width: clamp(280px, 35vw, 480px);
   height: auto;
   filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.25));
   /* Restore cinematic corner scale */
