@@ -171,68 +171,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <div style={{ 
-        position: 'fixed', 
-        inset: 0, 
-        zIndex: 0, 
-        pointerEvents: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ 
-          position: 'absolute', 
-          inset: 0,
-          opacity: showRings ? 1 : 0,
-          transition: 'opacity 2s ease-in-out',
-          transform: showRings ? 'scale(1)' : 'scale(0.8)',
-        }}>
-          <MagicRings
-            color="#42ff68"
-            colorTwo="#ea8b06"
-            ringCount={6}
-            speed={1}
-            attenuation={10}
-            lineThickness={2}
-            baseRadius={0.35}
-            radiusStep={0.1}
-            scaleRate={0.1}
-            opacity={1}
-            blur={0}
-            noiseAmount={0.1}
-            rotation={0}
-            ringGap={1.5}
-            fadeIn={0.7}
-            fadeOut={0.5}
-            followMouse={false}
-            mouseInfluence={0.2}
-            hoverScale={1.2}
-            parallax={0.05}
-            clickBurst={false}
-          />
-        </div>
-        <img 
-          src="/logo_refined.png" 
-          alt="" 
-          style={{ 
-            width: '140px', 
-            height: 'auto', 
-            zIndex: 1,
-            animation: !showRings ? 'logoBlink 0.5s ease-in-out infinite alternate' : 'fadeIn 1s ease-out forwards',
-            opacity: showRings ? 0.15 : 1,
-            transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
-            transform: showRings ? 'scale(1)' : 'scale(1.1)',
-          }} 
-        />
-      </div>
-
-      <style>{`
-        @keyframes logoBlink {
-          from { opacity: 0.3; transform: scale(1); filter: brightness(1); }
-          to { opacity: 1; transform: scale(1.05); filter: brightness(1.2); }
-        }
-      `}</style>
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div className="app-main-container">
         <AppRoutes />
       </div>
     </AuthProvider>

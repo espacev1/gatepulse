@@ -165,7 +165,7 @@ export default function Profile() {
                         <div style={{
                             width: 160, height: 160, borderRadius: 'var(--radius-xl)',
                             border: '2px solid var(--accent)', margin: '0 auto var(--space-6) auto',
-                            overflow: 'hidden', background: 'var(--bg-deep)', position: 'relative'
+                            overflow: 'hidden', background: '#F8FAFC', position: 'relative'
                         }}>
                             {isCameraActive ? (
                                 <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
@@ -202,8 +202,8 @@ export default function Profile() {
                             <Fingerprint size={12} /> ID_CREDENTIAL_UPLOAD
                         </div>
                         <div style={{
-                            height: 100, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)',
-                            position: 'relative', overflow: 'hidden', background: 'rgba(0,0,0,0.2)'
+                            height: 100, border: '1px dashed rgba(0, 132, 255, 0.2)', borderRadius: 'var(--radius-md)',
+                            position: 'relative', overflow: 'hidden', background: 'rgba(0, 132, 255, 0.02)'
                         }}>
                             {idBarcodePreview ? (
                                 <img src={idBarcodePreview} alt="ID" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -226,9 +226,9 @@ export default function Profile() {
                     <form onSubmit={handleSave} className="flex flex-col gap-6">
                         <div className="form-group">
                             <label className="form-label">Email Designation (ReadOnly)</label>
-                            <div className="flex items-center gap-3 p-3" style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                                <Mail size={14} color="var(--text-dim)" />
-                                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>{user?.email}</span>
+                            <div className="flex items-center gap-3 p-3" style={{ background: 'rgba(0, 132, 255, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0, 132, 255, 0.1)' }}>
+                                <Mail size={14} color="var(--accent)" />
+                                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>{user?.email}</span>
                             </div>
                         </div>
 

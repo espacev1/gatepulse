@@ -2,26 +2,26 @@
 
 /* --- CSS Custom Properties --- */
 :root {
-  /* Primary Monochrome Dark Palette */
-  --bg-deepest: #000000;
-  --bg-deep: #0a0a0a;
-  --bg-mid: #111111;
-  --bg-panel: rgba(0, 0, 0, 0.1);
-  --bg-card: #080808;
-  --bg-card-hover: #111111;
-  --bg-elevated: #151515;
-  --bg-input: rgba(255, 255, 255, 0.01);
+  /* Landing Page Palette */
+  --bg-deepest: #FFFFFF;
+  --bg-deep: #F8FAFC;
+  --bg-mid: #F1F5F9;
+  --bg-panel: rgba(255, 255, 255, 0.8);
+  --bg-card: #FFFFFF;
+  --bg-card-hover: rgba(0, 132, 255, 0.05);
+  --bg-elevated: #FFFFFF;
+  --bg-input: rgba(0, 0, 0, 0.03);
 
-  /* Palette Gradients & Accents (Monochrome) */
-  --accent: #ffffff;
-  --accent-bright: #ffffff;
-  --accent-dim: #cccccc;
-  --accent-glow: rgba(255, 255, 255, 0.1);
-  --accent-glow-strong: rgba(255, 255, 255, 0.2);
-  --accent-gradient: #ffffff;
-  --golden-noir: #ffffff;
+  /* Accents from Landing Page */
+  --accent: #0084FF;
+  --accent-bright: #3399FF;
+  --accent-dim: #0066CC;
+  --accent-glow: rgba(0, 132, 255, 0.1);
+  --accent-glow-strong: rgba(0, 132, 255, 0.2);
+  --accent-gradient: linear-gradient(135deg, #0084FF 0%, #00C2FF 100%);
+  --golden-noir: #ffffff; /* Keeping this as it was not specified for change */
 
-  /* Secondary - Monochrome */
+  /* Secondary - Monochrome (Keeping existing as not specified for change) */
   --secondary: #aaaaaa;
   --secondary-dim: #888888;
   --secondary-glow: rgba(255, 255, 255, 0.05);
@@ -30,30 +30,32 @@
   --magenta: #dddddd;
   --magenta-glow: rgba(255, 255, 255, 0.05);
 
-  /* Text Colors (Light on Dark) */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --text-muted: rgba(255, 255, 255, 0.65);
-  --text-dim: rgba(255, 255, 255, 0.4);
+  /* Status Colors */
+  --status-ok: #059669;
+  --status-ok-bg: #D1FAE5;
+  --status-ok-border: rgba(5, 150, 105, 0.2);
+  --status-warn: #D97706;
+  --status-warn-bg: #FEF3C7;
+  --status-warn-border: rgba(217, 119, 6, 0.2);
+  --status-critical: #DC2626;
+  --status-critical-bg: #FEE2E2;
+  --status-critical-border: rgba(220, 38, 38, 0.2);
+  --status-info: #2563EB;
+  --status-info-bg: #DBEAFE;
+  --status-info-border: rgba(37, 99, 235, 0.2);
 
-  /* Status Indicators (Keep subtle color or monochrome?) 
-     User said "whole website ui to the same theme as back ground", 
-     so I'll make them monochrome with different shades/borders for now 
-     or keep them very muted. I'll make them monochrome-ish with borders. */
-  --status-ok: #ffffff;
-  --status-ok-bg: rgba(255, 255, 255, 0.05);
-  --status-ok-border: rgba(255, 255, 255, 0.2);
-  --status-warn: #cccccc;
-  --status-warn-bg: rgba(255, 255, 255, 0.05);
-  --status-warn-border: rgba(255, 255, 255, 0.15);
-  --status-critical: #ffffff;
-  --status-critical-bg: rgba(255, 255, 255, 0.1);
-  --status-critical-border: rgba(255, 255, 255, 0.3);
-  --status-info: #dddddd;
-  --status-info-bg: rgba(255, 255, 255, 0.05);
-  --status-info-border: rgba(255, 255, 255, 0.15);
+  /* Text Colors (Dark on Light) */
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-muted: #555555;
+  --text-dim: #888888;
 
-  /* Gradients (Dark) */
+  /* Glassmorphism Token */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(20px);
+  --border-glass: 1px solid rgba(0, 132, 255, 0.15);
+
+  /* Gradients (Dark) - Keeping existing as not specified for change, but some might be overridden by new accent-gradient */
   --gradient-bg: transparent;
   --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
   --gradient-panel: rgba(0, 0, 0, 0.2);
@@ -62,8 +64,8 @@
   --gradient-hero: #000000;
 
   /* Typography */
-  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-serif: 'Times New Roman MT', 'Times New Roman', serif;
+  --font-family-display: 'Haettenschweiler', 'Impact', sans-serif;
+  --font-family-sans: 'League Spartan', 'Inter', sans-serif;
   --font-family: var(--font-family-sans);
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --font-xs: 0.6875rem;
@@ -138,6 +140,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global Typography */
 body {
   font-family: var(--font-family-sans);
   font-size: var(--font-base);
@@ -146,18 +149,21 @@ body {
   line-height: 1.55;
   min-height: 100vh;
   overflow-x: hidden;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  font-weight: 700; /* Bold as requested */
 }
 
-/* Global Monochrome Text for Headings */
 h1,
 h2,
 h3,
 .page-title,
 .modal-title,
 .logo-text {
-  font-family: var(--font-family-sans);
-  color: var(--text-primary);
+  font-family: var(--font-family-display);
+  font-weight: normal; /* Font itself is bold */
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   display: inline-block;
 }
 
@@ -201,59 +207,47 @@ img {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 8px 18px;
-  font-family: var(--font-family);
+  padding: 10px 22px;
+  font-family: var(--font-family-sans);
   font-size: var(--font-sm);
-  font-weight: 600;
+  font-weight: 800; /* Extra bold for impact */
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: 50px; /* Pill shaped buttons like landing page */
   cursor: pointer;
   transition: all var(--transition-base);
   text-decoration: none;
   white-space: nowrap;
   line-height: 1.4;
-  letter-spacing: 0.02em;
-}
-
-.btn:active {
-  transform: scale(0.97);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .btn-primary {
-  background: var(--accent-gradient);
-  color: var(--bg-deepest);
-  font-weight: 700;
-  box-shadow: var(--shadow-md), var(--shadow-glow);
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 10px 20px rgba(0, 132, 255, 0.15);
 }
 
 .btn-primary:hover {
-  box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
-  transform: translateY(-1px);
-  filter: brightness(1.1);
+  background: var(--accent-bright);
+  box-shadow: 0 15px 30px rgba(0, 132, 255, 0.25);
+  transform: translateY(-2px);
 }
 
 .btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  background: #FFFFFF;
+  color: var(--accent);
+  border: 2px solid var(--accent);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
+  background: var(--accent);
+  color: #FFFFFF;
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--accent-dim) 100%);
+  background: var(--accent-gradient);
   color: white;
-  font-weight: 700;
-  box-shadow: var(--shadow-md);
-}
-
-.btn-accent:hover {
-  box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 191, 165, 0.3);
-  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -329,34 +323,32 @@ img {
   background: rgba(249, 115, 22, 0.06);
 }
 
-/* --- Cards (SIEM Panel Style) --- */
+/* --- Cards (Glassmorphism Style) --- */
 .card {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-6);
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 132, 255, 0.1);
+  border-radius: 30px; /* Large rounded corners like landing page */
+  padding: var(--space-8);
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
   position: relative;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   will-change: transform;
 }
 
 .card:hover {
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
-  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 20px 60px rgba(0, 132, 255, 0.1);
+  transform: translateY(-5px);
 }
 
 .card-glass {
-  background: var(--gradient-glass);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  will-change: transform, opacity;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--border-glass);
+  border-radius: 30px;
+  padding: var(--space-8);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
 /* --- Forms --- */
@@ -548,71 +540,39 @@ tr:hover td {
   gap: var(--space-5);
 }
 
-/* --- Stat Cards (SIEM Metric Style) --- */
+/* --- Stat Cards --- */
 .stat-card {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 132, 255, 0.1);
+  border-radius: 20px;
+  padding: var(--space-6);
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-2);
   transition: all var(--transition-base);
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  will-change: transform;
-}
-
-.stat-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-accent-line);
-  opacity: 0;
-  transition: opacity var(--transition-base);
-}
-
-.stat-card:hover::after {
-  opacity: 1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .stat-card:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
-}
-
-.stat-card-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(0, 132, 255, 0.1);
 }
 
 .stat-card-value {
-  font-size: var(--font-3xl);
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-display);
+  font-size: var(--font-4xl);
+  color: var(--accent);
+  letter-spacing: 0.02em;
 }
 
 .stat-card-label {
+  font-family: var(--font-family-sans);
   font-size: var(--font-xs);
-  color: var(--text-dim);
-  margin-top: 2px;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
+  letter-spacing: 0.1em;
+  font-weight: 800;
 }
 
 .stat-card-trend {

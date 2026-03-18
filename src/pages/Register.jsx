@@ -171,9 +171,16 @@ export default function Register() {
     return (
         <div style={{
             minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'transparent', padding: 'var(--space-6)', position: 'relative'
+            background: 'linear-gradient(135deg, #0084FF 0%, #FFFFFF 100%)', padding: 'var(--space-6)', position: 'relative'
         }}>
-            <div className="card-glass shadow-2xl" style={{ width: '100%', maxWidth: '480px', padding: 'var(--space-8)', zIndex: 1, border: '1px solid rgba(255, 40, 40, 0.1)' }}>
+            <div className="card-glass" style={{ 
+                width: '100%', 
+                maxWidth: '480px', 
+                padding: 'var(--space-8)', 
+                zIndex: 1, 
+                boxShadow: '0 30px 60px rgba(0, 132, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.4)' 
+            }}>
                 <div className="text-center mb-8">
                     <h1 className="page-title" style={{ fontSize: '24px' }}>Identity Provisioning</h1>
                     <p className="page-subtitle">Security Step {step} of 3</p>

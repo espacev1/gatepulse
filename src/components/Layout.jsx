@@ -83,24 +83,31 @@ export default function Layout() {
             <aside style={{
                 width: sidebarOpen ? 'var(--sidebar-width)' : 'var(--sidebar-collapsed)',
                 minHeight: '100vh',
-                background: 'transparent',
-                borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                background: '#FFFFFF',
+                borderRight: '1px solid rgba(0, 132, 255, 0.1)',
                 display: 'flex', flexDirection: 'column',
                 transition: 'width var(--transition-base)',
                 position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
                 overflow: 'hidden',
+                boxShadow: '10px 0 30px rgba(0, 132, 255, 0.03)'
             }}>
                 {/* Logo */}
                 <div style={{
-                    padding: '14px var(--space-4)',
-                    borderBottom: '1px solid var(--border-color)',
+                    padding: '20px var(--space-4)',
+                    borderBottom: '1px solid rgba(0, 132, 255, 0.05)',
                     display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
-                    minHeight: 'var(--navbar-height)',
+                    minHeight: '80px',
                 }}>
                     {sidebarOpen && (
-                        <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img src="/logo_refined.png" alt="Logo" style={{ height: '32px' }} />
-                            <div style={{ fontWeight: 800, fontSize: 'var(--font-lg)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                        <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <img src="/logo_refined.png" alt="Logo" style={{ height: '36px' }} />
+                            <div style={{ 
+                                fontFamily: 'var(--font-family-display)', 
+                                fontSize: '24px', 
+                                color: 'var(--accent)', 
+                                letterSpacing: '0.02em',
+                                textTransform: 'uppercase'
+                            }}>
                                 VIT-PULSE
                             </div>
                         </div>
@@ -120,17 +127,20 @@ export default function Layout() {
                         <NavLink key={link.to} to={link.to} end={link.end} onClick={() => setMobileOpen(false)}
                             style={({ isActive }) => ({
                                 display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
-                                padding: sidebarOpen ? '9px 14px' : '9px',
+                                padding: sidebarOpen ? '12px 18px' : '12px',
                                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
                                 borderRadius: 'var(--radius-lg)',
-                                color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-                                background: isActive ? 'var(--accent-glow)' : 'transparent',
-                                borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent',
-                                fontWeight: isActive ? 600 : 400,
-                                fontSize: 'var(--font-sm)',
+                                color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                                background: isActive ? 'var(--accent)' : 'transparent',
+                                fontWeight: 800,
+                                fontSize: '13px',
                                 textDecoration: 'none',
-                                transition: 'all var(--transition-fast)',
+                                transition: 'all var(--transition-base)',
                                 whiteSpace: 'nowrap',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                boxShadow: isActive ? '0 8px 20px rgba(0, 132, 255, 0.2)' : 'none',
+                                margin: '2px 0'
                             })}>
                             <link.icon size={18} style={{ flexShrink: 0 }} />
                             {sidebarOpen && <span>{link.label}</span>}
@@ -207,29 +217,26 @@ export default function Layout() {
             }}>
                 {/* Top bar */}
                 <header style={{
-                    height: 'var(--navbar-height)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    height: '80px',
+                    borderBottom: '1px solid rgba(0, 132, 255, 0.05)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0 var(--space-6)',
-                    background: 'transparent',
+                    padding: '0 var(--space-8)',
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
                     position: 'sticky', top: 0, zIndex: 30,
                 }}>
                     <button onClick={() => setMobileOpen(!mobileOpen)} className="btn-icon" style={{ display: 'none' }} id="mobile-menu-btn">
                         {mobileOpen ? <X size={18} /> : <Menu size={18} />}
                     </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', fontSize: '12px', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         <Activity size={14} color="var(--accent)" />
-                        <span>
-                            <span className="live-dot" /> System Active
-                        </span>
-                        <span style={{ margin: '0 var(--space-2)', opacity: 0.3 }}>|</span>
-                        <span>Welcome, <strong style={{ color: 'var(--text-primary)' }}>{user?.full_name}</strong></span>
+                        <span>System Operational</span>
+                        <span style={{ margin: '0 var(--space-2)', opacity: 0.1 }}>|</span>
+                        <span>Operator: <strong style={{ color: 'var(--accent)' }}>{user?.full_name}</strong></span>
                     </div>
-
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                        <span className="badge badge-primary" style={{ textTransform: 'capitalize' }}>
-                            {user?.role}
+                        <span className="badge badge-primary" style={{ padding: '4px 12px', background: 'var(--accent)', color: '#fff', border: 'none' }}>
+                            {user?.role} Access
                         </span>
                     </div>
                 </header>

@@ -64,7 +64,7 @@ export default function Login({ portalType }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'transparent',
+            background: 'linear-gradient(135deg, #0084FF 0%, #FFFFFF 100%)', /* Blue to White "Curtain" feel */
             padding: 'var(--space-6)',
             position: 'relative',
             overflow: 'hidden'
@@ -76,8 +76,8 @@ export default function Login({ portalType }) {
                 padding: 'var(--space-10)',
                 position: 'relative',
                 zIndex: 1,
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                border: '1px solid rgba(255, 40, 40, 0.1)'
+                boxShadow: '0 30px 60px rgba(0, 132, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.4)'
             }}>
                 <div className="text-center mb-10">
                     <h1 className="page-title" style={{ marginBottom: 4 }}>
