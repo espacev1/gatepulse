@@ -1195,61 +1195,113 @@ h2 {
     position: relative;
     height: auto;
     overflow: visible;
+    background: #fff;
+  }
+
+  .landing-header {
+    padding: 1rem 1.5rem;
+    background: #fff;
+    position: fixed;
+    height: 70px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .logo-text {
+    font-size: 1.4rem;
   }
 
   .scroll-spacer {
     display: none;
   }
 
-  .explore-content {
-    padding: 6rem 2rem 2rem;
-  }
-
-  .explore-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .explore-header-group {
-    text-align: center;
-  }
-
-  .explore-intro h3 {
-    font-size: 2rem;
-  }
-
-  .explore-section {
-    padding: 2rem;
-  }
-
   .hero-v2-layer,
-  .about-v2-layer {
+  .about-v2-layer,
+  .explore-v2-layer,
+  .features-v2-layer,
+  .team-v2-layer {
     position: relative;
     flex-direction: column;
     height: auto;
     opacity: 1 !important;
     transform: none !important;
+    pointer-events: auto !important;
+    padding: 80px 0 0;
   }
 
   .hero-left-curtain,
   .about-right-curtain {
     width: 100% !important;
+    height: auto !important;
     border-radius: 0 !important;
-    padding: 4rem 2rem;
+    padding: 4rem 1.5rem !important;
+    transform: none !important;
+    position: relative !important;
+  }
+
+  h1 {
+    font-size: 3.5rem !important;
+    line-height: 1 !important;
+    margin: 1rem 0 2rem !important;
+    text-align: center;
+  }
+
+  .hero-content {
+    align-items: center;
+    text-align: center;
+    transform: none !important;
+  }
+
+  .get-started-btn {
+    min-width: 220px;
+    font-size: 1rem;
+    margin-top: 2rem;
   }
 
   .traveling-logo-wrap {
-    position: relative;
-    padding: 2rem;
-    left: 0;
-    transform: none;
-    display: flex;
-    justify-content: center;
+    display: none !important; /* Animated logo takes too much space on mobile */
   }
 
-  .hero-v2-layer {
-    filter: none;
-    transform: none;
+  .about-content {
+    width: 100%;
+    padding: 2rem 1.5rem;
+    transform: none !important;
+  }
+
+  .highlight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .explore-canvas {
+    transform: none !important;
+    padding: 4rem 1.5rem;
+  }
+
+  .explore-canvas::before {
+    display: none;
+  }
+
+  .explore-interactive-area {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .explore-detail-box {
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
+  }
+
+  .features-grid-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
   }
 }
 
