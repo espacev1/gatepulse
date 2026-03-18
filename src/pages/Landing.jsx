@@ -135,6 +135,7 @@ export default function Landing() {
     ]
 
     const [selectedSection, setSelectedSection] = useState(null)
+    const [selectedMember, setSelectedMember] = useState(null)
 
     return (
         <div className="landing-v2" style={{ '--scroll-progress': smoothedProgress }}>
@@ -343,13 +344,13 @@ export default function Landing() {
                                 <p className="team-description">Meet the creative minds building the future of campus management.</p>
                             </div>
 
-                            <div className={`team-grid ${expandedMember ? 'has-expanded' : ''}`}>
+                            <div className="team-grid">
                                 {(showAllTeam ? team : team.slice(0, 3)).map((member, i) => (
                                     <div 
                                         key={member.id} 
-                                        className={`team-card glass-card ${expandedMember === member.id ? 'is-expanded' : expandedMember ? 'is-minimized' : ''}`} 
+                                        className="team-card glass-card" 
                                         style={{ "--i": i }}
-                                        onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+                                        onClick={() => setSelectedMember(member)}
                                     >
                                         <div className="member-image-wrap">
                                             <img src={member.image_url || '/default-avatar.png'} alt={member.name} />
@@ -357,29 +358,6 @@ export default function Landing() {
                                         <div className="member-info">
                                             <h4>{member.name}</h4>
                                             <span>{member.designation}</span>
-                                            
-                                            {expandedMember === member.id && (
-                                                <div className="member-expanded-content animate-fadeIn">
-                                                    <p className="member-bio">{member.description}</p>
-                                                    <div className="member-socials">
-                                                        {member.linkedin_url && (
-                                                            <a href={member.linkedin_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="social-icon">
-                                                                <Linkedin size={18} />
-                                                            </a>
-                                                        )}
-                                                        {member.email && (
-                                                            <a href={`mailto:${member.email}`} onClick={e => e.stopPropagation()} className="social-icon">
-                                                                <Mail size={18} />
-                                                            </a>
-                                                        )}
-                                                        {member.phone && (
-                                                            <a href={`tel:${member.phone}`} onClick={e => e.stopPropagation()} className="social-icon">
-                                                                <Phone size={18} />
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -392,6 +370,51 @@ export default function Landing() {
                             )}
                         </div>
                     </section>
+
+                    {/* Team Member Detail Modal */}
+                    {selectedMember && (
+                        <div className="team-modal-overlay animate-fadeIn">
+                            <div className="team-modal-content glass-card animate-slideUp">
+                                <div className="team-modal-layout">
+                                    <div className="team-modal-media">
+                                        <img src={selectedMember.image_url || '/default-avatar.png'} alt={selectedMember.name} />
+                                    </div>
+                                    <div className="team-modal-text">
+                                        <div className="detail-header">
+                                            <h3 className="norwester">{selectedMember.name}</h3>
+                                        </div>
+                                        <h4>{selectedMember.designation}</h4>
+                                        <p className="member-bio-large">{selectedMember.description}</p>
+                                        
+                                        <ul className="detail-list">
+                                            {selectedMember.linkedin_url && (
+                                                <li>
+                                                    <a href={selectedMember.linkedin_url} target="_blank" rel="noreferrer">
+                                                        Connect on LinkedIn
+                                                    </a>
+                                                </li>
+                                            )}
+                                            {selectedMember.email && (
+                                                <li>
+                                                    <a href={`mailto:${selectedMember.email}`}>
+                                                        Get in touch via Gmail
+                                                    </a>
+                                                </li>
+                                            )}
+                                            {selectedMember.phone && (
+                                                <li>
+                                                    <a href={`tel:${selectedMember.phone}`}>
+                                                        Contact via Phone
+                                                    </a>
+                                                </li>
+                                            )}
+                                        </ul>
+                                        <button className="back-btn" onClick={() => setSelectedMember(null)}>CLOSE</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* The Traveling Logo - Standalone for clean cutout look */}
                     <div className="traveling-logo-wrap">
