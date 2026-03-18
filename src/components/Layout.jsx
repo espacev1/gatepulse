@@ -20,7 +20,8 @@ const navConfig = {
         { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { to: '/admin/faculty', icon: UserCheck, label: 'Faculty Verification' },
         { to: '/admin/active-events', icon: Play, label: 'Active Events' },
-        { to: '/admin/department-view', icon: BarChart3, label: 'Department View' },
+        { id: 'f23', to: '/admin/department-view', icon: BarChart3, label: 'Department View' },
+        { id: 'f24', to: '/admin/team', icon: Users, label: 'Team Management' },
     ],
     staff: [
         { to: '/staff/scanner', icon: ScanLine, label: 'QR Scanner' },

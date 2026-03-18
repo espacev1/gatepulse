@@ -1,11 +1,27 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Linkedin, Mail, Phone, ChevronDown } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import './Landing.css'
 
 export default function Landing() {
     const [scrollProgress, setScrollProgress] = useState(0)
     const [smoothedProgress, setSmoothedProgress] = useState(0)
+    const [team, setTeam] = useState([])
+    const [showAllTeam, setShowAllTeam] = useState(false)
+    const [expandedMember, setExpandedMember] = useState(null)
+
+    useEffect(() => {
+        fetchTeam()
+    }, [])
+
+    const fetchTeam = async () => {
+        const { data } = await supabase
+            .from('team_members')
+            .select('*')
+            .order('display_order', { ascending: true })
+        if (data) setTeam(data)
+    }
 
     useEffect(() => {
         let currentScroll = 0
@@ -327,23 +343,53 @@ export default function Landing() {
                                 <p className="team-description">Meet the creative minds building the future of campus management.</p>
                             </div>
 
-                            <div className="team-grid">
-                                {[
-                                    { name: "Alex Rivera", role: "Lead Architect", img: "/brain/ca321cf7-c7ad-4bd3-be7b-4bfb82365519/team_member_1_1773809476277.png" },
-                                    { name: "Sarah Chen", role: "UI/UX Director", img: "/brain/ca321cf7-c7ad-4bd3-be7b-4bfb82365519/team_member_2_1773809494571.png" },
-                                    { name: "Marcus Thorne", role: "System Engineer", img: "/brain/ca321cf7-c7ad-4bd3-be7b-4bfb82365519/team_member_3_1773809513338.png" }
-                                ].map((member, i) => (
-                                    <div key={i} className="team-card glass-card" style={{ "--i": i }}>
+                            <div className={`team-grid ${expandedMember ? 'has-expanded' : ''}`}>
+                                {(showAllTeam ? team : team.slice(0, 3)).map((member, i) => (
+                                    <div 
+                                        key={member.id} 
+                                        className={`team-card glass-card ${expandedMember === member.id ? 'is-expanded' : expandedMember ? 'is-minimized' : ''}`} 
+                                        style={{ "--i": i }}
+                                        onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+                                    >
                                         <div className="member-image-wrap">
-                                            <img src={member.img} alt={member.name} />
+                                            <img src={member.image_url || '/default-avatar.png'} alt={member.name} />
                                         </div>
                                         <div className="member-info">
                                             <h4>{member.name}</h4>
-                                            <span>{member.role}</span>
+                                            <span>{member.designation}</span>
+                                            
+                                            {expandedMember === member.id && (
+                                                <div className="member-expanded-content animate-fadeIn">
+                                                    <p className="member-bio">{member.description}</p>
+                                                    <div className="member-socials">
+                                                        {member.linkedin_url && (
+                                                            <a href={member.linkedin_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="social-icon">
+                                                                <Linkedin size={18} />
+                                                            </a>
+                                                        )}
+                                                        {member.email && (
+                                                            <a href={`mailto:${member.email}`} onClick={e => e.stopPropagation()} className="social-icon">
+                                                                <Mail size={18} />
+                                                            </a>
+                                                        )}
+                                                        {member.phone && (
+                                                            <a href={`tel:${member.phone}`} onClick={e => e.stopPropagation()} className="social-icon">
+                                                                <Phone size={18} />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
+
+                            {!showAllTeam && team.length > 3 && (
+                                <button className="see-more-btn" onClick={() => setShowAllTeam(true)}>
+                                    SEE MORE <ChevronDown size={18} />
+                                </button>
+                            )}
                         </div>
                     </section>
 

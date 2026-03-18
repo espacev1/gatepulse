@@ -207,6 +207,12 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 3rem;
   width: 100%;
+  transition: all 0.6s var(--ease-premium);
+}
+
+.team-grid.has-expanded {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
 }
 
 .team-card {
@@ -219,12 +225,31 @@
   align-items: center;
   text-align: center;
   gap: 1.5rem;
-  transition: all 0.5s var(--ease-premium);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.6s var(--ease-premium);
   animation: cardEntrance 0.8s var(--ease-premium) backwards;
   animation-delay: calc(var(--i) * 0.1s + 0.3s);
 }
 
-.team-card:hover {
+.team-card.is-expanded {
+  grid-column: span 2;
+  flex-direction: row;
+  text-align: left;
+  background: #fff;
+  border-color: #0084FF;
+  box-shadow: 0 30px 60px rgba(0, 132, 255, 0.15);
+  padding: 3.5rem;
+  z-index: 10;
+}
+
+.team-card.is-minimized {
+  opacity: 0.4;
+  transform: scale(0.9);
+  filter: grayscale(1);
+}
+
+.team-card:hover:not(.is-expanded):not(.is-minimized) {
   transform: translateY(-15px);
   background: rgba(0, 132, 255, 0.06);
   border-color: #0084FF;
@@ -268,6 +293,74 @@
   color: #0084FF;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  display: block;
+}
+
+.member-expanded-content {
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 1.5rem;
+}
+
+.member-bio {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.member-socials {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f8faff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0084FF;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 132, 255, 0.1);
+}
+
+.social-icon:hover {
+  background: #0084FF;
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 132, 255, 0.2);
+}
+
+.see-more-btn {
+  margin-top: 4rem;
+  background: #fff;
+  border: 2px solid #0084FF;
+  color: #0084FF;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-premium);
+}
+
+.see-more-btn:hover {
+  background: #0084FF;
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 132, 255, 0.2);
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease both;
 }
 
 .features-canvas {
