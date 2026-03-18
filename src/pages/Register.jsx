@@ -97,15 +97,15 @@ export default function Register() {
     const validateStep1 = () => {
         const email = formData.email.toLowerCase().trim()
         if (email !== ADMIN_EMAIL && !email.endsWith(ALLOWED_DOMAIN)) {
-            setError(`ACCESS_DENIED: Restricted to ${ALLOWED_DOMAIN} domain.`)
+            setError(`ACCESS DENIED: Please use your university email (${ALLOWED_DOMAIN}).`)
             return false
         }
         if (formData.password.length < 6) {
-            setError('Security key must be at least 6 characters.')
+            setError('Password must be at least 6 characters.')
             return false
         }
         if (formData.password !== formData.confirmPassword) {
-            setError('Security keys do not match.')
+            setError('Passwords do not match.')
             return false
         }
         setError('')
@@ -123,7 +123,7 @@ export default function Register() {
 
     const handleFinalRegister = async () => {
         if (!idBarcode || !facePic) {
-            setError('Biometric uplink (ID & Face) is mandatory.')
+            setError('Verification Photo (ID & Face Photo) is mandatory.')
             return
         }
 
@@ -162,7 +162,7 @@ export default function Register() {
             navigate('/events')
         } catch (err) {
             console.error(err)
-            setError(err.message || 'Identity provisioning failed.')
+            setError(err.message || 'User registration failed.')
         } finally {
             setLoading(false)
         }
@@ -182,8 +182,8 @@ export default function Register() {
                 border: '1px solid rgba(255, 255, 255, 0.4)' 
             }}>
                 <div className="text-center mb-8">
-                    <h1 className="page-title" style={{ fontSize: '24px' }}>Identity Provisioning</h1>
-                    <p className="page-subtitle">Security Step {step} of 3</p>
+                    <h1 className="page-title" style={{ fontSize: '24px' }}>User Registration</h1>
+                    <p className="page-subtitle">Form Step {step} of 3</p>
                 </div>
 
                 {error && (
@@ -203,7 +203,7 @@ export default function Register() {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Secure Key</label>
+                            <label className="form-label">Password</label>
                             <div className="relative">
                                 <Lock size={16} className="absolute left-3 top-3 text-dim" />
                                 <input 
@@ -225,7 +225,7 @@ export default function Register() {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Confirm Key</label>
+                            <label className="form-label">Confirm Password</label>
                             <div className="relative">
                                 <Lock size={16} className="absolute left-3 top-3 text-dim" />
                                 <input 
@@ -252,11 +252,11 @@ export default function Register() {
                     </div>
                 )}
 
-                {/* Step 2: Academic Node */}
+                {/* Step 2: Academic Details */}
                 {step === 2 && (
                     <div className="flex flex-col gap-4">
                         <div className="form-group">
-                            <label className="form-label">Full Legal Name</label>
+                            <label className="form-label">Full Name</label>
                             <div className="relative">
                                 <User size={16} className="absolute left-3 top-3 text-accent" />
                                 <input type="text" name="fullName" className="form-input pl-10" placeholder="Full Name" value={formData.fullName} onChange={handleChange} required />
@@ -286,23 +286,23 @@ export default function Register() {
                                 <input type="text" name="section" className="form-input" placeholder="A" value={formData.section} onChange={handleChange} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Reg No</label>
+                                <label className="form-label">Registration Number</label>
                                 <input type="text" name="regNo" className="form-input" placeholder="2021CS001" value={formData.regNo} onChange={handleChange} required />
                             </div>
                         </div>
                         <div className="flex gap-4 mt-4">
                             <button onClick={() => setStep(1)} className="btn btn-secondary flex-1"><ArrowLeft size={18} /> Back</button>
-                            <button onClick={() => validateStep2() && setStep(3)} className="btn btn-primary flex-1">Final Stage <ArrowRight size={18} /></button>
+                            <button onClick={() => validateStep2() && setStep(3)} className="btn btn-primary flex-1">Final Step <ArrowRight size={18} /></button>
                         </div>
                     </div>
                 )}
 
-                {/* Step 3: Biometric Uplink */}
+                {/* Step 3: Identity Verification */}
                 {step === 3 && (
                     <div className="flex flex-col gap-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="verification-slot">
-                                <label className="form-label mb-1 block">ID Barcode</label>
+                                <label className="form-label mb-1 block">College ID Card</label>
                                 <div style={{
                                     height: 120, border: idBarcode ? '1px solid var(--accent)' : '1px solid var(--border-color)',
                                     borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -321,7 +321,7 @@ export default function Register() {
                             </div>
 
                             <div className="verification-slot">
-                                <label className="form-label mb-1 block">Live Face</label>
+                                <label className="form-label mb-1 block">Profile Photo</label>
                                 <div style={{
                                     height: 120, border: facePic || isCameraActive ? '1px solid var(--accent)' : '1px solid var(--border-color)',
                                     borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -355,7 +355,7 @@ export default function Register() {
                         <div className="flex gap-4 mt-6">
                             <button onClick={() => setStep(2)} className="btn btn-secondary flex-1" disabled={loading}><ArrowLeft size={18} /> Back</button>
                             <button onClick={handleFinalRegister} className="btn btn-primary flex-1" disabled={loading}>
-                                {loading ? <Activity className="animate-pulse" size={18} /> : 'INITIALIZE UPLINK'}
+                                {loading ? <Activity className="animate-pulse" size={18} /> : 'REGISTER NOW'}
                             </button>
                         </div>
                     </div>
@@ -363,7 +363,7 @@ export default function Register() {
 
                 <div className="text-center mt-8">
                     <p style={{ fontSize: '14px', color: 'var(--text-dim)' }}>
-                        Existing Entity? <Link to="/login" className="text-accent font-bold">Access Console</Link>
+                        Already Registered? <Link to="/login" className="text-accent font-bold">Login</Link>
                     </p>
                 </div>
             </div>

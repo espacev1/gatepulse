@@ -132,10 +132,10 @@ export default function Profile() {
             if (updateError) throw updateError
 
             await refreshUser()
-            setSuccess('PROTOCOL_UPDATED: Identity record successfully synchronized.')
+            setSuccess('PROFILE UPDATED: Your changes have been saved successfully.')
             setIsEditing(false)
         } catch (err) {
-            setError(`SYNC_FAILURE: ${err.message}`)
+            setError(`SAVE FAILED: ${err.message}`)
         } finally {
             setLoading(false)
         }
@@ -145,12 +145,12 @@ export default function Profile() {
         <div className="page-container" style={{ maxWidth: 800 }}>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Identity Profile</h1>
-                    <p className="page-subtitle">Personal data registry and biometric authorization records.</p>
+                    <h1 className="page-title">User Profile</h1>
+                    <p className="page-subtitle">Your personal details and identity verification photo.</p>
                 </div>
                 {!isEditing && (
                     <button onClick={() => setIsEditing(true)} className="btn btn-primary btn-sm">
-                        <Edit3 size={14} /> MODIFY_DATA
+                        <Edit3 size={14} /> EDIT DETAILS
                     </button>
                 )}
             </div>
@@ -187,7 +187,7 @@ export default function Profile() {
                         </div>
 
                         {isCameraActive && (
-                            <button onClick={capturePhoto} className="btn btn-primary btn-xs w-full mb-4">CAPTURE IDENTITY</button>
+                            <button onClick={capturePhoto} className="btn btn-primary btn-xs w-full mb-4">TAKE PHOTO</button>
                         )}
 
                         <div className="flex items-center justify-center gap-2 mb-2">
@@ -199,7 +199,7 @@ export default function Profile() {
 
                     <div className="card" style={{ padding: 'var(--space-4)' }}>
                         <div className="panel-header" style={{ marginBottom: 'var(--space-3)' }}>
-                            <Fingerprint size={12} /> ID_CREDENTIAL_UPLOAD
+                            <Fingerprint size={12} /> DOCUMENT UPLOAD
                         </div>
                         <div style={{
                             height: 100, border: '1px dashed rgba(0, 132, 255, 0.2)', borderRadius: 'var(--radius-md)',
@@ -220,12 +220,12 @@ export default function Profile() {
                 {/* Right: Personal Details Form */}
                 <div className="card" style={{ padding: 'var(--space-8)' }}>
                     <div className="panel-header" style={{ marginBottom: 'var(--space-6)' }}>
-                        <Shield size={12} /> DATA_REGISTRY_FIELDS
+                        <Shield size={12} /> PERSONAL DETAILS
                     </div>
 
                     <form onSubmit={handleSave} className="flex flex-col gap-6">
                         <div className="form-group">
-                            <label className="form-label">Email Designation (ReadOnly)</label>
+                            <label className="form-label">Registered Email</label>
                             <div className="flex items-center gap-3 p-3" style={{ background: 'rgba(0, 132, 255, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0, 132, 255, 0.1)' }}>
                                 <Mail size={14} color="var(--accent)" />
                                 <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', fontWeight: 600 }}>{user?.email}</span>
@@ -233,7 +233,7 @@ export default function Profile() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Full Legal Name</label>
+                            <label className="form-label">Full Name</label>
                             <div style={{ position: 'relative' }}>
                                 <User size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)' }} />
                                 <input
@@ -273,7 +273,7 @@ export default function Profile() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Registration Identifier (Reg No)</label>
+                            <label className="form-label">Registration Number (Reg No)</label>
                             <div style={{ position: 'relative' }}>
                                 <Hash size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)' }} />
                                 <input
@@ -288,10 +288,10 @@ export default function Profile() {
                         {isEditing && (
                             <div className="flex gap-4 mt-4 animate-fade-in-up">
                                 <button type="button" onClick={() => setIsEditing(false)} className="btn btn-secondary flex-1">
-                                    <X size={16} /> ABORT_CHANGES
+                                    <X size={16} /> CANCEL
                                 </button>
                                 <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                                    {loading ? 'SYNCHRONIZING...' : <><Save size={16} /> COMMIT_UPDATES</>}
+                                    {loading ? 'SAVING...' : <><Save size={16} /> SAVE CHANGES</>}
                                 </button>
                             </div>
                         )}

@@ -142,7 +142,7 @@ export default function FacultyCreateEvents() {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to decommission this node?')) return
+        if (!window.confirm('Are you sure you want to delete this event?')) return
         const { error } = await supabase.from('events').delete().eq('id', id).eq('created_by', user.id)
 
         if (error) {
@@ -158,11 +158,11 @@ export default function FacultyCreateEvents() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Sector Node Deployment</h1>
-                    <p className="page-subtitle">Provision and manage events within your authorized operational sector.</p>
+                    <h1 className="page-title">Event Management</h1>
+                    <p className="page-subtitle">Manage and list events within your assigned department.</p>
                 </div>
                 <button onClick={() => handleOpenModal()} className="btn btn-primary">
-                    <Plus size={16} /> Deploy New Node
+                    <Plus size={16} /> Create New Event
                 </button>
             </div>
 
@@ -170,15 +170,15 @@ export default function FacultyCreateEvents() {
                 <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                     <div className="search-bar">
                         <Search />
-                        <input placeholder="Search Authorized Nodes..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input placeholder="Search Events..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                 </div>
             </div>
 
             <div className="grid-3">
-                {loading && <div className="col-span-3 text-center py-12">Synchronizing sector data...</div>}
+                {loading && <div className="col-span-3 text-center py-12">Loading event data...</div>}
                 {!loading && filtered.length === 0 && (
-                    <div className="col-span-3 text-center py-12 text-dim">No authorized nodes detected.</div>
+                    <div className="col-span-3 text-center py-12 text-dim">No events found in this department.</div>
                 )}
                 {filtered.map((event, i) => (
                     <div key={event.id} className="card" style={{ animation: `fadeInUp 0.4s ease ${i * 0.05}s both` }}>
@@ -186,7 +186,7 @@ export default function FacultyCreateEvents() {
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                     <div className="live-dot" style={{ background: event.status === 'active' ? 'var(--status-ok)' : 'var(--status-warn)' }} />
-                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>NODE_{event.id.slice(-4)}</span>
+                                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>ID: {event.id.slice(-4)}</span>
                                 </div>
                                 <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>{event.name}</h3>
                             </div>
@@ -209,11 +209,11 @@ export default function FacultyCreateEvents() {
                         <div className="flex gap-2">
                             {event.created_by === user.id ? (
                                 <>
-                                    <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> CONFIGURE</button>
+                                    <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> EDIT</button>
                                     <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
                                 </>
                             ) : (
-                                <div className="text-[10px] text-dim italic py-2 px-1">READ-ONLY ACCESS (FOREIGN NODE)</div>
+                                <div className="text-[10px] text-dim italic py-2 px-1">READ-ONLY ACCESS (OTHER DEPARTMENT)</div>
                             )}
                         </div>
                     </div>
@@ -224,14 +224,14 @@ export default function FacultyCreateEvents() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ border: '2px solid var(--border-accent)', maxWidth: '600px' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">{editingEvent ? 'RECONFIGURE_NODE' : 'PROVISION_NODE'}</h2>
+                            <h2 className="modal-title">{editingEvent ? 'EDIT EVENT' : 'CREATE EVENT'}</h2>
                             <button onClick={() => setShowModal(false)} className="btn-icon"><X size={20} /></button>
                         </div>
 
                         <div className="modal-body">
                             <div className="form-group">
-                                <label className="form-label">Sector Designation (Name)</label>
-                                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Event Service A" />
+                                <label className="form-label">Event Name</label>
+                                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Annual Tech Fest" />
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
@@ -253,13 +253,13 @@ export default function FacultyCreateEvents() {
                                     </div>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Max Capacity (Entities)</label>
+                                    <label className="form-label">Max Capacity (Seats)</label>
                                     <input type="number" className="form-input" value={form.max_capacity} onChange={e => setForm({ ...form, max_capacity: parseInt(e.target.value) })} />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Sector Lock (Target Departments)</label>
+                                <label className="form-label">Department Restriction</label>
                                 <div className="flex flex-wrap gap-2 p-3 bg-transparent rounded-lg border border-border-color">
                                     {DEPARTMENTS.map(dept => (
                                         <button
@@ -289,7 +289,7 @@ export default function FacultyCreateEvents() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Deployment Local (Location)</label>
+                                    <label className="form-label">Event Location</label>
                                     <input className="form-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
                                 </div>
                                 <div className="form-group">
@@ -347,7 +347,7 @@ export default function FacultyCreateEvents() {
                             <div className="form-group">
                                 <label className="form-label flex items-center gap-2">
                                     <input type="checkbox" checked={form.is_live} onChange={e => setForm({ ...form, is_live: e.target.checked })} />
-                                    MARK AS LIVE EVENT
+                                    SHOW ON LIVE TICKER
                                 </label>
                             </div>
 
@@ -402,8 +402,8 @@ export default function FacultyCreateEvents() {
                         </div>
 
                         <div className="modal-footer">
-                            <button onClick={() => setShowModal(false)} className="btn btn-ghost">ABORT</button>
-                            <button onClick={handleSave} className="btn btn-primary">CONFIRM_DEPLOYMENT</button>
+                            <button onClick={() => setShowModal(false)} className="btn btn-ghost">CANCEL</button>
+                            <button onClick={handleSave} className="btn btn-primary">SAVE EVENT</button>
                         </div>
                     </div>
                 </div>

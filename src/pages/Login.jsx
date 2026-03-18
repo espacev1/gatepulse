@@ -81,14 +81,14 @@ export default function Login({ portalType }) {
             }}>
                 <div className="text-center mb-10">
                     <h1 className="page-title" style={{ marginBottom: 4 }}>
-                        {isJury ? 'Jury Access Console' : 
+                        {isJury ? 'Jury Login' : 
                          isFaculty ? 'Faculty Advisor Login' : 
-                         'Access Console'}
+                         'Login'}
                     </h1>
                     <p className="page-subtitle">
-                        {isJury ? 'Secure Evaluation Node' : 
-                         isFaculty ? 'Unified Academic Oversight' :
-                         'Security Authentication Gateway'}
+                        {isJury ? 'Secure Evaluation Area' : 
+                         isFaculty ? 'Academic Dashboard' :
+                         'Authorized Event Access'}
                     </p>
                 </div>
 
@@ -100,14 +100,14 @@ export default function Login({ portalType }) {
 
                 <form onSubmit={handleLogin} className="flex flex-col gap-5">
                     <div className="form-group">
-                        <label className="form-label">Deployment Entity (Email)</label>
+                        <label className="form-label">Registered Email</label>
                         <div style={{ position: 'relative' }}>
                             <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                             <input
                                 type="email"
                                 className="form-input"
                                 style={{ paddingLeft: '40px' }}
-                                placeholder="operator@gatepulse.io"
+                                placeholder="user@vishnu.edu.in"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -116,7 +116,7 @@ export default function Login({ portalType }) {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Encrypted Key (Password)</label>
+                        <label className="form-label">Password</label>
                         <div style={{ position: 'relative' }}>
                             <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                             <input
@@ -148,7 +148,7 @@ export default function Login({ portalType }) {
                     </div>
 
                     <button type="submit" className="btn btn-primary btn-lg w-full mt-4" disabled={loading}>
-                        {loading ? <Activity className="animate-pulse" size={18} /> : <>Initialize Access <ArrowRight size={18} /></>}
+                        {loading ? <Activity className="animate-pulse" size={18} /> : <>Sign In <ArrowRight size={18} /></>}
                     </button>
 
                     {isJury && isAuthenticated && user?.is_super_admin && (
@@ -164,8 +164,8 @@ export default function Login({ portalType }) {
                 </form>
 
                 <p className="text-center mt-8" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-dim)' }}>
-                    Unauthorized access is strictly logged.{' '}
-                    <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Apply for Credentials</Link>
+                    Unauthorized access is not permitted.{' '}
+                    <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Register now</Link>
                 </p>
             </div>
         </div>

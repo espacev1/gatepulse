@@ -128,11 +128,11 @@ export default function JuryManagement() {
     }
 
     const handleDeleteJury = async (id, name) => {
-        if (!confirm(`ARE YOU SURE? This will permanently decommission the evaluation node: ${name}`)) return
+        if (!confirm(`ARE YOU SURE? This will permanently delete the jury account for: ${name}`)) return
         
         const { error } = await supabase.from('profiles').delete().eq('id', id)
         if (error) {
-            alert('Failed to decommission node: ' + error.message)
+            alert('Failed to delete account: ' + error.message)
         } else {
             fetchInitialData()
         }
@@ -151,27 +151,27 @@ export default function JuryManagement() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Jury Orchestration</h1>
-                    <p className="page-subtitle">Provision secure scoring nodes and generate unique evaluation links.</p>
+                    <h1 className="page-title">Jury Management</h1>
+                    <p className="page-subtitle">Assign jury members to events and generate evaluation links.</p>
                 </div>
                 <div className="flex gap-3">
                     <button onClick={() => { fetchLeaderboard(); setShowLeaderboard(true); }} className="btn btn-secondary">
                         <Trophy size={16} /> VIEW LEADERBOARD
                     </button>
                     <button onClick={() => setShowModal(true)} className="btn btn-primary">
-                        <Plus size={16} /> PROVISION JURY NODE
+                        <Plus size={16} /> ADD JURY ACCOUNT
                     </button>
                 </div>
             </div>
 
             <div className="grid-2 mb-8">
                 <div className="card">
-                    <div className="panel-header">Active Evaluation Nodes (Juries)</div>
+                    <div className="panel-header">Active Juries</div>
                     <div className="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Jury Identity</th>
+                                    <th>Jury Name</th>
                                     <th>Target Event</th>
                                     <th>Portal Link</th>
                                     <th>Actions</th>
@@ -246,7 +246,7 @@ export default function JuryManagement() {
                                     )
                                 })}
                                 {juries.length === 0 && (
-                                    <tr><td colSpan="4" className="text-center py-8 text-dim">No jury nodes provisioned.</td></tr>
+                                    <tr><td colSpan="4" className="text-center py-8 text-dim">No juries found.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -293,7 +293,7 @@ export default function JuryManagement() {
                                                     setShowModal(true)
                                                 }}
                                                 className="text-accent hover:underline font-bold"
-                                            >PROVISION JURY</button>
+                                            >SET JURY</button>
                                         </div>
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@ export default function JuryManagement() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '450px' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">PROVISION JURY NODE</h2>
+                            <h2 className="modal-title">ADD JURY ACCOUNT</h2>
                             <button onClick={() => setShowModal(false)} className="btn-icon">×</button>
                         </div>
                         <div className="modal-body">
@@ -342,8 +342,8 @@ export default function JuryManagement() {
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button onClick={() => setShowModal(false)} className="btn btn-secondary">ABORT</button>
-                            <button onClick={handleCreateJury} className="btn btn-primary">COMMIT PROVISIONING</button>
+                            <button onClick={() => setShowModal(false)} className="btn btn-secondary">CANCEL</button>
+                            <button onClick={handleCreateJury} className="btn btn-primary">CREATE JURY ACCOUNT</button>
                         </div>
                     </div>
                 </div>
@@ -354,7 +354,7 @@ export default function JuryManagement() {
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '900px', border: '1px solid var(--accent)' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title flex items-center gap-2"><Trophy size={20} color="var(--accent)" /> GLOBAL VERIFICATION LEADERBOARD</h2>
+                            <h2 className="modal-title flex items-center gap-2"><Trophy size={20} color="var(--accent)" /> GLOBAL LEADERBOARD</h2>
                             <button onClick={() => setShowLeaderboard(false)} className="btn-icon"><X size={20} /></button>
                         </div>
                         <div className="modal-body" style={{ padding: 0 }}>
@@ -363,7 +363,7 @@ export default function JuryManagement() {
                                     <thead>
                                         <tr>
                                             <th>Rank</th>
-                                            <th>Entity Node</th>
+                                            <th>Participant Name</th>
                                             <th>Registration ID</th>
                                             <th>Sector</th>
                                             <th style={{ textAlign: 'right' }}>V-Score (AVG)</th>
@@ -371,7 +371,7 @@ export default function JuryManagement() {
                                     </thead>
                                     <tbody>
                                         {leaderboardData.length === 0 ? (
-                                            <tr><td colSpan="5" className="text-center py-12 text-dim">NO EVALUATION DATA SYNCHRONIZED</td></tr>
+                                            <tr><td colSpan="5" className="text-center py-12 text-dim">NO SCORE DATA FOUND</td></tr>
                                         ) : leaderboardData.map((item, i) => (
                                             <tr key={item.id} style={{ background: i === 0 ? 'rgba(255, 40, 40, 0.03)' : 'transparent' }}>
                                                 <td>

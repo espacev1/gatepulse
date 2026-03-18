@@ -13,7 +13,7 @@ const navConfig = {
         { to: '/admin/events', icon: CalendarDays, label: 'Events' },
         { to: '/admin/synopsis', icon: Activity, label: 'Event Synopsis' },
         { to: '/admin/attendance', icon: ClipboardCheck, label: 'Attendance' },
-        { to: '/admin/participants', icon: Users, label: 'Entity Registry' },
+        { to: '/admin/participants', icon: Users, label: 'User Directory' },
         { to: '/admin/users', icon: Shield, label: 'User Management' },
         { to: '/admin/jury', icon: Gavel, label: 'Jury Management' },
         { to: '/admin/jury-live', icon: Trophy, label: 'Live Verification' },
@@ -40,7 +40,7 @@ const navConfig = {
         { to: '/faculty/jury', icon: Gavel, label: 'Live Verification' },
         { to: '/faculty/active-events', icon: Play, label: 'Active Events' },
         { to: '/faculty/department-view', icon: BarChart3, label: 'Department View' },
-        { to: '/faculty/create-events', icon: CalendarDays, label: 'Deploy Sector Nodes' },
+        { to: '/faculty/create-events', icon: CalendarDays, label: 'Create Events' },
     ],
     jury: [
         { to: '/jury/dashboard', icon: Activity, label: 'Live Verification', end: true },
@@ -61,11 +61,7 @@ export default function Layout() {
     // If super admin, adapt sidebar to current portal context
     if (user?.is_super_admin) {
         if (path.startsWith('/jury')) {
-            links = [...navConfig.jury, { to: '/admin', icon: ShieldCheck, label: 'Return to Command', end: true }]
-        } else if (path.startsWith('/staff')) {
-            links = [...navConfig.staff, { to: '/admin', icon: ShieldCheck, label: 'Return to Command', end: true }]
-        } else if (path.startsWith('/faculty') && !path.startsWith('/admin/faculty')) {
-            links = [...navConfig.faculty, { to: '/admin', icon: ShieldCheck, label: 'Return to Command', end: true }]
+            links = [...navConfig.faculty, { to: '/admin', icon: ShieldCheck, label: 'Back to Dashboard', end: true }]
         }
     }
 
@@ -230,9 +226,9 @@ export default function Layout() {
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', fontSize: '12px', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         <Activity size={14} color="var(--accent)" />
-                        <span>System Operational</span>
+                        <span>System Active</span>
                         <span style={{ margin: '0 var(--space-2)', opacity: 0.1 }}>|</span>
-                        <span>Operator: <strong style={{ color: 'var(--accent)' }}>{user?.full_name}</strong></span>
+                        <span>User: <strong style={{ color: 'var(--accent)' }}>{user?.full_name}</strong></span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                         <span className="badge badge-primary" style={{ padding: '4px 12px', background: 'var(--accent)', color: '#fff', border: 'none' }}>

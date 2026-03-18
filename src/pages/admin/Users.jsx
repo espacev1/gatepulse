@@ -75,11 +75,11 @@ export default function AdminUsers() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Entity Management</h1>
-                    <p className="page-subtitle">Administrative oversight of all system identities and clearance levels.</p>
+                    <h1 className="page-title">User Management</h1>
+                    <p className="page-subtitle">Manage all student and faculty accounts and their access levels.</p>
                 </div>
                 <div className="badge badge-primary">
-                    {loading ? 'SYNCING...' : `${filtered.length} IDENTITIES DETECTED`}
+                    {loading ? 'LOADING...' : `${filtered.length} USERS FOUND`}
                 </div>
             </div>
 
@@ -90,7 +90,7 @@ export default function AdminUsers() {
                         <input placeholder="Search by name or email..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                     <select className="form-select" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
-                        <option value="all">CLEARANCE: ALL</option>
+                        <option value="all">ROLE: ALL</option>
                         <option value="admin">ADMIN</option>
                         <option value="staff">STAFF</option>
                         <option value="faculty">FACULTY</option>
@@ -105,18 +105,18 @@ export default function AdminUsers() {
                     <table>
                         <thead>
                             <tr>
-                                <th>Identity</th>
-                                <th>Clearance Level</th>
-                                <th>Deployment Date</th>
+                                <th>User</th>
+                                <th>Access Level</th>
+                                <th>Joined Date</th>
                                 <th>Status</th>
-                                <th style={{ textAlign: 'right' }}>Privilege Escalation</th>
+                                <th style={{ textAlign: 'right' }}>Modify Role</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && users.length === 0 ? (
-                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>SCANNING DATABASE...</td></tr>
+                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)' }}>LOADING USERS...</td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>NO IDENTITIES MATCHING QUERY</td></tr>
+                                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)' }}>NO USERS MATCHING SEARCH</td></tr>
                             ) : filtered.map((u, i) => {
                                 const roleInfo = ROLE_LEVELS[u.role] || ROLE_LEVELS.participant
                                 const isCurrentUser = u.id === currentUser?.id
@@ -170,8 +170,8 @@ export default function AdminUsers() {
                                                     className="btn btn-secondary btn-sm"
                                                     style={{ gap: '6px', fontSize: '11px' }}
                                                 >
-                                                    <ArrowUpRight size={13} />
-                                                    Escalate
+                                                    <UserCog size={13} />
+                                                    Edit Role
                                                     <ChevronDown size={12} style={{
                                                         transform: escalatingUser === u.id ? 'rotate(180deg)' : 'none',
                                                         transition: 'transform 0.2s ease'
@@ -209,7 +209,7 @@ export default function AdminUsers() {
                         animation: 'fadeIn 0.15s ease'
                     }}>
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-dim)', padding: '6px 10px 4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                            SET CLEARANCE LEVEL
+                            SET USER ROLE
                         </div>
                         {Object.entries(ROLE_LEVELS).map(([roleKey, info]) => (
                             <button

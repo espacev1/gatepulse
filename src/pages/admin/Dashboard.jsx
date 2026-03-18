@@ -112,20 +112,20 @@ export default function AdminDashboard() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">VIT-PULSE Operational Command</h1>
-                    <p className="page-subtitle">Real-time event security and orchestration oversight.</p>
+                    <h1 className="page-title">VIT-PULSE System Overview</h1>
+                    <p className="page-subtitle">Real-time coordination and management of all campus events.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="btn btn-primary" onClick={fetchDashboardData}><Activity size={14} /> Sync System</button>
+                    <button className="btn btn-primary" onClick={fetchDashboardData}><Activity size={14} /> Refresh Dashboard</button>
                 </div>
             </div>
 
             <div className="grid-4 mb-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                 <MetricBar icon={Users} label="TOTAL RESERVATIONS" value={metrics.totalTickets} trend="LIVE" />
-                <MetricBar icon={ShieldCheck} label="TOTAL_IDENTITIES" value={metrics.totalUsers} trend="REGISTERED" color="var(--accent)" />
-                <MetricBar icon={Clock} label="PENDING APPROVALS" value={metrics.pendingApprovals} trend="AWAITING" color="var(--status-warn)" />
-                <MetricBar icon={Activity} label="ACTIVE_CHECKINS" value={metrics.activeCheckins} trend="SYNCED" color="var(--status-ok)" />
-                <MetricBar icon={TrendingUp} label="LOAD_FACTOR" value={`${metrics.loadFactor}%`} trend="NOMINAL" color="var(--status-info)" />
+                <MetricBar icon={ShieldCheck} label="TOTAL REGISTERED" value={metrics.totalUsers} trend="STABLE" color="var(--accent)" />
+                <MetricBar icon={Clock} label="PENDING APPROVALS" value={metrics.pendingApprovals} trend="PENDING" color="var(--status-warn)" />
+                <MetricBar icon={Activity} label="CURRENT ENTRIES" value={metrics.activeCheckins} trend="LIVE" color="var(--status-ok)" />
+                <MetricBar icon={TrendingUp} label="CAPACITY STATUS" value={`${metrics.loadFactor}%`} trend="STABLE" color="var(--status-info)" />
             </div>
 
             <div className="grid-3 mb-6">
@@ -146,16 +146,16 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                                 <div className="stat-card-value" style={{ color: 'var(--status-ok)' }}>100%</div>
-                                <div className="badge badge-success">OPTIMAL</div>
+                                <div className="badge badge-success">EXCELLENT</div>
                             </div>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>CORE STATUS</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>MAIN STATUS</span>
                             <span style={{ fontSize: '10px', color: 'var(--status-ok)' }}>ACTIVE</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>DATABASE_LATENCY</span>
-                            <span style={{ fontSize: '10px', color: 'var(--status-ok)' }}>&lt; 15MS</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-dim)' }}>RESPONSE TIME</span>
+                            <span style={{ fontSize: '10px', color: 'var(--status-ok)' }}>FAST</span>
                         </div>
                     </div>
                 </div>
@@ -176,19 +176,19 @@ export default function AdminDashboard() {
 
                 <div className="stat-card">
                     <div className="w-full">
-                        <div className="panel-header">Resource Integrity</div>
+                        <div className="panel-header">System Security</div>
                         <div style={{ position: 'relative', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Zap size={32} color="var(--accent)" className="animate-glow" />
                         </div>
-                        <div className="stat-card-value">NOMINAL</div>
-                        <div className="stat-card-label">Encryption Protocol Active</div>
+                        <div className="stat-card-value">STABLE</div>
+                        <div className="stat-card-label">Secure connection active</div>
                     </div>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
                 <div className="card">
-                    <div className="panel-header">Security Traffic Analysis</div>
+                    <div className="panel-header">Attendance Flow Analysis</div>
                     <div style={{ height: 320, width: '100%', marginTop: 'var(--space-4)' }}>
                         {trafficData.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-dim font-mono text-sm">NO ACCESS DATA DETECTED IN CURRENT TIME RANGE</div>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
                 <div className="card">
                     <div className="panel-header">Event Distribution</div>
                     <div style={{ height: 320, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        {events.length === 0 && <p className="text-center text-dim text-sm">No active nodes provisioned.</p>}
+                        {events.length === 0 && <p className="text-center text-dim text-sm">No active events listed.</p>}
                         {events.slice(0, 4).map((e, i) => (
                             <div key={e.id} className="mb-6">
                                 <div className="flex justify-between items-center mb-2">
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
                                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: i === 0 ? 'var(--accent)' : i === 1 ? 'var(--secondary)' : i === 2 ? 'var(--teal)' : 'var(--magenta)' }} />
                                         <span style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }} className="truncate">{e.name}</span>
                                     </div>
-                                    <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>{e.registered_count || 0} ENTITIES</span>
+                                    <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-dim)' }}>{e.registered_count || 0} USERS</span>
                                 </div>
                                 <div className="progress-bar-track">
                                     <div className="progress-bar-fill" style={{
@@ -243,24 +243,24 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-6)' }}>
                 <div className="card">
                     <div className="flex justify-between items-center mb-6">
-                        <div className="panel-header" style={{ marginBottom: 0 }}>Active Operational Nodes</div>
-                        <div className="badge badge-info"><Clock size={12} /> Live Sync</div>
+                        <div className="panel-header" style={{ marginBottom: 0 }}>Active Event Locations</div>
+                        <div className="badge badge-info"><Clock size={12} /> Auto Sync</div>
                     </div>
                     <div className="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Node ID</th>
-                                    <th>Resource Name</th>
+                                    <th>ID</th>
+                                    <th>Event Name</th>
                                     <th>Status</th>
-                                    <th>Load Factor</th>
+                                    <th>Attendance</th>
                                     <th>Price</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {events.length === 0 && (
-                                    <tr><td colSpan="6" className="text-center py-8 text-dim">No operational nodes detected in the secure database.</td></tr>
+                                    <tr><td colSpan="6" className="text-center py-8 text-dim">No events found in the database.</td></tr>
                                 )}
                                 {events.map((event) => (
                                     <tr key={event.id}>

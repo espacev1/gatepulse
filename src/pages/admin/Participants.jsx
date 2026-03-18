@@ -77,7 +77,7 @@ export default function AdminParticipants() {
 
         if (pError) return alert('Approval failed: ' + pError.message)
         if (!updated || updated.length === 0) {
-            return alert('PERMISSION DENIED: Your clearance level is insufficient to approve participants.')
+            return alert('PERMISSION DENIED: You do not have permission to approve participants.')
         }
 
         // 2. Provision Ticket
@@ -115,11 +115,11 @@ export default function AdminParticipants() {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Entity Registry</h1>
-                    <p className="page-subtitle">Historical and active participant credentials mapping.</p>
+                    <h1 className="page-title">Participant List</h1>
+                    <p className="page-subtitle">View and manage all event registrations and tickets.</p>
                 </div>
                 <div className="badge badge-primary" style={{ padding: 'var(--space-2) var(--space-4)' }}>
-                    {loading ? 'SYNCING...' : `${filtered.length} NODES LOGGED`}
+                    {loading ? 'LOADING...' : `${filtered.length} ENTRIES FOUND`}
                 </div>
             </div>
 
@@ -128,17 +128,17 @@ export default function AdminParticipants() {
                 <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                     <div className="search-bar">
                         <Search />
-                        <input placeholder="Filter by Identity/UID..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input placeholder="Search Name or Email..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                     <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
-                        <option value="all">Sectors: All</option>
+                        <option value="all">Events: All</option>
                         {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                     </select>
                     <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto' }}>
-                        <option value="all">Auth_Status: All</option>
-                        <option value="pending-approval">Security Clearance Required</option>
-                        <option value="pending-check-in">Confirmed Coverage</option>
-                        <option value="checked-in">Authenticated Entry</option>
+                        <option value="all">Status: All</option>
+                        <option value="pending-approval">Pending Approval</option>
+                        <option value="pending-check-in">Approved (Pending Entry)</option>
+                        <option value="checked-in">Already Checked In</option>
                     </select>
                 </div>
             </div>
@@ -148,19 +148,19 @@ export default function AdminParticipants() {
                     <table>
                         <thead>
                             <tr>
-                                <th>Identity Name</th>
-                                <th>Entity Class</th>
-                                <th>Target Sector</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Event</th>
                                 <th>Status</th>
-                                <th>Credential</th>
+                                <th>Ticket ID</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">SCANNING REGISTRY...</td></tr>
+                                <tr><td colSpan="6" className="text-center py-12 text-dim">LOADING DATA...</td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="6" className="text-center py-12 text-dim font-mono">NO ENTITIES REGISTERED</td></tr>
+                                <tr><td colSpan="6" className="text-center py-12 text-dim">NO PARTICIPANTS FOUND</td></tr>
                             ) : filtered.map((p, i) => (
                                 <tr key={p.id} style={{ animation: `fadeIn 0.3s ease ${i * 0.03}s both` }}>
                                     <td>
@@ -196,7 +196,7 @@ export default function AdminParticipants() {
                                     </td>
                                     <td>
                                         {p.registration_status === 'pending' ? (
-                                            <span className="badge badge-warning"><Clock size={10} /> PENDING_APPROVAL</span>
+                                            <span className="badge badge-warning"><Clock size={10} /> PENDING</span>
                                         ) : p.ticket?.is_validated ? (
                                             <span className="badge badge-success"><CheckCircle2 size={10} /> VERIFIED</span>
                                         ) : (
@@ -205,7 +205,7 @@ export default function AdminParticipants() {
                                     </td>
                                     <td>
                                         <code className="font-mono" style={{ fontSize: '10px', color: 'var(--text-dim)', opacity: 0.7 }}>
-                                            {p.registration_status === 'pending' ? 'SEC_CLEARANCE_REQUIRED' : p.ticket_id}
+                                            {p.registration_status === 'pending' ? 'WAITING' : p.ticket_id}
                                         </code>
                                     </td>
                                     <td>
@@ -215,7 +215,7 @@ export default function AdminParticipants() {
                                             </button>
                                         )}
                                         {p.registration_status === 'confirmed' && (
-                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>ACT_LOGGED</span>
+                                            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RECORDED</span>
                                         )}
                                     </td>
                                 </tr>
