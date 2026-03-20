@@ -38,7 +38,7 @@
   left: 0;
   width: 100%;
   background: transparent;
-  padding: 1.5rem 4rem;
+  padding: 1.5rem clamp(2rem, 5vw, 6rem);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -57,10 +57,10 @@
 }
 
 .logo-text {
-  font-family: 'Haettenschweiler', 'Impact', sans-serif;
+  font-family: 'norwester', sans-serif;
   font-weight: normal;
-  font-size: 1.8rem;
-  letter-spacing: 0.02em;
+  font-size: 1.6rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #000 !important;
   transition: opacity 0.3s ease;
@@ -75,10 +75,10 @@
 .nav-link {
   color: color-mix(in srgb, #fff, #000 calc(clamp(0, (var(--scroll-progress) - 0.1) * 8, 1) * 100%));
   text-decoration: none;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   transition: color 0.8s var(--ease-premium), opacity 0.3s ease;
 }
 
@@ -519,8 +519,28 @@
   align-items: flex-start;
   text-align: left;
   transition: transform 0.8s var(--ease-premium), opacity 0.8s var(--ease-premium);
-  /* Slide out left as we scroll */
   transform: translateX(calc(var(--scroll-progress) * -100px));
+}
+
+.hero-top-info {
+  margin-bottom: 1rem;
+}
+
+.hero-category {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #333;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero-line {
+  width: 380px;
+  max-width: 100%;
+  height: 2px;
+  background: #000;
+  margin-top: 0.5rem;
 }
 
 .about-content {
@@ -1103,14 +1123,22 @@
 }
 
 h1 {
-  font-family: 'Haettenschweiler', 'Impact', 'Arial Narrow Bold', sans-serif;
-  font-size: clamp(4rem, 12vw, 11rem);
+  font-family: 'norwester', sans-serif !important;
+  font-size: clamp(5.5rem, 16vw, 12.5rem);
   font-weight: normal;
   line-height: 0.85;
-  margin: 1rem 0 2.5rem;
+  margin: 1.5rem 0 3rem;
   letter-spacing: -0.01em;
   color: #000 !important;
   text-transform: uppercase;
+}
+
+.text-gradient-pulse {
+  background: linear-gradient(90deg, #F97316 0%, #D946EF 50%, #84CC16 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent !important;
 }
 
 h2 {
@@ -1160,10 +1188,10 @@ h2 {
 .get-started-btn {
   background: #000;
   color: #fff !important;
-  padding: 1rem 2.5rem;
+  padding: 1.2rem 3rem;
   text-decoration: none;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   display: inline-flex;
   align-items: center;
   gap: 1.5rem;
@@ -1171,12 +1199,14 @@ h2 {
   letter-spacing: 0.05em;
   min-width: 280px;
   justify-content: center;
-  margin-top: 3.5rem;
-  transition: transform 0.3s var(--ease-premium);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-premium);
 }
 
 .get-started-btn:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
+  background: #222;
 }
 
 /* Mobile */
@@ -1359,7 +1389,7 @@ h2 {
 }
 
 .team-modal-text h3.norwester {
-  font-family: 'norwester', 'Haettenschweiler', 'Impact', sans-serif !important;
+  font-family: 'Haettenschweiler', 'Impact', sans-serif !important;
   font-size: 3.5rem !important;
   color: #0084FF !important;
   margin: 0 !important;

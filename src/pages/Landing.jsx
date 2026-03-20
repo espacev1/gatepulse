@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Linkedin, Mail, Phone, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import FreshIntro from '../components/FreshIntro'
 import './Landing.css'
 
 export default function Landing() {
-    const [scrollProgress, setScrollProgress] = useState(0)
+    const navigate = useNavigate()
+    const { isAuthenticated } = useAuth()
+    
+    // Intro sequence state: false = currently playing, true = done
+    const [introFinished, setIntroFinished] = useState(false)
     const [smoothedProgress, setSmoothedProgress] = useState(0)
     const [team, setTeam] = useState([])
     const [showAllTeam, setShowAllTeam] = useState(false)
@@ -139,6 +145,11 @@ export default function Landing() {
 
     return (
         <div className="landing-v2" style={{ '--scroll-progress': smoothedProgress }}>
+            {/* The Fresh Intro Animation - Plays once, then unmounts completely */}
+            {!introFinished && (
+                <FreshIntro onComplete={() => setIntroFinished(true)} />
+            )}
+
             {/* Extended Scroll Catcher for 3 stages */}
             <div className="scroll-spacer"></div>
 
@@ -163,21 +174,26 @@ export default function Landing() {
                     {/* Hero Section Layer (Visible 0 -> 0.8) */}
                     <main className="hero-v2-layer" style={{
                         opacity: Math.max(0, 1 - smoothedProgress * 2.5),
-                        transform: `scale(${1 + smoothedProgress * 0.1}) translateY(${smoothedProgress * -20}vh)`,
+                        transform: `translateY(${smoothedProgress * 50}px)`,
                         pointerEvents: smoothedProgress < 0.4 ? 'auto' : 'none'
                     }}>
                         <div className="hero-left-curtain">
                             <div className="hero-content">
-                                <span className="subtitle">SMART EVENT MANAGEMENT SYSTEM</span>
-                                <h1 className="main-title">
-                                    VIT<br />
-                                    PULSE
+                                <div className="hero-top-info">
+                                    <span className="hero-category">SMART EVENT MANAGEMENT SYSTEM</span>
+                                    <div className="hero-line"></div>
+                                </div>
+                                <h1 className="hero-title">
+                                    VIT<br />PULSE
                                 </h1>
-                                <Link to="/register" className="get-started-btn">
-                                    GET STARTED <ArrowRight size={24} />
-                                </Link>
+                                <div className="hero-actions">
+                                    <button onClick={() => navigate('/register')} className="get-started-btn">
+                                        GET STARTED <ArrowRight size={20} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        <div className="hero-right-anchor"></div>
                     </main>
 
                     {/* About Section Layer (Visible 0.4 -> 1.5) */}

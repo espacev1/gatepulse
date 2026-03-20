@@ -1,0 +1,142 @@
+/* FreshIntro.css */
+
+.fresh-intro-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: opacity 0.8s cubic-bezier(0.19, 1, 0.22, 1), transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
+}
+
+/* The "Zoom Through" exit effect */
+.fresh-intro-container.exit {
+  opacity: 0;
+  transform: scale(2.5);
+  pointer-events: none;
+}
+
+/* --- Logo Entrance --- */
+.fresh-logo-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  z-index: 2;
+}
+
+/* Global glow behind the assembling logo */
+.fresh-logo-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180%;
+  height: 180%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0;
+  animation: glowFadeIn 1.5s cubic-bezier(0.19, 1, 0.22, 1) 0.5s forwards, breath 4s ease-in-out 1.5s infinite;
+}
+
+.fresh-logo-image {
+  width: 220px;
+  height: auto;
+  opacity: 0;
+  transform: scale(0.85);
+  animation: logoPop 1.2s cubic-bezier(0.17, 0.67, 0.83, 1.2) 0.2s forwards;
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.12));
+}
+
+@keyframes logoPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Text Entrance --- */
+.fresh-text-container {
+  display: flex;
+  gap: 1.2rem;
+  opacity: 0;
+  animation: textEmerge 1s cubic-bezier(0.19, 1, 0.22, 1) 0.8s forwards;
+  z-index: 2;
+}
+
+.fresh-text-word {
+  font-family: 'norwester', sans-serif;
+  font-size: 5.5rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.fresh-text-vit {
+  color: #000;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.fresh-text-pulse {
+  background: linear-gradient(91.7deg, #F97316 1.8%, #D946EF 49.3%, #84CC16 97.4%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% auto;
+  position: relative;
+  /* Neon Glow Effect */
+  filter: drop-shadow(0 0 10px rgba(217, 70, 239, 0.3)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* --- Keyframes --- */
+
+/* --- Transitions & Effects --- */
+@keyframes glowFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes textEmerge {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes breath {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; }
+}
+
+@media (max-width: 768px) {
+  .fresh-logo-image {
+    width: 160px;
+  }
+  .fresh-text-word {
+    font-size: 3.5rem;
+    letter-spacing: 0.1em;
+  }
+}
