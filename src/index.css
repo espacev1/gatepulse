@@ -15,10 +15,10 @@
 
   /* Accents from Landing Page */
   --accent: #0084FF;
-  --accent-bright: #3399FF;
+  --accent-bright: #33A3FF;
   --accent-dim: #0066CC;
-  --accent-glow: rgba(0, 132, 255, 0.1);
-  --accent-glow-strong: rgba(0, 132, 255, 0.2);
+  --accent-glow: rgba(0, 132, 255, 0.15);
+  --accent-glow-strong: rgba(0, 132, 255, 0.25);
   --accent-gradient: linear-gradient(135deg, #0084FF 0%, #00C2FF 100%);
   --golden-noir: #ffffff; /* Keeping this as it was not specified for change */
 
@@ -52,17 +52,19 @@
   --text-dim: #888888;
 
   /* Glassmorphism Token */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-blur: blur(20px);
-  --border-glass: 1px solid rgba(0, 132, 255, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(10px);
+  --border-glass: 1px solid rgba(255, 255, 255, 0.2);
+  --glass-inner-glow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 
   /* Gradients (Colorful Logo Inspired) */
-  --gradient-bg: linear-gradient(135deg, rgba(0, 132, 255, 0.05) 0%, rgba(234, 139, 6, 0.05) 50%, rgba(66, 255, 104, 0.05) 100%);
-  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  --gradient-panel: rgba(255, 255, 255, 0.5);
+  --gradient-bg: linear-gradient(135deg, rgba(0, 132, 255, 0.08) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(234, 139, 6, 0.08) 100%);
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  --gradient-panel: rgba(255, 255, 255, 0.6);
   --gradient-accent-line: linear-gradient(90deg, var(--accent) 0%, var(--teal) 50%, var(--secondary) 100%);
-  --gradient-glass: rgba(255, 255, 255, 0.5);
-  --gradient-hero: linear-gradient(135deg, rgba(0, 132, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  --gradient-glass: rgba(255, 255, 255, 0.1);
+  --gradient-hero: linear-gradient(135deg, rgba(234, 139, 6, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
 
   /* Typography */
   --font-family-display: 'Norwester', 'norwester', 'Impact', sans-serif;
@@ -106,13 +108,12 @@
   --border-accent: rgba(255, 255, 255, 0.4);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.8);
-  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.05);
-  --shadow-glow-strong: 0 0 30px rgba(255, 255, 255, 0.1);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 1px rgba(255, 255, 255, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 10px 0 30px rgba(0, 132, 255, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-card: var(--shadow-md);
+  --shadow-stat: 0 8px 20px rgba(0, 132, 255, 0.08);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -327,20 +328,36 @@ img {
 
 /* --- Cards (Glassmorphism Style) --- */
 .card {
-  background: var(--bg-card);
-  border: 1px solid rgba(0, 132, 255, 0.1);
-  border-radius: 30px; /* Large rounded corners like landing page */
-  padding: var(--space-8);
-  transition: all var(--transition-base);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  background: var(--gradient-card);
+  border: 1px solid rgba(0, 132, 255, 0.12);
+  border-radius: 24px;
+  padding: var(--space-6);
+  transition: all var(--transition-spring);
+  box-shadow: var(--shadow-card);
   position: relative;
-  will-change: transform;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-accent-line);
+  opacity: 0;
+  transition: opacity var(--transition-base);
 }
 
 .card:hover {
   border-color: var(--accent);
-  box-shadow: 0 20px 60px rgba(0, 132, 255, 0.1);
-  transform: translateY(-5px);
+  box-shadow: var(--shadow-premium);
+  transform: translateY(-4px);
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 .card-glass {
@@ -549,36 +566,54 @@ tr:hover td {
 
 /* --- Stat Cards --- */
 .stat-card {
-  background: var(--bg-card);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid rgba(0, 132, 255, 0.1);
   border-radius: 20px;
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  transition: all var(--transition-base);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  gap: var(--space-3);
+  transition: all var(--transition-spring);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent, rgba(0,132,255,0.1));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: destination-out;
+  pointer-events: none;
 }
 
 .stat-card:hover {
   border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 15px 35px rgba(0, 132, 255, 0.1);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: var(--shadow-premium);
 }
 
 .stat-card-value {
   font-family: var(--font-family-display);
-  font-size: var(--font-4xl);
+  font-size: 2.5rem;
   color: var(--accent);
   letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .stat-card-label {
   font-family: var(--font-family-sans);
-  font-size: var(--font-xs);
-  color: var(--text-muted);
+  font-size: 10px;
+  color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   font-weight: 800;
 }
 

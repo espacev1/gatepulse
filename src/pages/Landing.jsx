@@ -162,8 +162,7 @@ export default function Landing() {
                         <span className="logo-text">VITPULSE</span>
                     </div>
                     <nav className="nav-links">
-                        <Link to="/register" className="nav-link">GET STARTED</Link>
-                        <Link to="/login" className="nav-link">LOGIN</Link>
+                        <Link to="/auth" className="nav-link">GET STARTED</Link>
                         <button onClick={() => window.scrollTo({ top: window.innerHeight * 1.8, behavior: 'smooth' })} className="nav-link btn-link">EXPLORE</button>
                         <button onClick={() => window.scrollTo({ top: window.innerHeight * 2.8, behavior: 'smooth' })} className="nav-link btn-link">FEATURES</button>
                         <button onClick={() => window.scrollTo({ top: window.innerHeight * 4.0, behavior: 'smooth' })} className="nav-link btn-link">TEAM</button>
@@ -187,7 +186,7 @@ export default function Landing() {
                                     VIT<br />PULSE
                                 </h1>
                                 <div className="hero-actions">
-                                    <button onClick={() => navigate('/register')} className="get-started-btn">
+                                    <button onClick={() => navigate('/auth')} className="get-started-btn">
                                         GET STARTED <ArrowRight size={20} />
                                     </button>
                                 </div>

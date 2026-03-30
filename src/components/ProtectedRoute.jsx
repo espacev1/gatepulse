@@ -22,6 +22,4 @@ export default function ProtectedRoute({ children, allowedRoles }) {
         }
         return <Navigate to={dashMap[user.role] || '/'} replace />
     }
-
-    return children
 }

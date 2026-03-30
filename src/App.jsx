@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AccessModal from './components/AccessModal'
 import MagicRings from './components/MagicRings'
 import Landing from './pages/Landing'
+import AuthPortal from './pages/AuthPortal'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminDashboard from './pages/admin/Dashboard'
@@ -90,8 +91,9 @@ function AppRoutes() {
     <>
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <Landing />} />
-        <Route path="/login" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <Login />} />
-        <Route path="/register" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <Register />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <AuthPortal />} />
+        <Route path="/register" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <AuthPortal />} />
+        <Route path="/auth" element={isAuthenticated ? <Navigate to={getDashboardRedirect()} /> : <AuthPortal />} />
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['admin']}><Layout /></ProtectedRoute>}>
