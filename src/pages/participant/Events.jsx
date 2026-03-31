@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import ProfileCompletionModal from '../../components/ProfileCompletionModal'
 import Loader from '../../components/Loader'
+import { sendTicketEmail } from '../../lib/emailService'
 
 export default function ParticipantEvents() {
     const { user } = useAuth()
@@ -111,11 +112,12 @@ export default function ParticipantEvents() {
 
     const provisionTicket = async (participantId, eventId) => {
         const qrToken = `GP-${eventId.slice(0, 4)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-        await supabase.from('tickets').insert([{
+        const { data } = await supabase.from('tickets').insert([{
             participant_id: participantId,
             event_id: eventId,
             qr_token: qrToken
-        }])
+        }]).select().single()
+        return data
     }
 
     const executeSoloRegistration = async (event) => {
@@ -138,7 +140,8 @@ export default function ParticipantEvents() {
                 throw pError
             }
 
-            await provisionTicket(participant.id, event.id)
+            const ticket = await provisionTicket(participant.id, event.id)
+            if (ticket) sendTicketEmail(user, event, ticket)
             completeRegistration(event.id)
             setSelectedEvent(null)
             setPhoneNumber('')
@@ -210,10 +213,18 @@ export default function ParticipantEvents() {
 
             // Provision tickets for all members (Simplified for team)
             // In a real scenario, you'd batch this
-            const { data: teamParticipants } = await supabase.from('participants').select('id').eq('team_id', team.id)
+            // Provision tickets for all members
+            const { data: teamParticipants } = await supabase
+                .from('participants')
+                .select('id, user:profiles(id, full_name, email)')
+                .eq('team_id', team.id)
+
             if (teamParticipants) {
-                for (const p of teamParticipants) {
-                    await provisionTicket(p.id, pendingEvent.id)
+                for (const tp of teamParticipants) {
+                    const ticket = await provisionTicket(tp.id, pendingEvent.id)
+                    if (ticket && tp.user) {
+                        sendTicketEmail(tp.user, pendingEvent, ticket)
+                    }
                 }
             }
 

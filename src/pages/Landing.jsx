@@ -24,9 +24,18 @@ export default function Landing() {
     const fetchTeam = async () => {
         const { data } = await supabase
             .from('team_members')
-            .select('*')
+            .select('*, profile:profiles(id, full_name, email, avatar_url)')
             .order('display_order', { ascending: true })
-        if (data) setTeam(data)
+        
+        if (data) {
+            const resolved = data.map(m => ({
+                ...m,
+                display_name: m.profile?.full_name || m.name,
+                display_email: m.profile?.email || m.email,
+                display_image: m.profile?.avatar_url || m.image_url || '/default-avatar.png'
+            }))
+            setTeam(resolved)
+        }
     }
 
     useEffect(() => {
@@ -368,10 +377,10 @@ export default function Landing() {
                                         onClick={() => setSelectedMember(member)}
                                     >
                                         <div className="member-image-wrap">
-                                            <img src={member.image_url || '/default-avatar.png'} alt={member.name} />
+                                            <img src={member.display_image} alt={member.display_name} />
                                         </div>
                                         <div className="member-info">
-                                            <h4>{member.name}</h4>
+                                            <h4>{member.display_name}</h4>
                                             <span>{member.designation}</span>
                                         </div>
                                     </div>
@@ -392,11 +401,11 @@ export default function Landing() {
                             <div className="team-modal-content glass-card animate-slideUp">
                                 <div className="team-modal-layout">
                                     <div className="team-modal-media">
-                                        <img src={selectedMember.image_url || '/default-avatar.png'} alt={selectedMember.name} />
+                                        <img src={selectedMember.display_image} alt={selectedMember.display_name} />
                                     </div>
                                     <div className="team-modal-text">
                                         <div className="detail-header">
-                                            <h3 className="norwester">{selectedMember.name}</h3>
+                                            <h3 className="norwester">{selectedMember.display_name}</h3>
                                         </div>
                                         <h4>{selectedMember.designation}</h4>
                                         <p className="member-bio-large">{selectedMember.description}</p>
@@ -407,8 +416,8 @@ export default function Landing() {
                                                     <span>Connect on LinkedIn</span>
                                                 </li>
                                             )}
-                                            {selectedMember.email && (
-                                                <li onClick={() => window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${selectedMember.email}`, '_blank')}>
+                                            {selectedMember.display_email && (
+                                                <li onClick={() => window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${selectedMember.display_email}`, '_blank')}>
                                                     <span>Get in touch via Gmail</span>
                                                 </li>
                                             )}

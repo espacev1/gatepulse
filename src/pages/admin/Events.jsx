@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { notifyNewEvent, sendRegistrationReminder } from '../../lib/emailService'
 
 export default function AdminEvents() {
     const { user } = useAuth()
@@ -128,9 +129,47 @@ export default function AdminEvents() {
         if (!error) {
             setShowModal(false)
             fetchEvents()
+            
+            // If new event, notify participants
+            if (!editingEvent) {
+                const { data: participants } = await supabase.from('profiles').select('email').eq('role', 'participant')
+                const emails = participants?.map(p => p.email).filter(Boolean) || []
+                if (emails.length > 0) {
+                    notifyNewEvent(payload, emails)
+                }
+            }
         } else {
             alert('Error saving event: ' + error.message)
         }
+    }
+
+    const handleSendReminders = async (event) => {
+        if (!window.confirm(`Send registration reminders for "${event.name}" to all participants?`)) return
+        
+        setLoading(true)
+        try {
+            // Fetch participants who haven't registered yet
+            const { data: registered } = await supabase.from('participants').select('user_id').eq('event_id', event.id)
+            const registeredIds = registered?.map(r => r.user_id) || []
+            
+            let query = supabase.from('profiles').select('email').eq('role', 'participant')
+            if (registeredIds.length > 0) {
+                query = query.not('id', 'in', `(${registeredIds.join(',')})`)
+            }
+            
+            const { data: targets } = await query
+            const emails = targets?.map(t => t.email).filter(Boolean) || []
+
+            if (emails.length > 0) {
+                await sendRegistrationReminder(event, emails)
+                alert(`SUCCESS: Reminder sent to ${emails.length} potential participants.`)
+            } else {
+                alert('No eligible participants found to notify.')
+            }
+        } catch (err) {
+            alert('Failed to send reminders: ' + err.message)
+        }
+        setLoading(false)
     }
 
     const toggleDept = (dept) => {
@@ -269,6 +308,7 @@ export default function AdminEvents() {
                         <div className="flex gap-2">
                             <button onClick={() => handleOpenModal(event)} className="btn btn-secondary btn-sm flex-1"><Edit2 size={12} /> EDIT</button>
                             <button onClick={() => fetchEventSynopsis(event)} className="btn btn-primary btn-sm flex-1"><Activity size={12} /> OVERVIEW</button>
+                            <button onClick={() => handleSendReminders(event)} className="btn btn-ghost btn-icon" title="Send Registration Reminders"><Clock size={14} color="var(--status-warn)" /></button>
                             {user?.role === 'admin' && (
                                 <button onClick={() => handleDelete(event.id)} className="btn btn-ghost btn-icon" style={{ color: 'var(--status-critical)' }}><Trash2 size={14} /></button>
                             )}

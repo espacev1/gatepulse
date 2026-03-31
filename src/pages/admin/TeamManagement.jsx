@@ -8,6 +8,8 @@ export default function TeamManagement() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingMember, setEditingMember] = useState(null)
     const [uploading, setUploading] = useState(false)
+    const [allProfiles, setAllProfiles] = useState([])
+    const [profileSearch, setProfileSearch] = useState('')
     const fileInputRef = useRef(null)
 
     const [formData, setFormData] = useState({
@@ -23,7 +25,16 @@ export default function TeamManagement() {
 
     useEffect(() => {
         fetchMembers()
+        fetchProfiles()
     }, [])
+
+    const fetchProfiles = async () => {
+        const { data } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, avatar_url, role')
+            .order('full_name')
+        if (data) setAllProfiles(data)
+    }
 
     const fetchMembers = async () => {
         setLoading(true)
@@ -60,10 +71,23 @@ export default function TeamManagement() {
                 email: '',
                 phone: '',
                 description: '',
+                user_id: null,
                 display_order: (members || []).length
             })
         }
+        setProfileSearch('')
         setIsModalOpen(true)
+    }
+
+    const handleSelectProfile = (p) => {
+        setFormData({
+            ...formData,
+            user_id: p.id,
+            name: p.full_name || formData.name,
+            email: p.email || formData.email,
+            image_url: p.avatar_url || formData.image_url
+        })
+        setProfileSearch('')
     }
 
     const handleFileUpload = async (e) => {
@@ -196,7 +220,10 @@ export default function TeamManagement() {
                                                 {m.image_url ? <img src={m.image_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="w-full h-full flex items-center justify-center"><User size={20} color="var(--text-dim)" /></div>}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{m.name}</div>
+                                                <div style={{ fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    {m.name}
+                                                    {m.user_id && <Shield size={12} color="var(--status-ok)" title="CONNECTED_TO_OFFICIAL_PROFILE" />}
+                                                </div>
                                                 <div style={{ fontSize: '11px', color: 'var(--text-dim)', maxWidth: '200px' }} className="truncate">{m.description}</div>
                                             </div>
                                         </div>
@@ -261,6 +288,52 @@ export default function TeamManagement() {
                                     accept="image/*" 
                                     onChange={handleFileUpload} 
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Link to Official Profile (Optional)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input 
+                                        className="form-input" 
+                                        placeholder="Search by name or email..." 
+                                        value={profileSearch}
+                                        onChange={e => setProfileSearch(e.target.value)}
+                                    />
+                                    {profileSearch && (
+                                        <div className="card glass-card" style={{ 
+                                            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                                            maxHeight: '200px', overflowY: 'auto', padding: 'var(--space-2)'
+                                        }}>
+                                            {allProfiles
+                                                .filter(p => 
+                                                    p.full_name?.toLowerCase().includes(profileSearch.toLowerCase()) || 
+                                                    p.email?.toLowerCase().includes(profileSearch.toLowerCase()))
+                                                .slice(0, 5)
+                                                .map(p => (
+                                                    <div 
+                                                        key={p.id} 
+                                                        className="p-2 hover:bg-accent-glow rounded pointer flex justify-between items-center"
+                                                        onClick={() => handleSelectProfile(p)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <div>
+                                                            <div className="text-xs font-bold">{p.full_name}</div>
+                                                            <div className="text-[10px] text-dim">{p.email}</div>
+                                                        </div>
+                                                        <span className="badge badge-info" style={{ fontSize: '8px' }}>{p.role.toUpperCase()}</span>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    )}
+                                </div>
+                                {formData.user_id && (
+                                    <div className="flex items-center gap-2 mt-2 p-2 bg-accent-glow rounded-lg border border-accent">
+                                        <Shield size={12} color="var(--accent)" />
+                                        <span style={{ fontSize: '10px', fontWeight: 600 }}>CONNECTED TO: {allProfiles.find(p => p.id === formData.user_id)?.email}</span>
+                                        <button type="button" onClick={() => setFormData({...formData, user_id: null})} className="ml-auto text-[10px] text-critical underline">UNLINK</button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid-2">
