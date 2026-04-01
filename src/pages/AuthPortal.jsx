@@ -7,6 +7,7 @@ import {
     Mail, Lock, User, Building2, Eye, EyeOff, 
     ArrowRight, ArrowLeft, Camera, RefreshCw, AlertCircle, Activity
 } from 'lucide-react'
+import SEO from '../components/SEO'
 import './AuthPortal.css'
 
 export default function AuthPortal() {
@@ -179,6 +180,10 @@ export default function AuthPortal() {
 
     return (
         <div className="auth-portal-container">
+            <SEO 
+                title={isRightPanelActive ? "Create an Account" : "Sign In"}
+                description={isRightPanelActive ? "Join VIT-PULSE to participate in campus events and get your digital tickets." : "Sign in to VIT-PULSE to access your event tickets and attendance."}
+            />
             <div className={`auth-main-wrapper ${isRightPanelActive ? 'right-panel-active' : ''}`}>
                 
                 {/* SIGN UP FORM AREA */}

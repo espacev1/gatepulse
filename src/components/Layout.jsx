@@ -6,6 +6,7 @@ import {
     ClipboardCheck, Ticket, CalendarSearch, LogOut, Menu, X,
     Shield, ShieldCheck, ChevronLeft, Activity, Gavel, UserCheck, Play, Trophy
 } from 'lucide-react'
+import SEO from './SEO'
 
 const navConfig = {
     admin: [
@@ -66,10 +67,14 @@ export default function Layout() {
         }
     }
 
+    const currentLink = links.find(l => l.to === path)
+    const pageTitle = currentLink ? currentLink.label : 'Dashboard'
+
     const handleLogout = () => { logout(); navigate('/') }
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'transparent' }}>
+            <SEO title={pageTitle} description={`VIT-PULSE ${user?.role} portal for managing campus events and attendance.`} />
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div onClick={() => setMobileOpen(false)} className="mobile-overlay"

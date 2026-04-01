@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /faculty/
+Disallow: /jury/
+Disallow: /profile
+Disallow: /events
+Disallow: /my-tickets
+Disallow: /attendance
+Disallow: /my-qr
+
+Sitemap: https://vitpulse-vitb.vercel.app/sitemap.xml

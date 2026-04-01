@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { HelmetProvider } from 'react-helmet-async'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import AccessModal from './components/AccessModal'
@@ -167,10 +168,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <div className="app-main-container" style={{ position: 'relative', zIndex: 1 }}>
-        <AppRoutes />
-      </div>
-    </AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <div className="app-main-container" style={{ position: 'relative', zIndex: 1 }}>
+          <AppRoutes />
+        </div>
+      </AuthProvider>
+    </HelmetProvider>
   )
 }

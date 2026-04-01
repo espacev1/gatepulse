@@ -4,6 +4,7 @@ import { ArrowRight, Linkedin, Mail, Phone, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import FreshIntro from '../components/FreshIntro'
+import SEO from '../components/SEO'
 import './Landing.css'
 
 export default function Landing() {
@@ -152,8 +153,54 @@ export default function Landing() {
     const [selectedSection, setSelectedSection] = useState(null)
     const [selectedMember, setSelectedMember] = useState(null)
 
+    const structuredData = [
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "VIT-PULSE",
+            "alternateName": ["VITPULSE", "VIT Pulse"],
+            "url": "https://vitpulse-vitb.vercel.app",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://vitpulse-vitb.vercel.app/events?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+            }
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "VIT-PULSE",
+            "url": "https://vitpulse-vitb.vercel.app",
+            "logo": "https://vitpulse-vitb.vercel.app/logo_refined.png",
+            "sameAs": [
+                "https://linkedin.com/company/vitpulse"
+            ]
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "VIT-PULSE",
+            "operatingSystem": "Web",
+            "applicationCategory": "EducationalApplication",
+            "description": "Smart Event Management System for Vishnu Institute of Technology, featuring digital ticket validation and real-time attendance tracking.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0"
+            }
+        }
+    ]
+
     return (
         <div className="landing-v2" style={{ '--scroll-progress': smoothedProgress }}>
+            <SEO 
+                title="Smart Event Management — Vishnu Institute of Technology"
+                description="VIT-PULSE is a modern event management platform for VIT Bhimavaram, offering digital ticketing, QR verification, and real-time analytics for campus events."
+                keywords="VIT-PULSE, Vishnu Institute of Technology, event management, digital tickets, campus events, QR validation"
+            />
+            <script 
+                type="application/ld+json" 
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+            />
             {/* The Fresh Intro Animation - Plays once, then unmounts completely */}
             {!introFinished && (
                 <FreshIntro onComplete={() => setIntroFinished(true)} />
