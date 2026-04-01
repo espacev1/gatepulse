@@ -22,8 +22,7 @@ export default function AuthPortal() {
     
     // Login State
     const [loginData, setLoginData] = useState({ email: '', password: '' })
-    const [showLoginPassword, setShowLoginPassword] = useState(false)
-    
+
     // Registration State
     const [regStep, setRegStep] = useState(1)
     const [regData, setRegData] = useState({
@@ -35,8 +34,6 @@ export default function AuthPortal() {
         section: '',
         regNo: ''
     })
-    const [showRegPassword, setShowRegPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [idBarcode, setIdBarcode] = useState(null)
     const [facePic, setFacePic] = useState(null)
     const [isCameraActive, setIsCameraActive] = useState(false)
@@ -117,7 +114,7 @@ export default function AuthPortal() {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
             streamRef.current = stream
             setIsCameraActive(true)
-        } catch (err) {
+        } catch {
             setError('Camera access failed.')
         }
     }

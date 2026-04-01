@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
     Activity, Download, FileText, Table, Search,
     Filter, Calendar, Users, Star, ArrowUpRight, CheckCircle2
@@ -10,21 +10,21 @@ export default function ActiveEvents() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
-    useEffect(() => {
-        fetchActiveEvents()
-    }, [])
-
-    const fetchActiveEvents = async () => {
+    const fetchActiveEvents = useCallback(async () => {
         setLoading(true)
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('events')
             .select('*')
             .or('status.eq.active,is_live.eq.true')
             .order('event_date', { ascending: true })
-        
+
         if (data) setEvents(data)
         setLoading(false)
-    }
+    }, [])
+
+    useEffect(() => {
+        fetchActiveEvents()
+    }, [fetchActiveEvents])
 
     const filtered = events.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
 

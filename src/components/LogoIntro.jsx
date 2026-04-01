@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './LogoIntro.css';
 
-export default function LogoIntro({ onComplete, onStamping }) {
+export default function LogoIntro({ onComplete }) {
     const [animationStage, setAnimationStage] = useState('entering');
 
     useEffect(() => {

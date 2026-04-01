@@ -40,25 +40,6 @@ export default function Login({ portalType }) {
         }
     }
 
-    const quickLogin = async (email, pass) => {
-        setLoading(true)
-        try {
-            const loggedInUser = await login(email, pass)
-            const dashMap = {
-                admin: '/admin',
-                staff: '/staff/scanner',
-                faculty: '/faculty',
-                jury: '/jury/dashboard',
-                participant: '/events'
-            }
-            navigate(dashMap[loggedInUser.role] || '/events')
-        } catch (err) {
-            setError('Connection failed')
-        } finally {
-            setLoading(false)
-        }
-    }
-
     return (
         <>
             <SEO

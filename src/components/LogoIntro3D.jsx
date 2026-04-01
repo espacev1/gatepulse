@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useNavigate } from 'react-router-dom';
 
 export default function LogoIntro3D({ onComplete }) {
   const mountRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
     // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
@@ -19,7 +20,7 @@ export default function LogoIntro3D({ onComplete }) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.appendChild(renderer.domElement);
+    mount.appendChild(renderer.domElement);
 
     // Create VIT logo group
     const logoGroup = new THREE.Group();
@@ -226,8 +227,8 @@ export default function LogoIntro3D({ onComplete }) {
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', handleResize);
-      if (mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (mount && mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
       }
       // Cleanup Three.js resources
       scene.traverse((object) => {

@@ -22,22 +22,6 @@ export default function AdminDashboard() {
         totalUsers: 0
     })
 
-    useEffect(() => {
-        fetchDashboardData()
-
-        const channel = supabase
-            .channel('dashboard-live')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => fetchDashboardData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDashboardData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => fetchDashboardData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchDashboardData())
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [])
-
     const fetchDashboardData = async () => {
         // 1. Fetch Events & Admins
         const [eventsRes, ticketsRes, checkinsRes, adminsRes, logsRes, pendingRes, usersRes] = await Promise.all([
@@ -81,6 +65,22 @@ export default function AdminDashboard() {
             setTrafficData(chartData)
         }
     }
+
+    useEffect(() => {
+        fetchDashboardData()
+
+        const channel = supabase
+            .channel('dashboard-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchDashboardData())
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [fetchDashboardData])
 
     const MetricBar = ({ icon: Icon, label, value, trend, color = 'var(--accent)' }) => (
         <div className="stat-card">

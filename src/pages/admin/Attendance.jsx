@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
     Users, Calendar, ClipboardCheck, Activity, Search,
     UserPlus, Shield, Clock, BarChart3, ChevronRight, Play
@@ -12,31 +12,6 @@ export default function AdminAttendance() {
     const [staff, setStaff] = useState([])
     const [assignments, setAssignments] = useState([])
     const [sessions, setSessions] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [search, setSearch] = useState('')
-
-    useEffect(() => {
-        fetchInitialData()
-
-        const channel = supabase
-            .channel('admin-attendance-sync')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_assignments' }, () => fetchAssignments())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => fetchSessions())
-            .subscribe()
-
-        return () => { supabase.removeChannel(channel) }
-    }, [])
-
-    const fetchInitialData = async () => {
-        setLoading(true)
-        await Promise.all([
-            fetchEvents(),
-            fetchStaff(),
-            fetchAssignments(),
-            fetchSessions()
-        ])
-        setLoading(false)
-    }
 
     const fetchEvents = async () => {
         const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false })
@@ -62,6 +37,27 @@ export default function AdminAttendance() {
             .order('activated_at', { ascending: false })
         if (data) setSessions(data)
     }
+
+    const fetchInitialData = useCallback(async () => {
+        await Promise.all([
+            fetchEvents(),
+            fetchStaff(),
+            fetchAssignments(),
+            fetchSessions()
+        ])
+    }, [])
+
+    useEffect(() => {
+        fetchInitialData()
+
+        const channel = supabase
+            .channel('admin-attendance-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_assignments' }, () => fetchAssignments())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => fetchSessions())
+            .subscribe()
+
+        return () => { supabase.removeChannel(channel) }
+    }, [fetchInitialData])
 
     const assignStaff = async (eventId, staffId) => {
         const { error } = await supabase.from('staff_assignments').insert([{ event_id: eventId, staff_id: staffId }])

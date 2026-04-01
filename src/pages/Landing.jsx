@@ -1,34 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Linkedin, Mail, Phone, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
 import LogoIntro from '../components/LogoIntro'
 import SEO from '../components/SEO'
 import './Landing.css'
 
 export default function Landing() {
     const navigate = useNavigate()
-    const { isAuthenticated } = useAuth()
-    
+
     // Intro sequence state: false = currently playing, true = done
     const [introFinished, setIntroFinished] = useState(false)
     const [smoothedProgress, setSmoothedProgress] = useState(0)
     const [team, setTeam] = useState([])
     const [showAllTeam, setShowAllTeam] = useState(false)
-    const [expandedMember, setExpandedMember] = useState(null)
 
-    useEffect(() => {
-        fetchTeam()
-    }, [])
-
-    const fetchTeam = async () => {
+    const fetchTeam = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('team_members')
                 .select('*, profile:profiles(id, full_name, email, avatar_url)')
                 .order('display_order', { ascending: true })
-            
+
             if (error) {
                 console.error('Error fetching team members:', error.message, error.details)
                 return
@@ -48,7 +41,11 @@ export default function Landing() {
         } catch (err) {
             console.error('Critical failure in fetchTeam:', err)
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        fetchTeam()
+    }, [fetchTeam])
 
     useEffect(() => {
         let currentScroll = 0

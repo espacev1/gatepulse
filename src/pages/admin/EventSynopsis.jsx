@@ -17,22 +17,12 @@ export default function AdminEventSynopsis() {
     const [selectedDept, setSelectedDept] = useState('ALL')
     const [selectedGenre, setSelectedGenre] = useState('ALL')
 
-    useEffect(() => {
-        fetchEvents()
-        const subscription = supabase
-            .channel('admin-events-synopsis-live')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => fetchEvents())
-            .subscribe()
-
-        return () => supabase.removeChannel(subscription)
-    }, [])
-
     const fetchEvents = async () => {
         setLoading(true)
         const { data } = await supabase
             .from('events')
             .select('*')
-        
+
         if (data) {
             // Sort: active > upcoming > completed > cancelled
             const statusPriority = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
@@ -46,6 +36,17 @@ export default function AdminEventSynopsis() {
         }
         setLoading(false)
     }
+
+    useEffect(() => {
+        fetchEvents()
+
+        const subscription = supabase
+            .channel('admin-events-synopsis-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => fetchEvents())
+            .subscribe()
+
+        return () => supabase.removeChannel(subscription)
+    }, [fetchEvents])
 
     const fetchEventSynopsis = async (event) => {
         setSelectedEvent(event)
@@ -157,7 +158,7 @@ export default function AdminEventSynopsis() {
         a.click()
     }
 
-    const exportCheckinsCSV = (checkins) => {
+    const exportCheckinsCSV = () => {
         if (!synopsis?.checkins || synopsis.checkins.length === 0) return alert('No check-ins to export.')
         
         const headers = ['Identity', 'Registry ID', 'Department', 'Timestamp']
@@ -197,7 +198,7 @@ export default function AdminEventSynopsis() {
     const filtered = events.filter(e => {
         const matchesSearch = e.name.toLowerCase().includes(search.toLowerCase())
         if (!matchesSearch) return false
-        
+
         // Sector Lock Check
         let matchesDept = true
         if (selectedDept !== 'ALL' && !isGlobalEvent(e)) {
@@ -209,16 +210,6 @@ export default function AdminEventSynopsis() {
         if (selectedGenre === 'ALL') return true
         return e.genre === selectedGenre
     })
-
-    const statusColor = (status) => {
-        switch (status) {
-            case 'active': return 'var(--status-ok)'
-            case 'upcoming': return 'var(--status-info)'
-            case 'completed': return 'var(--text-dim)'
-            case 'cancelled': return 'var(--status-critical)'
-            default: return 'var(--status-warn)'
-        }
-    }
 
     const statusBadge = (status) => {
         switch (status) {
@@ -423,7 +414,7 @@ export default function AdminEventSynopsis() {
                                         <button onClick={() => exportJuryMarksCSV(selectedEvent)} className="btn btn-secondary btn-sm flex items-center gap-2">
                                             <Download size={12} /> JURY MARKS
                                         </button>
-                                        <button onClick={() => exportCheckinsCSV(synopsis.checkins)} className="btn btn-secondary btn-sm flex items-center gap-2">
+                                        <button onClick={() => exportCheckinsCSV()} className="btn btn-secondary btn-sm flex items-center gap-2">
                                             <Download size={12} /> VERIFICATION LOG
                                         </button>
                                     </div>

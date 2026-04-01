@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
     BarChart3, PieChart, TrendingUp, Download, AlertTriangle,
     Activity, Users, CalendarDays, Search, Filter, Shield, Info
@@ -27,28 +27,7 @@ export default function AdminAnalytics() {
         }
     })
 
-    useEffect(() => {
-        fetchAnalyticsData()
-
-        const subscription = supabase
-            .channel('analytics-live')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
-                fetchAnalyticsData()
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-                fetchAnalyticsData()
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-                fetchAnalyticsData()
-            })
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(subscription)
-        }
-    }, [])
-
-    const fetchAnalyticsData = async () => {
+    const fetchAnalyticsData = useCallback(async () => {
         // 1. Fetch Overall Metrics
         const [scansRes, validatedRes, ticketsRes, eventsRes, logsRes] = await Promise.all([
             supabase.from('attendance_logs').select('*', { count: 'exact', head: true }),
@@ -108,7 +87,28 @@ export default function AdminAnalytics() {
                 uptime: '100%'
             }
         })
-    }
+    }, [])
+
+    useEffect(() => {
+        fetchAnalyticsData()
+
+        const subscription = supabase
+            .channel('analytics-live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+                fetchAnalyticsData()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                fetchAnalyticsData()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(subscription)
+        }
+    }, [fetchAnalyticsData])
 
     const statsCards = [
         { label: 'Avg Attendance', value: analyticsData.metrics.avgAttendance, trend: 'LIVE', icon: Users, color: 'var(--accent)' },
