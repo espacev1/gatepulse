@@ -487,6 +487,20 @@ export default function Landing() {
                     </div>
                 </div>
             </div>
+
+            {/* Footer */}
+            <footer className="landing-footer">
+                <div className="footer-content">
+                    <p className="footer-text">
+                        &copy; {new Date().getFullYear()} VIT-PULSE, Vishnu Institute of Technology. All rights reserved.
+                    </p>
+                    <div className="footer-links">
+                        <Link to="/privacy" className="footer-link">Privacy Policy</Link>
+                        <span className="footer-separator">|</span>
+                        <Link to="/terms" className="footer-link">Terms of Service</Link>
+                    </div>
+                </div>
+            </footer>
         </div>
     )
 }

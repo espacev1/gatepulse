@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Shield, Lock, Mail, ArrowRight, Activity, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import SEO from '../components/SEO'
 
 export default function Login({ portalType }) {
     const isJury = portalType === 'jury'
@@ -59,16 +60,22 @@ export default function Login({ portalType }) {
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0084FF 0%, #FFFFFF 100%)', /* Blue to White "Curtain" feel */
-            padding: 'var(--space-6)',
-            position: 'relative',
-            overflow: 'hidden'
-        }}>
+        <>
+            <SEO
+                title="Sign In"
+                description="Sign in to VIT-PULSE - Vishnu Institute of Technology's Event Management System"
+                keywords="login, sign in, VIT-PULSE, Vishnu Institute of Technology, event access"
+            />
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #0084FF 0%, #FFFFFF 100%)', /* Blue to White "Curtain" feel */
+                padding: 'var(--space-6)',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
 
             <div className="card-glass" style={{
                 width: '100%',
@@ -169,22 +176,6 @@ export default function Login({ portalType }) {
                 </p>
             </div>
         </div>
+        </>
     )
-}
-
-const styles = `
-@media (max-width: 480px) {
-    .card-glass {
-        padding: var(--space-6) !important;
-    }
-    .page-title {
-        font-size: var(--font-xl) !important;
-    }
-}
-`;
-
-if (typeof document !== 'undefined') {
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = styles;
-    document.head.appendChild(styleSheet);
 }

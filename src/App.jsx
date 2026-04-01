@@ -10,6 +10,8 @@ import Landing from './pages/Landing'
 import AuthPortal from './pages/AuthPortal'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminEvents from './pages/admin/Events'
 import AdminParticipants from './pages/admin/Participants'
@@ -152,6 +154,10 @@ function AppRoutes() {
           <Route path="/my-qr" element={<MyQR />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
+
+        {/* Legal Pages - Public */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

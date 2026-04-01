@@ -1,0 +1,119 @@
+.privacy-policy-page, .terms-of-service-page {
+    min-height: 100vh;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    padding: var(--space-8) 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-8);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    font-size: var(--font-4xl);
+    font-family: var(--font-family-display);
+    color: var(--accent);
+    margin-bottom: var(--space-2);
+}
+
+.last-updated {
+    color: var(--text-dim);
+    font-size: var(--font-sm);
+    margin-bottom: var(--space-8);
+}
+
+section {
+    margin-bottom: var(--space-8);
+}
+
+h2 {
+    font-size: var(--font-2xl);
+    color: var(--accent);
+    margin-bottom: var(--space-4);
+    font-weight: 700;
+}
+
+p {
+    line-height: 1.8;
+    margin-bottom: var(--space-4);
+    color: var(--text-secondary);
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
+    margin: var(--space-4) 0;
+}
+
+li {
+    position: relative;
+    padding-left: var(--space-6);
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.page-footer {
+    margin-top: var(--space-12);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.footer-nav {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.footer-nav a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: var(--font-sm);
+    transition: opacity 0.2s;
+}
+
+.footer-nav a:hover {
+    opacity: 0.7;
+}
+
+.copyright {
+    color: var(--text-dim);
+    font-size: var(--font-xs);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-4);
+        margin: var(--space-4);
+    }
+
+    h1 {
+        font-size: var(--font-3xl);
+    }
+
+    h2 {
+        font-size: var(--font-xl);
+    }
+
+    .footer-nav {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+}

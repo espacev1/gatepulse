@@ -1,0 +1,68 @@
+.terms-of-service-page {
+    min-height: 100vh;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    padding: var(--space-8) 0;
+}
+
+.terms-of-service-page .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-8);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+}
+
+.terms-of-service-page h1 {
+    font-size: var(--font-4xl);
+    font-family: var(--font-family-display);
+    color: var(--accent);
+    margin-bottom: var(--space-2);
+}
+
+.terms-of-service-page .last-updated {
+    color: var(--text-dim);
+    font-size: var(--font-sm);
+    margin-bottom: var(--space-8);
+}
+
+.terms-of-service-page section {
+    margin-bottom: var(--space-8);
+}
+
+.terms-of-service-page h2 {
+    font-size: var(--font-2xl);
+    color: var(--accent);
+    margin-bottom: var(--space-4);
+    font-weight: 700;
+}
+
+.terms-of-service-page p {
+    line-height: 1.8;
+    margin-bottom: var(--space-4);
+    color: var(--text-secondary);
+}
+
+.terms-of-service-page ul {
+    list-style: none;
+    padding-left: 0;
+    margin: var(--space-4) 0;
+}
+
+.terms-of-service-page li {
+    position: relative;
+    padding-left: var(--space-6);
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.terms-of-service-page li::before {
+    content: "•";
+    position: absolute;
+    left: var(--space-2);
+    color: var(--accent);
+    font-weight: bold;
+}
