@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { HelmetProvider } from 'react-helmet-async'
 import Layout from './components/Layout'
@@ -12,6 +12,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import AnalyticsTracker from './components/AnalyticsTracker'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminEvents from './pages/admin/Events'
 import AdminParticipants from './pages/admin/Participants'
@@ -177,6 +178,7 @@ export default function App() {
     <HelmetProvider>
       <AuthProvider>
         <div className="app-main-container" style={{ position: 'relative', zIndex: 1 }}>
+          <AnalyticsTracker />
           <AppRoutes />
         </div>
       </AuthProvider>
