@@ -277,14 +277,14 @@ export default function AuthPortal() {
                     <div className="overlay">
                         <div className="overlay-panel overlay-left">
                             <img src="/logo_refined.png" alt="Logo" style={{height: '60px', marginBottom: '20px'}} />
-                            <h1 className="auth-title" style={{color: '#fff', fontSize: '32px'}}>WELCOME BACK!</h1>
-                            <p style={{margin: '20px 0', fontSize: '14px', lineHeight: '1.4'}}>To keep connected with us please login with your personal info</p>
+                            <h1 className="auth-title" style={{color: '#fff', fontSize: '32px'}}>HELLO, STUDENT!</h1>
+                            <p style={{margin: '20px 0', fontSize: '14px', lineHeight: '1.4'}}>GET STARTED WITH VITPULSE</p>
                             <button className="btn-auth btn-ghost" onClick={() => handleToggle(false)}>Sign In</button>
                         </div>
                         <div className="overlay-panel overlay-right">
                             <img src="/logo_refined.png" alt="Logo" style={{height: '60px', marginBottom: '20px'}} />
-                            <h1 className="auth-title" style={{color: '#fff', fontSize: '32px'}}>HELLO, STUDENT!</h1>
-                            <p style={{margin: '20px 0', fontSize: '14px', lineHeight: '1.4'}}>GET STARTED WITH VITPULSE</p>
+                            <h1 className="auth-title" style={{color: '#fff', fontSize: '32px'}}>WELCOME BACK!</h1>
+                            <p style={{margin: '20px 0', fontSize: '14px', lineHeight: '1.4'}}>To keep connected with us please login with your personal info</p>
                             <button className="btn-auth btn-ghost" onClick={() => handleToggle(true)}>Sign Up</button>
                         </div>
                     </div>
