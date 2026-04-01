@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Linkedin, Mail, Phone, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import FreshIntro from '../components/FreshIntro'
+import LogoIntro from '../components/LogoIntro'
 import SEO from '../components/SEO'
 import './Landing.css'
 
@@ -23,19 +23,30 @@ export default function Landing() {
     }, [])
 
     const fetchTeam = async () => {
-        const { data } = await supabase
-            .from('team_members')
-            .select('*, profile:profiles(id, full_name, email, avatar_url)')
-            .order('display_order', { ascending: true })
-        
-        if (data) {
-            const resolved = data.map(m => ({
-                ...m,
-                display_name: m.profile?.full_name || m.name,
-                display_email: m.profile?.email || m.email,
-                display_image: m.profile?.avatar_url || m.image_url || '/default-avatar.png'
-            }))
-            setTeam(resolved)
+        try {
+            const { data, error } = await supabase
+                .from('team_members')
+                .select('*, profile:profiles(id, full_name, email, avatar_url)')
+                .order('display_order', { ascending: true })
+            
+            if (error) {
+                console.error('Error fetching team members:', error.message, error.details)
+                return
+            }
+
+            if (data && data.length > 0) {
+                const resolved = data.map(m => ({
+                    ...m,
+                    display_name: m.profile?.full_name || m.name || 'Team Member',
+                    display_email: m.profile?.email || m.email || '',
+                    display_image: m.profile?.avatar_url || m.image_url || '/default-avatar.png'
+                }))
+                setTeam(resolved)
+            } else {
+                console.warn('No team members found in the database. Check RLS policies or add members via Admin.')
+            }
+        } catch (err) {
+            console.error('Critical failure in fetchTeam:', err)
         }
     }
 
@@ -201,9 +212,9 @@ export default function Landing() {
                 type="application/ld+json" 
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
             />
-            {/* The Fresh Intro Animation - Plays once, then unmounts completely */}
+            {/* The Logo Intro Animation - Plays once, then unmounts completely */}
             {!introFinished && (
-                <FreshIntro onComplete={() => setIntroFinished(true)} />
+                <LogoIntro onComplete={() => setIntroFinished(true)} />
             )}
 
             {/* Extended Scroll Catcher for 3 stages */}

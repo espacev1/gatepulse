@@ -1,0 +1,415 @@
+/* Formal & Professional 3D Intro Styles */
+.impressive-3d-intro {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background: linear-gradient(135deg, #0a0f1a 0%, #1a2433 50%, #0a0f1a 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1), transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.impressive-3d-intro.complete {
+  opacity: 0;
+  transform: scale(1.01);
+  pointer-events: none;
+}
+
+/* Particle Canvas - subtle grid pattern fallback */
+.particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 2.5s ease-in-out;
+  background:
+    linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.impressive-3d-intro.phase1 .particle-canvas,
+.impressive-3d-intro.phase2 .particle-canvas,
+.impressive-3d-intro.phase3 .particle-canvas,
+.impressive-3d-intro.phase4 .particle-canvas {
+  opacity: 1;
+}
+
+/* Main Content */
+.intro-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+}
+
+/* 3D Cube - Professional Wireframe */
+.logo-3d-container {
+  position: relative;
+  width: clamp(160px, 28vw, 260px);
+  height: clamp(160px, 28vw, 260px);
+  perspective: 2500px;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.impressive-3d-intro.phase2 .logo-3d-container {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.logo-cube-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
+}
+
+.logo-cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: cubeRotate 40s infinite linear;
+}
+
+@keyframes cubeRotate {
+  0% { transform: rotateX(0deg) rotateY(0deg); }
+  100% { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+.cube-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: visible;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: transparent;
+  box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.05);
+}
+
+.cube-face.front {
+  transform: translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+.cube-face.back {
+  transform: rotateY(180deg) translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+.cube-face.right {
+  transform: rotateY(90deg) translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+.cube-face.left {
+  transform: rotateY(-90deg) translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+.cube-face.top {
+  transform: rotateX(90deg) translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+.cube-face.bottom {
+  transform: rotateX(-90deg) translateZ(calc(clamp(160px, 28vw, 260px) / 2));
+}
+
+/* Cube content styling */
+.cube-logo {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.logo-text-back {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(0.8rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.8);
+  transform: rotateY(180deg);
+}
+
+.cube-letter {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cube-letter-side {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(0.7rem, 2vw, 1.2rem);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
+/* Glow Rings - Subtle */
+.glow-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 140%;
+  transform: translate(-50%, -50%) rotateX(70deg);
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(59, 130, 246, 0.25);
+  border-right-color: rgba(59, 130, 246, 0.15);
+  animation: ringSpin 8s linear infinite, ringPulse 3s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+
+.impressive-3d-intro.phase2 .glow-ring,
+.impressive-3d-intro.phase3 .glow-ring,
+.impressive-3d-intro.phase4 .glow-ring {
+  opacity: 1;
+}
+
+.ring-2 {
+  width: 160%;
+  height: 160%;
+  animation: ringSpin 12s linear infinite reverse, ringPulse 3s ease-in-out infinite 1s;
+  border-top-color: rgba(37, 99, 235, 0.2);
+  border-bottom-color: rgba(59, 130, 246, 0.1);
+}
+
+@keyframes ringSpin {
+  0% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); }
+  100% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); }
+}
+
+@keyframes ringPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Text Reveal */
+.text-reveal-container {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.impressive-3d-intro.phase3 .text-reveal-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.institution-badge {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 1rem;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1) 1.5s;
+}
+
+.impressive-3d-intro.phase4 .institution-badge {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.main-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+  display: flex;
+  gap: 0.3em;
+  justify-content: center;
+  align-items: center;
+  letter-spacing: -0.02em;
+}
+
+.title-vit {
+  color: #f8fafc;
+  text-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+}
+
+.title-pulse {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 6s ease-in-out infinite;
+  position: relative;
+}
+
+.title-pulse::after {
+  content: '';
+  position: absolute;
+  bottom: 4%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  animation: underlineShimmer 4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes underlineShimmer {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.6); }
+  50% { opacity: 0.7; transform: scaleX(1); }
+}
+
+.tagline {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(0.85rem, 2vw, 1.15rem);
+  font-weight: 400;
+  color: #94a3b8;
+  margin-top: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeSlideUp 1.5s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.underline-accent {
+  width: clamp(160px, 35vw, 280px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  margin-top: 1.25rem;
+  opacity: 0;
+  transform: scaleX(0);
+  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1) 2.5s;
+}
+
+.impressive-3d-intro.phase4 .underline-accent {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  opacity: 0;
+  transition: opacity 1s ease 3s;
+}
+
+.impressive-3d-intro.phase4 .status-indicator,
+.impressive-3d-intro.phase5 .status-indicator {
+  opacity: 1;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+.status-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(150px, 30vw, 240px);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.5s;
+}
+
+.impressive-3d-intro.phase1 .loading-indicator {
+  opacity: 1;
+}
+
+.loading-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
+  border-radius: 1px;
+  animation: progressFill 8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes progressFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .logo-3d-container {
+    width: 180px;
+    height: 180px;
+  }
+
+  .cube-face.front { transform: translateZ(90px); }
+  .cube-face.back { transform: rotateY(180deg) translateZ(90px); }
+  .cube-face.right { transform: rotateY(90deg) translateZ(90px); }
+  .cube-face.left { transform: rotateY(-90deg) translateZ(90px); }
+  .cube-face.top { transform: rotateX(90deg) translateZ(90px); }
+  .cube-face.bottom { transform: rotateX(-90deg) translateZ(90px); }
+
+  .main-title {
+    flex-direction: column;
+    gap: 0.2em;
+  }
+
+  .tagline {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+  }
+
+  .underline-accent {
+    width: 180px;
+  }
+
+  .loading-indicator {
+    width: 180px;
+  }
+}
