@@ -4,8 +4,15 @@ import './Impressive3DIntro.css';
 export default function Impressive3DIntro({ onComplete }) {
   const [animationStage, setAnimationStage] = useState('phase1');
   const canvasRef = useRef(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
+    // Attempt to play intro music
+    if (audioRef.current) {
+      audioRef.current.volume = 0.6;
+      audioRef.current.play().catch(e => console.log("Autoplay blocked by browser:", e));
+    }
+
     // Extended timeline: 8 seconds total
     // Phase 1: Grid emerges (0-2s)
     const phase1 = setTimeout(() => setAnimationStage('phase2'), 2000);
@@ -13,6 +20,24 @@ export default function Impressive3DIntro({ onComplete }) {
     const phase2 = setTimeout(() => setAnimationStage('phase3'), 4000);
     // Phase 3: Text reveals (4-6s)
     const phase3 = setTimeout(() => setAnimationStage('phase4'), 6000);
+    
+    // Audio Fade out starts at 6s
+    const fadeOut = setTimeout(() => {
+      if (audioRef.current) {
+        let vol = 0.6;
+        const fadeInterval = setInterval(() => {
+          vol -= 0.06;
+          if (vol <= 0) {
+            vol = 0;
+            clearInterval(fadeInterval);
+          }
+          if (audioRef.current) {
+            audioRef.current.volume = vol;
+          }
+        }, 200);
+      }
+    }, 6000);
+
     // Phase 4: Finalize and exit (6-8s)
     const phase4 = setTimeout(() => {
       setAnimationStage('complete');
@@ -23,6 +48,7 @@ export default function Impressive3DIntro({ onComplete }) {
       clearTimeout(phase1);
       clearTimeout(phase2);
       clearTimeout(phase3);
+      clearTimeout(fadeOut);
       clearTimeout(phase4);
     };
   }, [onComplete]);
@@ -83,6 +109,9 @@ export default function Impressive3DIntro({ onComplete }) {
       <div className="loading-indicator">
         <div className="loading-bar"></div>
       </div>
+      
+      {/* Cinematic Intro Music */}
+      <audio ref={audioRef} src="/intro-music.mp3" preload="auto" />
     </div>
   );
 }
