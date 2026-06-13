@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import BubbleMenu from '../components/BubbleMenu'
 import './Landing.css'
+import { motion } from 'framer-motion'
 
 export default function Landing() {
     const navigate = useNavigate()
@@ -275,6 +276,11 @@ export default function Landing() {
 
     return (
         <div className="landing-v2">
+            <div className="ambient-bg">
+                <div className="glow-orb primary"></div>
+                <div className="glow-orb secondary"></div>
+                <div className="glow-orb accent"></div>
+            </div>
             <SEO
                 title="Smart Event Management — Vishnu Institute of Technology"
                 description="VIT-PULSE is a modern event management platform for VIT Bhimavaram, offering digital ticketing, QR verification, and real-time analytics for campus events."
@@ -309,11 +315,16 @@ export default function Landing() {
                     {/* Hero Section Layer */}
                     <main id="hero" className="hero-v2-layer">
                         <div className="hero-left-curtain">
-                            <div className="hero-content">
-                                <div className="hero-top-info">
+                            <motion.div 
+                                className="hero-content"
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <motion.div className="hero-top-info" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                                     <span className="hero-category">SMART EVENT MANAGEMENT SYSTEM</span>
                                     <div className="hero-line"></div>
-                                </div>
+                                </motion.div>
                                 <h1 className="hero-title">
                                     VIT<br />PULSE
                                 </h1>
@@ -325,7 +336,7 @@ export default function Landing() {
                                         GET STARTED <ArrowRight size={20} />
                                     </button>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
                         <div className="hero-right-anchor">
                             <img src="/vishnu logo.webp" alt="Vishnu Logo" className="logo-main-image" />
@@ -339,52 +350,52 @@ export default function Landing() {
                                 <span className="about-subtitle">ABOUT VIT-PULSE</span>
 
                                 {/* Main Hero Card */}
-                                <div className="about-card hero-card">
+                                <motion.div className="about-card hero-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                                     <h2>Seamless Campus Event Management</h2>
                                     <p>VIT-PULSE is the official digital backbone for organizing and experiencing events at Vishnu Institute of Technology. From academic symposiums to cultural fests, our ecosystem streamlines registrations, issues secure digital tickets, manages live attendance, and aggregates real-time evaluation scores.</p>
-                                </div>
+                                </motion.div>
 
                                 {/* Overview Card */}
-                                <div className="about-card overview-card">
+                                <motion.div className="about-card overview-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                                     <h3>Our core ecosystem pillars</h3>
                                     <p>We leverage modern web technology to eliminate paper ticketing waste, prevent check-in fraud, and automate the tedious tasks of synopsis compilation and grading.</p>
-                                </div>
+                                </motion.div>
 
-                                <div className="highlight-grid">
+                                <motion.div className="highlight-grid" initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ staggerChildren: 0.1 }}>
                                     {/* Small Cards */}
-                                    <div className="card-small">
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Express Check-In</h4></div>
                                         <p>Under-2-second QR code verification using standard smartphone cameras.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Role-Based Hubs</h4></div>
                                         <p>Custom dashboards for participants, event staff, faculty, and jury members.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Live Analytics</h4></div>
                                         <p>Track student check-in ratios and branch demographic distribution dynamically.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Jury Portals</h4></div>
                                         <p>Enable digital scoring, rubric evaluation, and instant leaderboards.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Branch Restrictions</h4></div>
                                         <p>Restrict event registrations based on department-specific eligibility criteria.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Automated Synopsis</h4></div>
                                         <p>Generate coordinator reports and audit logs for administrative approvals.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Secure Ticketing</h4></div>
                                         <p>Generate cryptographically secure QR-tokens to prevent ticket duplication.</p>
-                                    </div>
-                                    <div className="card-small">
+                                    </motion.div>
+                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                                         <div className="card-header"><h4>Email Confirmation</h4></div>
                                         <p>Get digital tickets and check-in confirmation notes sent instantly to your inbox.</p>
-                                    </div>
-                                </div>
+                                    </motion.div>
+                                </motion.div>
                             </div>
                         </div>
                     </section>
@@ -426,15 +437,19 @@ export default function Landing() {
                                 <div className="explore-cards-container">
                                     {sections
                                         .map((section, index) => (
-                                            <div
+                                            <motion.div
                                                 key={section.id}
                                                 className={`explore-item-card glass-card ${selectedSection?.id === section.id ? 'is-hidden-selected' : ''}`}
                                                 style={{ "--i": index }}
                                                 onClick={() => setSelectedSection(section)}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                whileInView={{ opacity: 1, scale: 1 }}
+                                                viewport={{ once: true }}
+                                                transition={{ delay: index * 0.1 }}
                                             >
                                                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{section.icon}</div>
                                                 <h4>{section.title}</h4>
-                                            </div>
+                                            </motion.div>
                                         ))}
                                 </div>
                             </div>
@@ -459,7 +474,15 @@ export default function Landing() {
                                         const isLive = event.status === 'active' || event.is_live;
                                         const eventDate = event.event_date ? new Date(event.event_date) : null;
                                         return (
-                                            <div key={event.id || i} className={`event-card ${isLive ? 'live' : ''}`} style={{ "--i": i }}>
+                                            <motion.div 
+                                                key={event.id || i} 
+                                                className={`event-card ${isLive ? 'live' : ''}`} 
+                                                style={{ "--i": i }}
+                                                initial={{ opacity: 0, y: 30 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true }}
+                                                transition={{ delay: i * 0.1 }}
+                                            >
                                                 <div>
                                                     <span className={`event-badge ${isLive ? 'live' : 'upcoming'}`}>
                                                         <Zap size={12} fill="currentColor" /> {isLive ? 'Live Now' : 'Upcoming'}
@@ -491,7 +514,7 @@ export default function Landing() {
                                                         </button>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         )
                                     })}
                                 </div>
@@ -508,13 +531,17 @@ export default function Landing() {
                                 <p className="team-description">Meet the creative minds building the future of campus event management systems.</p>
                             </div>
 
-                            <div className="team-grid">
+                                <motion.div className="team-grid" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
                                 {(showAllTeam ? team : team.slice(0, 3)).map((member, i) => (
-                                    <div
+                                    <motion.div
                                         key={member.id}
                                         className="team-card glass-card"
                                         style={{ "--i": i }}
                                         onClick={() => setSelectedMember(member)}
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1 }}
                                     >
                                         <div className="member-image-wrap">
                                             <img src={member.display_image} alt={member.display_name} />
@@ -523,9 +550,9 @@ export default function Landing() {
                                             <h4>{member.display_name}</h4>
                                             <span>{member.designation}</span>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
 
                             {!showAllTeam && team.length > 3 && (
                                 <button className="see-more-btn" onClick={() => setShowAllTeam(true)}>

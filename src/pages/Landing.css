@@ -1377,3 +1377,124 @@ h2 {
   background: #0070db;
   box-shadow: 0 8px 20px rgba(0, 132, 255, 0.2);
 }
+
+/* --- PREMIUM VISUAL OVERRIDES --- */
+:root {
+  --vit-bg: #FFFFFF;
+  --vit-text: #0F172A;
+  --vit-text-muted: #64748B;
+  --vit-glow-primary: rgba(10, 61, 145, 0.15); /* Deep Royal Blue */
+  --vit-glow-secondary: rgba(0, 212, 255, 0.1); /* Electric Cyan */
+  --vit-glass-bg: rgba(255, 255, 255, 0.6);
+  --vit-glass-border: rgba(255, 255, 255, 0.8);
+  --vit-glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --font-ultra: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background-color: var(--vit-bg) !important;
+  color: var(--vit-text) !important;
+  font-family: var(--font-ultra) !important;
+  overflow-x: hidden;
+}
+
+/* Ambient Environment */
+.ambient-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 1; pointer-events: none; overflow: hidden;
+}
+.glow-orb {
+  position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.8;
+  animation: floatOrb 20s infinite ease-in-out;
+}
+.glow-orb.primary { width: 800px; height: 800px; background: var(--vit-glow-primary); top: -200px; left: -200px; }
+.glow-orb.secondary { width: 600px; height: 600px; background: var(--vit-glow-secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, -50px) scale(1.1); }
+}
+
+/* Glassmorphism Classes */
+.glass-surface {
+  background: var(--vit-glass-bg) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--vit-glass-border) !important;
+  box-shadow: var(--vit-glass-shadow) !important;
+  border-radius: 24px !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease !important;
+}
+.glass-surface:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* Overriding Existing Elements */
+.landing-v2 { background: transparent !important; color: var(--vit-text) !important; }
+.fixed-viewport { background: transparent !important; }
+
+/* Layer Backgrounds transparent to show ambient bg */
+.hero-v2-layer, .about-v2-layer, .explore-v2-layer, .features-v2-layer, .team-v2-layer {
+  background: transparent !important;
+  z-index: 5;
+}
+
+/* Typography Upgrades */
+.hero-title {
+  font-family: var(--font-ultra) !important;
+  font-size: clamp(5rem, 12vw, 10rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.9 !important;
+  background: linear-gradient(180deg, #0A3D91 0%, #1565C0 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.hero-desc { font-size: 1.4rem !important; color: var(--vit-text-muted) !important; }
+
+.team-main-title, .features-main-title, .explore-title {
+  font-family: var(--font-ultra) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  text-transform: none !important;
+  font-size: clamp(3rem, 6vw, 6rem) !important;
+}
+
+/* Remove flat curtains/backgrounds */
+.hero-left-curtain, .about-right-curtain {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Update cards */
+.about-card, .card-small, .explore-item-card, .feature-card, .team-card {
+  background: var(--vit-glass-bg) !important;
+  backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--vit-glass-border) !important;
+  box-shadow: var(--vit-glass-shadow) !important;
+  border-radius: 24px !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.about-card:hover, .card-small:hover, .explore-item-card:hover, .feature-card:hover, .team-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+.explore-detail-box {
+  background: var(--vit-glass-bg) !important;
+  backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--vit-glass-border) !important;
+  box-shadow: var(--vit-glass-shadow) !important;
+}
+
+.get-started-btn {
+  background: #0A3D91 !important;
+  box-shadow: 0 10px 20px rgba(10, 61, 145, 0.3) !important;
+}
+.get-started-btn:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 20px 40px rgba(10, 61, 145, 0.4) !important;
+}
