@@ -4,6 +4,7 @@ import { ArrowRight, Linkedin, Mail, Phone, ChevronDown, Calendar, MapPin, Users
 import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import BubbleMenu from '../components/BubbleMenu'
+import HeroSection from './HeroSection'
 import './Landing.css'
 import { motion } from 'framer-motion'
 
@@ -312,36 +313,11 @@ export default function Landing() {
                 />
 
                 <div className="morphing-container">
-                    {/* Hero Section Layer */}
-                    <main id="hero" className="hero-v2-layer">
-                        <div className="hero-left-curtain">
-                            <motion.div 
-                                className="hero-content"
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                            >
-                                <motion.div className="hero-top-info" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                                    <span className="hero-category">SMART EVENT MANAGEMENT SYSTEM</span>
-                                    <div className="hero-line"></div>
-                                </motion.div>
-                                <h1 className="hero-title">
-                                    VIT<br />PULSE
-                                </h1>
-                                <p className="hero-desc" style={{ fontSize: '1.15rem', color: '#555', margin: '1rem 0 2.5rem 0', maxWidth: '460px', lineHeight: 1.6 }}>
-                                    A premium digital ticketing, express QR validation, and live jury evaluation network for Vishnu Institute of Technology campus events.
-                                </p>
-                                <div className="hero-actions" style={{ display: 'flex', gap: '1rem', width: '100%' }}>
-                                    <button onClick={() => navigate('/auth')} className="get-started-btn">
-                                        GET STARTED <ArrowRight size={20} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </div>
-                        <div className="hero-right-anchor">
-                            <img src="/vishnu logo.webp" alt="Vishnu Logo" className="logo-main-image" />
-                        </div>
-                    </main>
+                    {/* Hero Section — Cinematic 3D Experience */}
+                    <HeroSection
+                        onExplore={() => scrollToSection('features')}
+                        onEnter={() => navigate('/auth')}
+                    />
 
                     {/* About Section Layer */}
                     <section id="about" className="about-v2-layer">

@@ -1,0 +1,338 @@
+/* ============================================================
+   VIT PULSE — CINEMATIC HERO SECTION
+   Apple Vision Pro / Linear / Stripe Sessions aesthetic
+   ============================================================ */
+
+/* ── Root Canvas ─────────────────────────────────────────── */
+.vp-hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 700px;
+  overflow: hidden;
+  background: #000a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Three.js Canvas ─────────────────────────────────────── */
+.vp-hero__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ── Vignette overlay ────────────────────────────────────── */
+.vp-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, transparent 40%, rgba(0,10,26,0.7) 100%),
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(0,10,26,0.8) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Content Layer ───────────────────────────────────────── */
+.vp-hero__content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 24px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ── Eyebrow pill ────────────────────────────────────────── */
+.vp-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 87, 216, 0.15);
+  border: 1px solid rgba(0, 87, 216, 0.4);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #7eb8ff;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  backdrop-filter: blur(12px);
+}
+
+.vp-hero__eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  background: #D4AF37;
+  border-radius: 50%;
+  animation: eyebrow-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 8px #D4AF37;
+}
+
+@keyframes eyebrow-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ── Main Headline ───────────────────────────────────────── */
+.vp-hero__title {
+  font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.vp-hero__title-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #a8c8ff 40%, #D4AF37 80%, #ffffff 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: title-shimmer 6s ease infinite;
+}
+
+@keyframes title-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Subheadline ─────────────────────────────────────────── */
+.vp-hero__subtitle-line {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 24px auto 48px;
+  max-width: 600px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+/* ── CTA Buttons ─────────────────────────────────────────── */
+.vp-hero__ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 64px;
+}
+
+.vp-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.vp-hero__btn--primary {
+  background: linear-gradient(135deg, #003B8E, #0057D8);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 87, 216, 0.6), 0 8px 32px rgba(0, 59, 142, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.vp-hero__btn--primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 0 1px rgba(0, 87, 216, 0.8), 0 16px 48px rgba(0, 59, 142, 0.7), 0 0 60px rgba(0, 87, 216, 0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.vp-hero__btn--secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.vp-hero__btn--secondary:hover {
+  transform: translateY(-3px) scale(1.02);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+
+.vp-hero__btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Floating Glass Panels ───────────────────────────────── */
+.vp-hero__panels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.vp-panel {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 18px 22px;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.vp-panel__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+}
+
+.vp-panel__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.vp-panel__sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+}
+
+.vp-panel__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+  margin-right: 6px;
+  animation: live-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes live-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* Panel positions */
+.vp-panel--tl {
+  top: 18%;
+  left: 4%;
+  animation: float-tl 6s ease-in-out infinite;
+}
+
+.vp-panel--tr {
+  top: 22%;
+  right: 4%;
+  animation: float-tr 7s ease-in-out infinite;
+}
+
+.vp-panel--bl {
+  bottom: 22%;
+  left: 5%;
+  animation: float-bl 8s ease-in-out infinite;
+}
+
+.vp-panel--br {
+  bottom: 20%;
+  right: 5%;
+  animation: float-br 5.5s ease-in-out infinite;
+}
+
+@keyframes float-tl {
+  0%, 100% { transform: translateY(0px)   rotate(-1deg); }
+  50%       { transform: translateY(-12px) rotate(0deg);  }
+}
+@keyframes float-tr {
+  0%, 100% { transform: translateY(-6px)  rotate(1deg);  }
+  50%       { transform: translateY(6px)  rotate(-0.5deg); }
+}
+@keyframes float-bl {
+  0%, 100% { transform: translateY(8px)   rotate(0.5deg); }
+  50%       { transform: translateY(-8px) rotate(-1deg);  }
+}
+@keyframes float-br {
+  0%, 100% { transform: translateY(0px)   rotate(-0.5deg); }
+  50%       { transform: translateY(-14px) rotate(1deg);   }
+}
+
+/* ── Scroll Cue ──────────────────────────────────────────── */
+.vp-hero__scroll {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.vp-hero__scroll-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.vp-hero__scroll-track {
+  width: 1px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vp-hero__scroll-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 16px;
+  background: linear-gradient(180deg, transparent, #D4AF37, transparent);
+  animation: scroll-slide 2s ease-in-out infinite;
+}
+
+@keyframes scroll-slide {
+  0%   { top: -16px; opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { top: 48px; opacity: 0; }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .vp-panel--tl, .vp-panel--tr { display: none; }
+}
+
+@media (max-width: 768px) {
+  .vp-panel--bl, .vp-panel--br { display: none; }
+  .vp-hero__ctas { flex-direction: column; align-items: center; }
+  .vp-hero__btn  { width: 100%; max-width: 280px; justify-content: center; }
+}
