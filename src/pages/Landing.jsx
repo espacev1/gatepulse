@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Linkedin, Mail, Phone, ChevronDown, Calendar, MapPin, Users, Ticket, Check, ShieldAlert, Award, Star, Activity, Zap } from 'lucide-react'
+import { ArrowRight, Linkedin, Mail, Phone, ChevronDown, Calendar, MapPin, Users, Ticket, Check, ShieldAlert, Award, Star, Activity, Zap, QrCode, LayoutDashboard, BarChart3, Fingerprint, FileText, Smartphone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import BubbleMenu from '../components/BubbleMenu'
@@ -355,46 +355,76 @@ export default function Landing() {
                                     <p>VIT-PULSE is the official digital backbone for organizing and experiencing events at Vishnu Institute of Technology. From academic symposiums to cultural fests, our ecosystem streamlines registrations, issues secure digital tickets, manages live attendance, and aggregates real-time evaluation scores.</p>
                                 </motion.div>
 
-                                {/* Overview Card */}
-                                <motion.div className="about-card overview-card" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                                    <h3>Our core ecosystem pillars</h3>
-                                    <p>We leverage modern web technology to eliminate paper ticketing waste, prevent check-in fraud, and automate the tedious tasks of synopsis compilation and grading.</p>
-                                </motion.div>
+                                {/* Bento Grid Layer */}
+                                <motion.div className="bento-container" initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ staggerChildren: 0.1 }}>
+                                    
+                                    {/* Large Card: Express Check-in */}
+                                    <motion.div className="bento-card bento-span-2 bento-row-span-2" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual bento-visual-large">
+                                            <div className="bento-abstract-shape-1"></div>
+                                            <div className="bento-abstract-shape-2"></div>
+                                            <QrCode className="bento-visual-icon" style={{ width: '80px', height: '80px' }} />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3>Express Check-In</h3>
+                                            <p>Under-2-second QR code verification using standard smartphone cameras. Eliminate lines entirely.</p>
+                                        </div>
+                                    </motion.div>
 
-                                <motion.div className="highlight-grid" initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ staggerChildren: 0.1 }}>
-                                    {/* Small Cards */}
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Express Check-In</h4></div>
-                                        <p>Under-2-second QR code verification using standard smartphone cameras.</p>
+                                    {/* Medium Card: Live Analytics */}
+                                    <motion.div className="bento-card bento-span-2" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual">
+                                            <BarChart3 className="bento-visual-icon" />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3>Live Analytics</h3>
+                                            <p>Track check-in ratios and branch demographic distribution dynamically.</p>
+                                        </div>
                                     </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Role-Based Hubs</h4></div>
-                                        <p>Custom dashboards for participants, event staff, faculty, and jury members.</p>
+
+                                    {/* Standard Cards */}
+                                    <motion.div className="bento-card" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual" style={{ minHeight: '100px' }}>
+                                            <LayoutDashboard className="bento-visual-icon" style={{ width: '40px', height: '40px' }} />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3 style={{ fontSize: '1.2rem' }}>Role Hubs</h3>
+                                            <p style={{ fontSize: '0.9rem' }}>Custom dashboards for staff, faculty, and jury.</p>
+                                        </div>
                                     </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Live Analytics</h4></div>
-                                        <p>Track student check-in ratios and branch demographic distribution dynamically.</p>
+
+                                    <motion.div className="bento-card" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual" style={{ minHeight: '100px' }}>
+                                            <Fingerprint className="bento-visual-icon" style={{ width: '40px', height: '40px' }} />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3 style={{ fontSize: '1.2rem' }}>Secure Tickets</h3>
+                                            <p style={{ fontSize: '0.9rem' }}>Cryptographically secure QR-tokens prevent fraud.</p>
+                                        </div>
                                     </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Jury Portals</h4></div>
-                                        <p>Enable digital scoring, rubric evaluation, and instant leaderboards.</p>
+
+                                    {/* Medium Card: Automated Synopsis */}
+                                    <motion.div className="bento-card bento-span-2" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual">
+                                            <FileText className="bento-visual-icon" />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3>Automated Synopsis</h3>
+                                            <p>Generate coordinator reports and audit logs for administrative approvals.</p>
+                                        </div>
                                     </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Branch Restrictions</h4></div>
-                                        <p>Restrict event registrations based on department-specific eligibility criteria.</p>
+
+                                    {/* Medium Card: Jury Portals */}
+                                    <motion.div className="bento-card bento-span-2" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                                        <div className="bento-visual">
+                                            <Star className="bento-visual-icon" />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3>Jury Portals</h3>
+                                            <p>Enable digital scoring, rubric evaluation, and instant leaderboards.</p>
+                                        </div>
                                     </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Automated Synopsis</h4></div>
-                                        <p>Generate coordinator reports and audit logs for administrative approvals.</p>
-                                    </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Secure Ticketing</h4></div>
-                                        <p>Generate cryptographically secure QR-tokens to prevent ticket duplication.</p>
-                                    </motion.div>
-                                    <motion.div className="card-small" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                                        <div className="card-header"><h4>Email Confirmation</h4></div>
-                                        <p>Get digital tickets and check-in confirmation notes sent instantly to your inbox.</p>
-                                    </motion.div>
+
                                 </motion.div>
                             </div>
                         </div>
@@ -468,56 +498,79 @@ export default function Landing() {
                                 <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0', width: '100%', color: '#0084FF' }}>
                                     <Activity className="animate-spin" size={32} />
                                 </div>
+                            ) : events.length === 0 ? (
+                                <motion.div className="bento-container" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                                    <div className="bento-card bento-span-4" style={{ textAlign: 'center', padding: '64px' }}>
+                                        <div className="bento-visual" style={{ minHeight: '120px' }}>
+                                            <div className="bento-abstract-shape-1"></div>
+                                            <Calendar className="bento-visual-icon" style={{ width: '60px', height: '60px' }} />
+                                        </div>
+                                        <div className="bento-content">
+                                            <h3>Events Coming Soon</h3>
+                                            <p>Stay tuned — the next wave of campus events is being organized. Register to get notified first.</p>
+                                        </div>
+                                        <button className="event-register-btn" style={{ marginTop: '24px' }} onClick={() => navigate('/auth')}>
+                                            Get Notified <ArrowRight size={16} />
+                                        </button>
+                                    </div>
+                                </motion.div>
                             ) : (
-                                <div className="features-grid-container">
+                                <motion.div className="bento-container" initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ staggerChildren: 0.1 }}>
                                     {events.map((event, i) => {
                                         const isLive = event.status === 'active' || event.is_live;
                                         const eventDate = event.event_date ? new Date(event.event_date) : null;
+                                        const isHero = i === 0;
                                         return (
-                                            <motion.div 
-                                                key={event.id || i} 
-                                                className={`event-card ${isLive ? 'live' : ''}`} 
-                                                style={{ "--i": i }}
-                                                initial={{ opacity: 0, y: 30 }}
-                                                whileInView={{ opacity: 1, y: 0 }}
-                                                viewport={{ once: true }}
-                                                transition={{ delay: i * 0.1 }}
+                                            <motion.div
+                                                key={event.id || i}
+                                                className={`bento-card ${isHero ? 'bento-span-2 bento-row-span-2' : ''}`}
+                                                variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+                                                style={isLive ? { borderColor: 'rgba(16, 185, 129, 0.4)', background: 'rgba(16,185,129,0.04)' } : {}}
                                             >
-                                                <div>
-                                                    <span className={`event-badge ${isLive ? 'live' : 'upcoming'}`}>
-                                                        <Zap size={12} fill="currentColor" /> {isLive ? 'Live Now' : 'Upcoming'}
-                                                    </span>
-                                                    <h3 className="event-title">{event.name}</h3>
-                                                    <p className="event-description">{event.description}</p>
+                                                {/* Visual Centerpiece */}
+                                                <div className={`bento-visual ${isHero ? 'bento-visual-large' : ''}`} style={{ background: isLive ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(0,212,255,0.08))' : undefined }}>
+                                                    <div className="bento-abstract-shape-1" style={isLive ? { background: 'radial-gradient(circle, rgba(16,185,129,0.6) 0%, transparent 70%)' } : {}}></div>
+                                                    <div className="bento-abstract-shape-2"></div>
+                                                    {isLive
+                                                        ? <Zap className="bento-visual-icon" style={{ width: isHero ? '72px' : '48px', height: isHero ? '72px' : '48px', color: '#10B981' }} />
+                                                        : <Calendar className="bento-visual-icon" style={{ width: isHero ? '72px' : '48px', height: isHero ? '72px' : '48px' }} />
+                                                    }
+                                                    {isLive && (
+                                                        <span style={{ position: 'absolute', top: '12px', left: '12px', background: '#10B981', color: '#fff', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', padding: '4px 10px', borderRadius: '999px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></span>
+                                                            LIVE
+                                                        </span>
+                                                    )}
+                                                    {!isLive && (
+                                                        <span style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(10,61,145,0.15)', color: '#0A3D91', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', padding: '4px 10px', borderRadius: '999px' }}>
+                                                            UPCOMING
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <div className="event-meta">
-                                                        <div className="meta-item">
-                                                            <MapPin size={16} color="#0084FF" />
-                                                            <span>{event.location}</span>
+
+                                                {/* Content */}
+                                                <div className="bento-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+                                                    <h3 style={{ fontSize: isHero ? '1.8rem' : '1.2rem' }}>{event.name}</h3>
+                                                    <p style={{ fontSize: isHero ? '1rem' : '0.9rem', flexGrow: 1 }}>{event.description}</p>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: 'auto' }}>
+                                                        <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--vit-text-muted)' }}>
+                                                            <MapPin size={14} color="#0084FF" /><span>{event.location}</span>
                                                         </div>
-                                                        <div className="meta-item">
-                                                            <Calendar size={16} color="#0084FF" />
-                                                            <span>{eventDate ? eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Date TBD'}</span>
+                                                        <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--vit-text-muted)' }}>
+                                                            <Calendar size={14} color="#0084FF" /><span>{eventDate ? eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}</span>
                                                         </div>
-                                                        <div className="meta-item">
-                                                            <Users size={16} color="#0084FF" />
-                                                            <span style={{ textTransform: 'capitalize' }}>{event.participation_type || 'Solo'} Event ({event.registered_count || 0} Joined)</span>
+                                                        <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--vit-text-muted)' }}>
+                                                            <Users size={14} color="#0084FF" /><span style={{ textTransform: 'capitalize' }}>{event.registered_count || 0} registered</span>
                                                         </div>
                                                     </div>
-                                                    <div className="event-card-actions">
-                                                        <button 
-                                                            className="event-register-btn"
-                                                            onClick={() => navigate('/auth')}
-                                                        >
-                                                            Register Now <ArrowRight size={16} />
-                                                        </button>
-                                                    </div>
+                                                    <button className="event-register-btn" style={{ marginTop: '8px', alignSelf: 'flex-start' }} onClick={() => navigate('/auth')}>
+                                                        Register Now <ArrowRight size={14} />
+                                                    </button>
                                                 </div>
                                             </motion.div>
-                                        )
+                                        );
                                     })}
-                                </div>
+                                </motion.div>
                             )}
                         </div>
                     </section>
@@ -531,24 +584,42 @@ export default function Landing() {
                                 <p className="team-description">Meet the creative minds building the future of campus event management systems.</p>
                             </div>
 
-                                <motion.div className="team-grid" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+                            <motion.div className="bento-container" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ staggerChildren: 0.12 }}>
                                 {(showAllTeam ? team : team.slice(0, 3)).map((member, i) => (
                                     <motion.div
                                         key={member.id}
-                                        className="team-card glass-card"
-                                        style={{ "--i": i }}
+                                        className="bento-card"
+                                        style={{ cursor: 'pointer' }}
                                         onClick={() => setSelectedMember(member)}
-                                        initial={{ opacity: 0, y: 30 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: i * 0.1 }}
+                                        variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }}
+                                        whileHover={{ y: -6 }}
                                     >
-                                        <div className="member-image-wrap">
-                                            <img src={member.display_image} alt={member.display_name} />
+                                        {/* Visual Centerpiece: Avatar */}
+                                        <div className="bento-visual" style={{ minHeight: '200px', padding: '0', overflow: 'hidden', borderRadius: '20px' }}>
+                                            <div className="bento-abstract-shape-1"></div>
+                                            <img
+                                                src={member.display_image}
+                                                alt={member.display_name}
+                                                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(10,61,145,0.15)', zIndex: 2, position: 'relative' }}
+                                            />
                                         </div>
-                                        <div className="member-info">
-                                            <h4>{member.display_name}</h4>
-                                            <span>{member.designation}</span>
+                                        <div className="bento-content" style={{ textAlign: 'center', paddingTop: '8px' }}>
+                                            <h3 style={{ fontSize: '1.25rem', marginBottom: '6px' }}>{member.display_name}</h3>
+                                            <span style={{ display: 'inline-block', background: 'rgba(10,61,145,0.08)', color: 'var(--vit-primary)', fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.05em', padding: '4px 12px', borderRadius: '999px', textTransform: 'uppercase' }}>
+                                                {member.designation}
+                                            </span>
+                                            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px' }}>
+                                                {member.linkedin_url && (
+                                                    <button onClick={(e) => { e.stopPropagation(); window.open(member.linkedin_url, '_blank'); }} style={{ background: 'none', border: '1px solid rgba(10,61,145,0.2)', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: 'var(--vit-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: 600 }}>
+                                                        <Linkedin size={14} /> LinkedIn
+                                                    </button>
+                                                )}
+                                                {member.display_email && (
+                                                    <button onClick={(e) => { e.stopPropagation(); window.open(`mailto:${member.display_email}`, '_blank'); }} style={{ background: 'none', border: '1px solid rgba(10,61,145,0.2)', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: 'var(--vit-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: 600 }}>
+                                                        <Mail size={14} /> Email
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}
